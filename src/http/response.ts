@@ -1,43 +1,49 @@
 import { Headers } from "../utils/types";
 
 /**
- * Clase encargada de gestionar la respuesta HTTP que se enviará al cliente.
- * * Permite configurar el estado, las cabeceras y el cuerpo de la respuesta
- * mediante una interfaz fluida (Fluent Interface).
+ * Esta clase representa el contrato de salida del framework: todo controlador,
+ * middleware o manejador de errores debe retornar una instancia de Response.
+ *
+ * @example
+ * return new Response()
+ *   .setStatus(201)
+ *   .setContentType("application/json")
+ *   .setContent(JSON.stringify({ id: 10 }));
+ *
+ * @example
+ * return Response.json({ ok: true });
  */
 export class Response {
   /**
    * Código de estado HTTP de la respuesta.
-   * @type {number}
    * @default 200
    */
   protected status = 200;
 
   /**
    * Colección de cabeceras HTTP de la respuesta.
-   * Se inicializa sin prototipo para evitar colisiones con propiedades heredadas.
-   * @type {Headers}
+   * Se inicializa sin prototipo para evitar colisiones
+   * con propiedades heredadas de Object.
    */
   protected headers: Headers = Object.create(null) as Headers;
 
   /**
    * Contenido del cuerpo de la respuesta.
-   * @type {string | null}
    */
   protected content?: string = null;
 
   /**
-   * Obtiene el código de estado actual de la respuesta.
-   * @returns {number}
+   * Obtiene el código de estado HTTP actual.
    */
   get getStatus(): number {
     return this.status;
   }
 
   /**
-   * Define el código de estado HTTP (ej. 200, 404, 500).
-   * @param {number} newStatus - El código numérico del estado.
-   * @returns {this} Retorna la instancia actual para encadenamiento.
+   * Define el código de estado HTTP.
+   *
+   * @example
+   * return Response.text("Created").setStatus(201);
    */
   public setStatus(newStatus: number): this {
     this.status = newStatus;
@@ -45,8 +51,7 @@ export class Response {
   }
 
   /**
-   * Obtiene todas las cabeceras configuradas actualmente.
-   * @returns {Headers}
+   * Obtiene todas las cabeceras configuradas.
    */
   get getHeaders(): Headers {
     return this.headers;
@@ -54,9 +59,10 @@ export class Response {
 
   /**
    * Agrega o actualiza una cabecera HTTP.
-   * @param {string} header - El nombre de la cabecera (ej. 'Cache-Control').
-   * @param {string} value - El valor de la cabecera.
-   * @returns {this} Retorna la instancia actual para encadenamiento.
+   *
+   * @example
+   * return Response.text("OK")
+   *   .setHeader("x-powered-by", "MyFramework");
    */
   public setHeader(header: string, value: string): this {
     this.headers[header] = value;
@@ -64,18 +70,22 @@ export class Response {
   }
 
   /**
-   * Elimina una cabecera específica de la respuesta.
-   * @param {string} header - El nombre de la cabecera a eliminar.
-   * @returns {void}
+   * Elimina una cabecera específica.
+   *
+   * @example
+   * response.removeHeader("x-debug");
    */
   public removeHeader(header: string): void {
     delete this.headers[header];
   }
 
   /**
-   * Atajo para definir la cabecera 'Content-Type'.
-   * @param {string} value - El tipo de contenido (ej. 'application/json').
-   * @returns {this} Retorna la instancia actual para encadenamiento.
+   * Atajo semántico para definir Content-Type.
+   *
+   * @example
+   * return new Response()
+   *   .setContentType("text/html")
+   *   .setContent("<h1>Hello</h1>");
    */
   public setContentType(value: string): this {
     this.headers["content-type"] = value;
@@ -83,17 +93,17 @@ export class Response {
   }
 
   /**
-   * Obtiene el contenido del cuerpo de la respuesta.
-   * @returns {string | null}
+   * Obtiene el contenido del cuerpo.
    */
   get getContent(): string | null {
     return this.content;
   }
 
   /**
-   * Define el cuerpo de la respuesta en formato string.
-   * @param {string} content - El contenido a enviar.
-   * @returns {this} Retorna la instancia actual para encadenamiento.
+   * Define el cuerpo de la respuesta.
+   *
+   * @example
+   * return new Response().setContent("Hello world");
    */
   public setContent(content: string): this {
     this.content = content;
@@ -101,9 +111,19 @@ export class Response {
   }
 
   /**
-   * Prepara la respuesta antes de ser enviada, gestionando automáticamente
-   * las cabeceras de longitud y tipo de contenido según la presencia de datos.
-   * @returns {void}
+   * Prepara la respuesta antes de ser enviada al cliente.
+   *
+   * Este método es invocado por el adaptador HTTP
+   * (por ejemplo NodeHttpAdapter) justo antes de escribir
+   * la respuesta en el socket.
+   *
+   * Se encarga de:
+   * - Calcular Content-Length automáticamente.
+   * - Limpiar cabeceras si no existe cuerpo.
+   *
+   * @example
+   * response.prepare();
+   * adapter.send(response);
    */
   public prepare(): void {
     if (!this.content) {
@@ -115,10 +135,14 @@ export class Response {
   }
 
   /**
-   * Crea una instancia de Response configurada para enviar datos en formato JSON.
-   * @static
-   * @param {any} data - Cualquier dato serializable a JSON.
-   * @returns {Response} Una nueva instancia de Response.
+   * Crea una respuesta JSON.
+   *
+   * Es el método estándar para APIs REST.
+   *
+   * @example
+   * app.get("/users", () => {
+   *   return Response.json([{ id: 1 }, { id: 2 }]);
+   * });
    */
   public static json(data: any): Response {
     return new this()
@@ -127,20 +151,24 @@ export class Response {
   }
 
   /**
-   * Crea una instancia de Response configurada para enviar texto plano.
-   * @static
-   * @param {string} data - El texto a enviar.
-   * @returns {Response} Una nueva instancia de Response.
+   * Crea una respuesta de texto plano.
+   *
+   * @example
+   * app.get("/", () => {
+   *   return Response.text("Hello world");
+   * });
    */
   public static text(data: string): Response {
     return new this().setContentType("text/plain").setContent(data);
   }
 
   /**
-   * Crea una instancia de Response configurada para realizar una redirección.
-   * @static
-   * @param {string} url - La URL de destino.
-   * @returns {Response} Una nueva instancia de Response con status 302.
+   * Crea una respuesta de redirección HTTP.
+   *
+   * @example
+   * app.get("/old-route", () => {
+   *   return Response.redirect("/new-route");
+   * });
    */
   public static redirect(url: string): Response {
     return new this().setStatus(302).setHeader("location", url);

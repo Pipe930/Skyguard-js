@@ -66,12 +66,7 @@ export class App {
   public handle(adapter: HttpAdapter): void {
     try {
       const request = adapter.getRequest();
-
-      const route = this.router.resolve(request);
-      request.setLayer(route);
-
-      const action = route.getAction;
-      const response = action(request);
+      const response = this.router.resolve(request);
 
       adapter.sendResponse(response);
     } catch (err) {

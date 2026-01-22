@@ -1,90 +1,163 @@
+import { Middleware } from "http/middleware";
 import { RouteHandler } from "../utils/types";
+import { App } from "../app";
 
 /**
- * Representa una capa de ruta individual dentro del sistema de enrutamiento.
- * * Se encarga de la lógica de coincidencia (matching) de URLs mediante expresiones
- * regulares y de la extracción de parámetros dinámicos definidos en la ruta.
+ * Clase que representa una ruta individual en el sistema de enrutamiento
+ *
+ * Responsabilidades principales:
+ * - Compilar patrones de URL con parámetros dinámicos a expresiones regulares
+ * - Validar si una URL entrante coincide con el patrón definido
+ * - Extraer parámetros dinámicos de URLs (ej: '/users/{id}' → { id: '42' })
+ * - Gestionar middlewares asociados a la ruta
+ *
+ * @example
+ * const layer = new Layer('/users/{id}', userController);
+ * layer.matches('/users/42'); // true
+ * layer.parseParameters('/users/42'); // { id: '42' }
  */
 export class Layer {
   /**
-   * La plantilla de la URL original (ej: '/users/{id}').
-   * @type {string}
+   * Plantilla original de la URL con sintaxis de parámetros
+   * @example '/users/{id}' o '/posts/{postId}/comments/{commentId}'
    */
   protected url: string;
 
   /**
-   * Expresión regular generada a partir de la URL para validar peticiones entrantes.
-   * @type {RegExp}
+   * Expresión regular compilada desde la URL para hacer matching
+   * @example '/users/{id}' se convierte en /^\/users\/([a-zA-Z0-9]+)\/?$/
    */
   protected regex: RegExp;
 
   /**
-   * Lista de nombres de los parámetros capturados en la URL (ej: ['id']).
-   * @type {string[]}
+   * Nombres de los parámetros extraídos de la URL en orden de aparición
+   * @example Para '/users/{id}' → ['id']
+   * @example Para '/posts/{postId}/comments/{commentId}' → ['postId', 'commentId']
    */
   protected parameters: string[];
 
   /**
-   * La función controladora o callback que se ejecuta cuando la ruta coincide.
-   * @type {RouteHandler}
+   * Handler/controlador que se ejecuta cuando la ruta hace match
    */
   protected action: RouteHandler;
 
   /**
-   * Crea una nueva instancia de Layer y compila la URL en una expresión regular.
-   * @param {string} url - La plantilla de la ruta (soporta parámetros entre llaves `{param}`).
-   * @param {RouteHandler} action - La función que procesará la petición para esta ruta.
+   * Middlewares que se ejecutan antes del handler principal
+   */
+  protected middlewares: Middleware[] = [];
+
+  /**
+   * Construye una nueva capa de ruta
+   *
+   * Proceso interno:
+   * 1. Busca parámetros en formato {param} en la URL
+   * 2. Los reemplaza por grupos de captura regex: ([a-zA-Z0-9]+)
+   * 3. Compila el patrón final con ^ y $ para match exacto
+   *
+   * @param url - Plantilla de la ruta (usa {nombreParam} para parámetros dinámicos)
+   * @param action - Función handler que procesa las peticiones a esta ruta
    */
   constructor(url: string, action: RouteHandler) {
     const paramRegex = /\{([a-zA-Z]+)\}/g;
     const regexSource = url.replace(paramRegex, "([a-zA-Z0-9]+)");
 
     this.url = url;
-    this.regex = new RegExp(`^${regexSource}/?$`);
+    this.regex = new RegExp(`^${regexSource}/?$`); // El /? permite trailing slash opcional
     this.parameters = [...url.matchAll(paramRegex)].map((m) => m[1]);
     this.action = action;
   }
 
   /**
-   * Obtiene la plantilla de URL original de esta capa.
-   * @returns {string}
+   * Obtiene la plantilla original de la URL
    */
   get getUrl(): string {
     return this.url;
   }
 
   /**
-   * Obtiene el manejador (handler) asociado a esta ruta.
-   * @returns {RouteHandler}
+   * Obtiene el handler/controlador de esta ruta
    */
   get getAction(): RouteHandler {
     return this.action;
   }
 
   /**
-   * Comprueba si una URL entrante coincide con el patrón de esta capa.
-   * @param {string} url - La URL de la petición a comparar.
-   * @returns {boolean} Verdadero si la URL cumple con la estructura de la ruta.
+   * Obtiene la lista de middlewares asociados
+   */
+  get getMiddlewares(): Middleware[] {
+    return this.middlewares;
+  }
+
+  /**
+   * Asigna middlewares a esta ruta
+   *
+   * @param middlewares - Array de clases de middleware (no instancias)
+   * @returns this - Para permitir method chaining
+   *
+   * @example
+   * layer.setMiddlewares([AuthMiddleware, LoggerMiddleware])
+   */
+  public setMiddlewares(middlewares: Array<new () => Middleware>): this {
+    this.middlewares = middlewares.map((middleware) => new middleware());
+    return this;
+  }
+
+  /**
+   * Verifica si la ruta tiene middlewares configurados
+   */
+  public hasMiddlewares(): boolean {
+    return this.middlewares.length > 0;
+  }
+
+  /**
+   * TODO: Documenta o elimina este método - parece ser para testing
+   * Método estático que crea una ruta GET usando el router de la app
+   */
+  public static getTest(url: string, action: RouteHandler, app: App): Layer {
+    return app.router.get(url, action);
+  }
+
+  /**
+   * Verifica si una URL entrante coincide con el patrón de esta ruta
+   *
+   * @param url - URL de la petición HTTP
+   * @returns true si la URL cumple con el patrón definido
+   *
+   * @example
+   * const layer = new Layer('/users/{id}', handler);
+   * layer.matches('/users/42');     // true
+   * layer.matches('/users/42/');    // true (trailing slash opcional)
+   * layer.matches('/users/abc');    // true
+   * layer.matches('/posts/1');      // false
    */
   public matches(url: string): boolean {
     return this.regex.test(url);
   }
 
   /**
-   * Indica si la ruta actual contiene parámetros dinámicos.
-   * @returns {boolean}
+   * Indica si esta ruta tiene parámetros dinámicos
    */
   public hasParameters(): boolean {
     return this.parameters.length > 0;
   }
 
   /**
-   * Extrae los valores de los parámetros dinámicos de una URL real.
+   * Extrae los valores de los parámetros dinámicos desde una URL real
+   *
+   * IMPORTANTE: Solo llamar después de verificar matches() === true
+   *
+   * @param url - URL real de la petición
+   * @returns Objeto con pares clave-valor de los parámetros extraídos
+   *
    * @example
-   * // Si la URL es /user/{id} y recibimos /user/42
-   * // Retorna: { id: "42" }
-   * @param {string} url - La URL real de la petición.
-   * @returns {Record<string, string>} Un objeto clave-valor con los parámetros extraídos.
+   * const layer = new Layer('/users/{id}', handler);
+   * layer.parseParameters('/users/42');
+   * // Retorna: { id: '42' }
+   *
+   * @example
+   * const layer = new Layer('/posts/{postId}/comments/{commentId}', handler);
+   * layer.parseParameters('/posts/10/comments/5');
+   * // Retorna: { postId: '10', commentId: '5' }
    */
   public parseParameters(url: string): Record<string, string> {
     const match = this.regex.exec(url);
@@ -93,7 +166,7 @@ export class Layer {
     const params: Record<string, string> = {};
 
     this.parameters.forEach((name, index) => {
-      params[name] = match[index + 1];
+      params[name] = match[index + 1]; // index + 1 porque match[0] es el match completo
     });
 
     return params;
