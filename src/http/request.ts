@@ -22,22 +22,22 @@ import { Layer } from "../routes/layer";
  */
 export class Request {
   /** Ruta normalizada de la solicitud (ej: '/api/users/42') */
-  protected url: string;
+  private url: string;
 
   /** Capa de enrutamiento que resolvió esta solicitud */
-  protected layer: Layer;
+  private layer: Layer;
 
   /** Cabeceras HTTP entrantes */
-  protected headers: Headers;
+  private headers: Headers;
 
   /** Método HTTP normalizado */
-  protected method: HttpMethods;
+  private method: HttpMethods;
 
   /** Cuerpo de la petición (payload ya procesado) */
-  protected data: Record<string, any> = {};
+  private data: Record<string, any> = {};
 
   /** Parámetros de query string */
-  protected query: Record<string, any> = {};
+  private query: Record<string, any> = {};
 
   get getUrl(): string {
     return this.url;

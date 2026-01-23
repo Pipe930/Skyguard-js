@@ -18,19 +18,19 @@ export class Response {
    * Código de estado HTTP de la respuesta.
    * @default 200
    */
-  protected status = 200;
+  private status = 200;
 
   /**
    * Colección de cabeceras HTTP de la respuesta.
    * Se inicializa sin prototipo para evitar colisiones
    * con propiedades heredadas de Object.
    */
-  protected headers: Headers = Object.create(null) as Headers;
+  private headers: Headers = Object.create(null) as Headers;
 
   /**
    * Contenido del cuerpo de la respuesta.
    */
-  protected content?: string = null;
+  private content?: string = null;
 
   get getStatus(): number {
     return this.status;

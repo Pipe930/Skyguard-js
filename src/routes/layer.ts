@@ -21,30 +21,30 @@ export class Layer {
    * Plantilla original de la URL con sintaxis de parámetros
    * @example '/users/{id}' o '/posts/{postId}/comments/{commentId}'
    */
-  protected url: string;
+  private url: string;
 
   /**
    * Expresión regular compilada desde la URL para hacer matching
    * @example '/users/{id}' se convierte en /^\/users\/([a-zA-Z0-9]+)\/?$/
    */
-  protected regex: RegExp;
+  private regex: RegExp;
 
   /**
    * Nombres de los parámetros extraídos de la URL en orden de aparición
    * @example Para '/users/{id}' → ['id']
    * @example Para '/posts/{postId}/comments/{commentId}' → ['postId', 'commentId']
    */
-  protected parameters: string[];
+  private parameters: string[];
 
   /**
    * Handler/controlador que se ejecuta cuando la ruta hace match
    */
-  protected action: RouteHandler;
+  private action: RouteHandler;
 
   /**
    * Middlewares que se ejecutan antes del handler principal
    */
-  protected middlewares: Middleware[] = [];
+  private middlewares: Middleware[] = [];
 
   /**
    * Construye una nueva capa de ruta

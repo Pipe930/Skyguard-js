@@ -31,7 +31,7 @@ export class Router {
    *
    * Usa Object.create(null) para evitar propiedades heredadas de Object.prototype
    */
-  protected routes: HashMapRouters = Object.create(null) as HashMapRouters;
+  private routes: HashMapRouters = Object.create(null) as HashMapRouters;
 
   /**
    * Inicializa el router creando arrays vacíos para cada método HTTP
@@ -124,7 +124,7 @@ export class Router {
    * 2.   LoggerMiddleware.handle(req, next)
    * 3.     handler(req)
    */
-  protected runMiddlewares(
+  private runMiddlewares(
     request: Request,
     middlewares: Middleware[],
     target: RouteHandler,
