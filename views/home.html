@@ -1,0 +1,12 @@
+<h1>{{title}}</h1>
+
+{{#each products}}
+<li>
+    <strong>{{ this.name }}</strong> - {{currency this.price}}
+    {{#if this.inStock}}
+    <span class="badge">En stock</span>
+    {{else}}
+    <span class="badge">Agotado</span>
+    {{/if}}
+</li>
+{{/each}}

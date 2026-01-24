@@ -7,7 +7,7 @@ import { Layer } from "../src/routes/layer";
 
 const PORT = 3000;
 
-const app = App.getInstance();
+const app = App.getInstance;
 
 app.router.get("/test/{param}", (request: Request) => {
   return Response.json(request.getlayerParameters());
@@ -19,6 +19,25 @@ app.router.post("/test", (request: Request) => {
 
 app.router.get("/redirect", (request: Request) => {
   return Response.redirect("/test");
+});
+
+app.router.get("/home", (request: Request) => {
+  return Response.view(
+    "home",
+    {
+      title: "Productos",
+      products: [
+        { name: "Laptop", price: 999.99, inStock: true },
+        { name: "Mouse", price: 29.99, inStock: false },
+      ],
+      user: {
+        name: "Juan Pérez",
+        role: "admin",
+      },
+    },
+    "main",
+    app,
+  );
 });
 
 class AuthMiddleware implements Middleware {

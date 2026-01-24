@@ -1,4 +1,5 @@
-import { Headers } from "../utils/types";
+import { App } from "../app";
+import { Headers, TemplateContext } from "../utils/types";
 
 /**
  * Esta clase representa el contrato de salida del framework: todo controlador,
@@ -110,7 +111,7 @@ export class Response {
    *   return Response.json([{ id: 1 }, { id: 2 }]);
    * });
    */
-  public static json(data: any): Response {
+  public static json(data: unknown): Response {
     return new this()
       .setContentType("application/json")
       .setContent(JSON.stringify(data));
@@ -138,5 +139,16 @@ export class Response {
    */
   public static redirect(url: string): Response {
     return new this().setStatus(302).setHeader("location", url);
+  }
+
+  public static view(
+    view: string,
+    params: TemplateContext,
+    layout: string = null,
+    app: App,
+  ): Response {
+    const content = app.engineTemplate.render(view, params, layout);
+
+    return new this().setContentType("text/html").setContent(content);
   }
 }

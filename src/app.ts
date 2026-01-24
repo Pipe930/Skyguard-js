@@ -4,6 +4,8 @@ import { Response } from "./http/response";
 import { HttpNotFoundException } from "./exceptions/httpNotFoundException";
 import { Server } from "./server/server";
 import { NodeServer } from "./server/nodeNativeServer";
+import { View } from "./views/view";
+import { RaptorEngine } from "./views/raptorEngine";
 
 /**
  * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
@@ -39,9 +41,12 @@ export class App {
    */
   private server: Server;
 
+  public engineTemplate: View;
+
   private constructor() {
     this.router = new Router();
     this.server = new NodeServer(this);
+    this.engineTemplate = new RaptorEngine("./views");
   }
 
   /**
@@ -54,7 +59,7 @@ export class App {
    * const app = App.getInstance();
    * app.router.get('/users', handler);
    */
-  public static getInstance(): App {
+  public static get getInstance(): App {
     if (!App.instance) App.instance = new App();
     return App.instance;
   }
