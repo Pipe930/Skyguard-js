@@ -3,6 +3,8 @@ import { IncomingMessage, ServerResponse } from "node:http";
 import { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
+import { ContentParserManager } from "../parsers/contentParserManager";
+import { ContentParseError } from "../exceptions/contentParserException";
 
 /**
  * Esta clase actúa como un *bridge* entre la API nativa de Node.js
@@ -19,6 +21,8 @@ import { Request } from "./request";
  * @implements {HttpAdapter}
  */
 export class NodeHttpAdapter implements HttpAdapter {
+  private contentParser: ContentParserManager;
+
   /**
    * Crea una nueva instancia del adaptador HTTP para Node.js.
    *
@@ -28,7 +32,9 @@ export class NodeHttpAdapter implements HttpAdapter {
   constructor(
     private readonly req: IncomingMessage,
     private readonly res: ServerResponse,
-  ) {}
+  ) {
+    this.contentParser = new ContentParserManager();
+  }
 
   /**
    * Construye y retorna un objeto {@link Request} del framework
@@ -42,15 +48,52 @@ export class NodeHttpAdapter implements HttpAdapter {
    *
    * @returns Instancia de {@link Request} completamente hidratada.
    */
-  public getRequest(): Request {
+  public async getRequest(): Promise<Request> {
     const url = new URL(this.req.url || "", `http://${this.req.headers.host}`);
 
-    return new Request()
+    const request = new Request()
       .setUrl(url.pathname)
       .setMethod((this.req.method as HttpMethods) || HttpMethods.get)
       .setQueryParameters(Object.fromEntries(url.searchParams.entries()))
-      .setHeaders(this.req.headers)
-      .setData({});
+      .setHeaders(this.req.headers);
+
+    const body = await this.readBody();
+    if (body.length > 0) {
+      const contentType = this.req.headers["content-type"] || "text/plain";
+      const parsedData = await this.contentParser.parse(body, contentType);
+      request.setData(parsedData);
+    } else {
+      request.setData({});
+    }
+
+    return request;
+  }
+
+  /**
+   * Lee el body completo de la solicitud.
+   */
+  private readBody(): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+
+      this.req.on("data", (chunk: Buffer) => {
+        chunks.push(chunk);
+      });
+
+      this.req.on("end", () => {
+        resolve(Buffer.concat(chunks));
+      });
+
+      this.req.on("error", (error) => {
+        reject(
+          new ContentParseError(
+            "Failed to read request body",
+            "READ_ERROR",
+            error,
+          ),
+        );
+      });
+    });
   }
 
   /**

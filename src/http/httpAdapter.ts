@@ -29,7 +29,7 @@ export interface HttpAdapter {
    * @returns Una promesa que resuelve en un objeto {@link Request}
    * listo para ser procesado por el kernel.
    */
-  getRequest(): Request;
+  getRequest(): Promise<Request>;
 
   /**
    * Envía al cliente una {@link Response} generada por el framework,

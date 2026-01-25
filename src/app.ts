@@ -93,9 +93,9 @@ export class App {
    * @param {HttpAdapter} adapter - Adaptador responsable de mapear
    * la capa de red al dominio del framework.
    */
-  public handle(adapter: HttpAdapter): void {
+  public async handle(adapter: HttpAdapter): Promise<void> {
     try {
-      const request = adapter.getRequest();
+      const request = await adapter.getRequest();
       const response = this.router.resolve(request);
 
       adapter.sendResponse(response);

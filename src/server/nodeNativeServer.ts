@@ -34,7 +34,7 @@ export class NodeServer implements Server {
   public listen(port: number): void {
     createServer((req, res) => {
       const adapter = new NodeHttpAdapter(req, res);
-      this.app.handle(adapter);
+      void this.app.handle(adapter);
     }).listen(port);
 
     console.log(`Server running on http://localhost:${port}`);
