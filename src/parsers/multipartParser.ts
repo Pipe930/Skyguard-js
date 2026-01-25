@@ -1,4 +1,4 @@
-import { ContentParseError } from "../exceptions/contentParserException";
+import { ContentParseError } from "../exceptions";
 import { ContentParser } from "./contentParser";
 import { MultipartData, ParsedPart } from "./parserInterface";
 

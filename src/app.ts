@@ -1,11 +1,8 @@
-import { Router } from "./routes/router";
-import { HttpAdapter } from "./http/httpAdapter";
-import { Response } from "./http/response";
-import { HttpNotFoundException } from "./exceptions/httpNotFoundException";
-import { Server } from "./server/server";
-import { NodeServer } from "./server/nodeNativeServer";
-import { View } from "./views/view";
-import { RaptorEngine } from "./views/raptorEngine";
+import { Router } from "./routes";
+import { HttpAdapter, Response } from "./http";
+import { HttpNotFoundException } from "./exceptions";
+import { Server, NodeServer } from "./server";
+import { View, RaptorEngine } from "./views";
 import { Container } from "./container/container";
 
 /**

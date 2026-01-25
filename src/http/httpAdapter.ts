@@ -1,5 +1,5 @@
-import { Request } from "../http/request";
-import { Response } from "../http/response";
+import { Request } from "./request";
+import { Response } from "./response";
 
 /**
  * Contrato de alto nivel que define el *puerto de entrada* del framework

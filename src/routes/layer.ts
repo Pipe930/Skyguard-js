@@ -1,4 +1,4 @@
-import { Middleware } from "http/middleware";
+import { Middleware } from "../http";
 import { RouteHandler } from "../utils/types";
 import { App } from "../app";
 

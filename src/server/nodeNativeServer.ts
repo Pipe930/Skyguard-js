@@ -1,6 +1,6 @@
 import { App } from "../app";
 import { createServer } from "node:http";
-import { NodeHttpAdapter } from "../http/nodeNativeHttp";
+import { NodeHttpAdapter } from "../http";
 import { Server } from "./server";
 
 /**

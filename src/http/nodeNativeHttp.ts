@@ -3,8 +3,8 @@ import { IncomingMessage, ServerResponse } from "node:http";
 import { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
-import { ContentParserManager } from "../parsers/contentParserManager";
-import { ContentParseError } from "../exceptions/contentParserException";
+import { ContentParseError } from "../exceptions";
+import { ContentParserManager } from "../parsers";
 
 /**
  * Esta clase actúa como un *bridge* entre la API nativa de Node.js

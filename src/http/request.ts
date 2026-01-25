@@ -1,6 +1,6 @@
 import { HttpMethods } from "./httpMethods";
 import { Headers, HttpValue } from "../utils/types";
-import { Layer } from "../routes/layer";
+import { Layer } from "../routes";
 
 /**
  * Esta clase representa el contrato de entrada del framework: todo controlador

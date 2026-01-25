@@ -1,10 +1,7 @@
 import { HashMapRouters, RouteHandler } from "../utils/types";
-import { HttpMethods } from "../http/httpMethods";
-import { Request } from "../http/request";
-import { Response } from "../http/response";
+import { Request, Response, HttpMethods, Middleware } from "../http";
+import { HttpNotFoundException } from "../exceptions";
 import { Layer } from "./layer";
-import { HttpNotFoundException } from "../exceptions/httpNotFoundException";
-import { Middleware } from "http/middleware";
 
 /**
  * Clase que representa el sistema central de enrutamiento del framework

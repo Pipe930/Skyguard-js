@@ -1,9 +1,7 @@
-import { Router } from "../src/routes/router";
-import { HttpMethods } from "../src/http/httpMethods";
+import { Router } from "../src/routes";
+import { Response, Request, HttpMethods } from "../src/http";
 import { createRequestMock } from "./utils";
 import { NextFunction } from "../src/utils/types";
-import { Request } from "../src/http/request";
-import { Response } from "../src/http/response";
 
 describe("RouterTest", () => {
   let router: Router;

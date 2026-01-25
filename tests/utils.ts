@@ -1,6 +1,4 @@
-import { NodeHttpAdapter } from "../src/http/nodeNativeHttp";
-import { Request } from "../src/http/request";
-import { HttpMethods } from "../src/http/httpMethods";
+import { NodeHttpAdapter, Request, HttpMethods } from "../src/http";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "stream";
 
