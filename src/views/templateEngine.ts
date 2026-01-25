@@ -56,7 +56,7 @@ export class SimpleTemplateEngine implements TemplateEngine {
    * @param template Contenido de la plantilla (string HTML).
    * @param context Objeto con los datos disponibles en la vista.
    *
-   * @returns HTML final renderizado.
+   * @returns Devuelve el HTML final completamente renderizado.
    *
    * @example
    * const engine = new SimpleTemplateEngine("./views");
@@ -88,7 +88,7 @@ export class SimpleTemplateEngine implements TemplateEngine {
    * con funciones reutilizables.
    *
    * @param name Nombre del helper.
-   * @param fn Función ejecutable.
+   * @param fn Función ejecutable del helper.
    *
    * @example
    * engine.registerHelper("currency", (value: number) => {
@@ -138,6 +138,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
   /**
    * Procesa partials.
    *
+   * @param template Nombre del template o vista
+   * @param context Datos que seran inyectados al HTML
+   * @returns Devuelve la vista o el HTML renderisado
+   *
    * Sintaxis:
    * {{> partialName}}
    *
@@ -176,6 +180,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
 
   /**
    * Procesa bloques iterativos.
+   *
+   * @param template Nombre del template o vista
+   * @param context Datos que seran inyectados al HTML
+   * @returns Devuelve la vista o el HTML renderisado
    *
    * Sintaxis:
    * {{#each items}}
@@ -247,6 +255,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
   /**
    * Procesa bloques condicionales.
    *
+   * @param template Nombre del template o vista
+   * @param context Datos que seran inyectados al HTML
+   * @returns Devuelve la vista o el HTML renderisado
+   *
    * Sintaxis:
    * {{#if condition}}
    *   contenido verdadero
@@ -284,6 +296,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
   /**
    * Procesa helpers definidos.
    *
+   * @param template Nombre del template o vista
+   * @param context Datos que seran inyectados al HTML
+   * @returns Devuelve la vista o el HTML renderisado
+   *
    * Sintaxis:
    * {{ helperName arg1 arg2 }}
    *
@@ -320,6 +336,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
 
   /**
    * Procesa interpolación de variables.
+   *
+   * @param template Nombre del template o vista
+   * @param context Datos que seran inyectados al HTML
+   * @returns Devuelve la vista o el HTML renderisado
    *
    * - Con escape HTML: {{ variable }}
    * - Sin escape: {{{ variable }}}
@@ -367,6 +387,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
   /**
    * Resuelve un path en el contexto.
    *
+   * @param template Nombre del template o vista
+   * @param context Datos que seran inyectados al HTML
+   * @returns Devuelve la vista o el HTML renderisado
+   *
    * Convierte:
    * "user.profile.name"
    * en:
@@ -392,6 +416,9 @@ export class SimpleTemplateEngine implements TemplateEngine {
   /**
    * Determina si un valor es considerado "truthy".
    * Se usa en bloques #if.
+   *
+   * @param value valor de los #if
+   * @returns Devuelve un buleano validando el dato
    */
   private isTruthy(value: unknown): boolean {
     if (value === false || value === null || value === undefined) return false;
@@ -402,6 +429,9 @@ export class SimpleTemplateEngine implements TemplateEngine {
 
   /**
    * Escapa caracteres HTML para prevenir XSS.
+   *
+   * @param text Texto del HTML a parsear
+   * @returns Devuelve los valores parseados
    */
   private escapeHtml(text: string): string {
     const map: Record<string, string> = {

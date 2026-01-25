@@ -6,16 +6,6 @@ import { Layer } from "./layer";
 /**
  * Clase que representa el sistema central de enrutamiento del framework
  *
- * Responsabilidades:
- * - Almacenar todas las rutas registradas organizadas por método HTTP
- * - Resolver qué Layer/handler debe ejecutarse para una petición entrante
- * - Ejecutar la cadena de middlewares antes del handler final
- * - Proporcionar métodos convenientes para registrar rutas (get, post, put, etc.)
- *
- * Flujo típico:
- * 1. Durante setup: router.get('/users/{id}', userController)
- * 2. En runtime: router.resolve(request) → busca Layer → ejecuta middlewares → ejecuta handler
- *
  * @example
  * const router = new Router();
  * router.get('/users/{id}', (req) => new Response({ userId: req.params.id }))
@@ -25,8 +15,6 @@ export class Router {
   /**
    * Mapa de rutas organizadas por método HTTP
    * Estructura: { 'GET': [Layer, Layer], 'POST': [Layer], ... }
-   *
-   * Usa Object.create(null) para evitar propiedades heredadas de Object.prototype
    */
   private routes: HashMapRouters = Object.create(null) as HashMapRouters;
 
@@ -43,15 +31,10 @@ export class Router {
   }
 
   /**
-   * Busca el Layer que coincide con la URL y método de la petición
-   *
-   * Proceso:
-   * 1. Obtiene el array de Layers para el método HTTP
-   * 2. Itera hasta encontrar el primer Layer que haga match con la URL
-   * 3. Retorna el Layer encontrado o lanza excepción
+   * Busca el Layer o ruta registrada que coincide con la URL y método de la petición
    *
    * @param request - Objeto de petición HTTP entrante
-   * @returns El Layer que coincide con la ruta
+   * @returns Devuelve una clase Layer que coincide con la ruta
    * @throws HttpNotFoundException - Si ninguna ruta coincide
    *
    * @example
@@ -81,7 +64,7 @@ export class Router {
    * 4. Finalmente ejecuta el handler/action principal
    *
    * @param request - Petición HTTP a procesar
-   * @returns Response del handler o middleware
+   * @returns Devuelve un response del handler o middleware
    *
    * @example
    * const request = new Request('POST', '/users');
@@ -112,7 +95,7 @@ export class Router {
    * @param request - Petición HTTP
    * @param middlewares - Array de middlewares restantes por ejecutar
    * @param target - Handler final a ejecutar después de todos los middlewares
-   * @returns Response del handler o de algún middleware que corte la cadena
+   * @returns Devuelve un response del handler o de algún middleware que corte la cadena
    *
    * @example
    * Cadena: [AuthMiddleware, LoggerMiddleware] → handler
@@ -139,7 +122,7 @@ export class Router {
    * @param method - Método HTTP (GET, POST, etc.)
    * @param path - Patrón de la URL (puede incluir parámetros: '/users/{id}')
    * @param action - Handler que procesa la petición
-   * @returns El Layer creado (permite encadenar .setMiddlewares())
+   * @returns Devuelve la instancia de la clase Lyaer creado (permite encadenar .setMiddlewares())
    */
   private registerRoute(
     method: HttpMethods,

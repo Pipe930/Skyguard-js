@@ -5,12 +5,6 @@ import { App } from "../app";
 /**
  * Clase que representa una ruta individual en el sistema de enrutamiento
  *
- * Responsabilidades principales:
- * - Compilar patrones de URL con parámetros dinámicos a expresiones regulares
- * - Validar si una URL entrante coincide con el patrón definido
- * - Extraer parámetros dinámicos de URLs (ej: '/users/{id}' → { id: '42' })
- * - Gestionar middlewares asociados a la ruta
- *
  * @example
  * const layer = new Layer('/users/{id}', userController);
  * layer.matches('/users/42'); // true
@@ -83,7 +77,7 @@ export class Layer {
    * Asigna middlewares a esta ruta
    *
    * @param middlewares - Array de clases de middleware (no instancias)
-   * @returns this - Para permitir method chaining
+   * @returns Devuelve un this. Para permitir method chaining
    *
    * @example
    * layer.setMiddlewares([AuthMiddleware, LoggerMiddleware])
@@ -94,25 +88,24 @@ export class Layer {
   }
 
   /**
-   * Verifica si la ruta tiene middlewares configurados
+   * Verifica si la lista de middlewares de esta ruta tiene middlewares
+   * configurados
+   *
+   * @returns Devuelve un booleano
    */
   public hasMiddlewares(): boolean {
     return this.middlewares.length > 0;
   }
 
-  /**
-   * TODO: Documenta o elimina este método - parece ser para testing
-   * Método estático que crea una ruta GET usando el router de la app
-   */
   public static getTest(url: string, action: RouteHandler, app: App): Layer {
     return app.router.get(url, action);
   }
 
   /**
-   * Verifica si una URL entrante coincide con el patrón de esta ruta
+   * Verifica si una URL entrante coincide con el patrón de la ruta actual
    *
    * @param url - URL de la petición HTTP
-   * @returns true si la URL cumple con el patrón definido
+   * @returns Devuelve un buleano verificando si existe o no
    *
    * @example
    * const layer = new Layer('/users/{id}', handler);
@@ -127,6 +120,8 @@ export class Layer {
 
   /**
    * Indica si esta ruta tiene parámetros dinámicos
+   *
+   * @returns Devuelve un buleano
    */
   public hasParameters(): boolean {
     return this.parameters.length > 0;
@@ -138,7 +133,7 @@ export class Layer {
    * IMPORTANTE: Solo llamar después de verificar matches() === true
    *
    * @param url - URL real de la petición
-   * @returns Objeto con pares clave-valor de los parámetros extraídos
+   * @returns Devuelve un objeto con los parámetros extraídos
    *
    * @example
    * const layer = new Layer('/users/{id}', handler);
@@ -157,7 +152,7 @@ export class Layer {
     const params: Record<string, string> = {};
 
     this.parameters.forEach((name, index) => {
-      params[name] = match[index + 1]; // index + 1 porque match[0] es el match completo
+      params[name] = match[index + 1];
     });
 
     return params;

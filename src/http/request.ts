@@ -6,11 +6,6 @@ import { Layer } from "../routes";
  * Esta clase representa el contrato de entrada del framework: todo controlador
  * y middleware recibe una instancia de Request ya normalizada.
  *
- * A diferencia del IncomingMessage de Node, esta versión:
- * - Es inmutable desde fuera del core.
- * - Contiene información semántica (Layer, params, query).
- * - Permite acceso unificado a body, query y parámetros de ruta.
- *
  * El objeto Request es construido por un HttpAdapter
  * (ej: NodeHttpAdapter) y enriquecido durante el pipeline.
  *

@@ -17,7 +17,7 @@ export class Container {
   /**
    * Almacena las instancias singleton indexadas por el constructor de la clase.
    */
-  private static instances: Map<Constructor<unknown>, unknown> = new Map();
+  private static instances = new Map<Constructor, any>();
 
   /**
    * Obtiene o crea una instancia singleton de la clase especificada.
@@ -26,8 +26,8 @@ export class Container {
    * Si no existe, crea una nueva instancia, la almacena y la devuelve.
    *
    * @template T - Tipo de la clase a instanciar
-   * @param {Constructor<T>} classConstructor - Constructor de la clase
-   * @returns {T} Instancia singleton de la clase
+   * @param classConstructor - Constructor de la clase
+   * @returns Devuelve una instancia singleton de la clase
    *
    * @example
    * class Database {
@@ -51,8 +51,8 @@ export class Container {
    * Resuelve una instancia singleton previamente registrada.
    *
    * @template T - Tipo de la clase a resolver
-   * @param {Constructor<T>} classConstructor - Constructor de la clase
-   * @returns {T | null} Instancia si existe, null si no está registrada
+   * @param classConstructor - Constructor de la clase
+   * @returns Devuelve una instancia si existe o null si no está registrada
    *
    * @example
    * const db = Container.resolve(Database);

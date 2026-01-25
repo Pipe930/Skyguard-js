@@ -11,11 +11,6 @@ import { ContentParserManager } from "../parsers";
  * (`IncomingMessage` / `ServerResponse`) y las abstracciones internas
  * del framework (`Request` / `Response`).
  *
- * Su responsabilidad es:
- * - Extraer y normalizar los datos de la petición entrante.
- * - Construir una instancia de {@link Request} del framework.
- * - Mapear una {@link Response} del framework hacia la respuesta nativa de Node.
- *
  * Esta clase **no contiene lógica de negocio**, routing ni middlewares.
  * Forma parte exclusivamente de la capa de infraestructura.
  * @implements {HttpAdapter}
@@ -39,12 +34,6 @@ export class NodeHttpAdapter implements HttpAdapter {
   /**
    * Construye y retorna un objeto {@link Request} del framework
    * a partir de los datos contenidos en `IncomingMessage`.
-   *
-   * Este método se encarga de:
-   * - Parsear la URL.
-   * - Extraer el método HTTP.
-   * - Mapear los query parameters.
-   * - Copiar los headers.
    *
    * @returns Instancia de {@link Request} completamente hidratada.
    */
@@ -71,6 +60,8 @@ export class NodeHttpAdapter implements HttpAdapter {
 
   /**
    * Lee el body completo de la solicitud.
+   *
+   * @returns Devuelve un buffer en promesa
    */
   private readBody(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
@@ -99,12 +90,6 @@ export class NodeHttpAdapter implements HttpAdapter {
   /**
    * Envía la respuesta al cliente mapeando un objeto {@link Response}
    * del framework hacia el objeto {@link ServerResponse} nativo de Node.js.
-   *
-   * Este método se encarga de:
-   * - Preparar la respuesta (serialización, headers, etc).
-   * - Establecer el código de estado HTTP.
-   * - Escribir los headers.
-   * - Finalizar la respuesta.
    *
    * @param response - Objeto de respuesta del framework.
    */

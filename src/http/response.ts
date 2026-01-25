@@ -24,8 +24,6 @@ export class Response {
 
   /**
    * Colección de cabeceras HTTP de la respuesta.
-   * Se inicializa sin prototipo para evitar colisiones
-   * con propiedades heredadas de Object.
    */
   private headers: Headers = Object.create(null) as Headers;
 
@@ -59,6 +57,9 @@ export class Response {
   /**
    * Atajo semántico para definir Content-Type.
    *
+   * @param value Valor que le daras a la cabecera Content-Type
+   * @returns Retorna una instancia de la clase {@link Response}
+   *
    * @example
    * return new Response()
    *   .setContentType("text/html")
@@ -85,10 +86,6 @@ export class Response {
    * (por ejemplo NodeHttpAdapter) justo antes de escribir
    * la respuesta en el socket.
    *
-   * Se encarga de:
-   * - Calcular Content-Length automáticamente.
-   * - Limpiar cabeceras si no existe cuerpo.
-   *
    * @example
    * response.prepare();
    * adapter.send(response);
@@ -105,7 +102,8 @@ export class Response {
   /**
    * Crea una respuesta JSON.
    *
-   * Es el método estándar para APIs REST.
+   * @param data Contenido en formato string o texto
+   * @returns Retorna una instancia de la clase {@link Response}
    *
    * @example
    * app.get("/users", () => {
@@ -121,6 +119,9 @@ export class Response {
   /**
    * Crea una respuesta de texto plano.
    *
+   * @param data Contenido en formato string o texto
+   * @returns Retorna una instancia de la clase {@link Response}
+   *
    * @example
    * app.get("/", () => {
    *   return Response.text("Hello world");
@@ -132,6 +133,8 @@ export class Response {
 
   /**
    * Crea una respuesta de redirección HTTP.
+   * @param url Url donde quieres redirijir el flujo
+   * @returns Retorna una instancia de la clase {@link Response}
    *
    * @example
    * app.get("/old-route", () => {
@@ -148,13 +151,7 @@ export class Response {
    * Este método actúa como un *facade* entre el motor de vistas
    * y el sistema de respuestas HTTP del framework.
    *
-   * Responsabilidades:
-   * - Resolver la instancia global de la aplicación.
-   * - Delegar el renderizado al motor de vistas configurado.
-   * - Envolver el resultado en un objeto {@link Response}
-   *   con tipo de contenido `text/html`.
-   *
-   * Permite a los controladores retornar vistas de forma declarativa:
+   * Permite a los controladores retornar vistas de forma declarativa.
    *
    * @example
    * return Response.view("users/profile", { user });
@@ -162,16 +159,13 @@ export class Response {
    * @example
    * return Response.view("auth/login", {}, "auth");
    *
-   * @param {string} view - Nombre lógico de la vista a renderizar
+   * @param view - Nombre lógico de la vista a renderizar
    * (sin extensión ni ruta base).
-   *
-   * @param {TemplateContext} params - Variables que se inyectan
+   * @param params - Variables que se inyectan
    * en la plantilla.
-   *
-   * @param {string | null} layout - Layout a utilizar. Si es `null`,
+   * @param layout - Layout a utilizar. Si es `null`,
    * se usa el layout por defecto configurado en el motor de vistas.
-   *
-   * @returns {Response} Respuesta HTTP lista para ser enviada al cliente.
+   * @returns Respuesta HTTP lista para ser enviada al cliente.
    */
   public static view(
     view: string,

@@ -85,7 +85,7 @@ export class RaptorEngine implements View {
    * @param params Contexto de datos.
    * @param layout Layout opcional (si no se pasa, se usa el default).
    *
-   * @returns HTML final renderizado.
+   * @returns Devuelve el HTML final renderizado.
    *
    * @example
    * view.render("home", { user: { name: "Felipe" } });
@@ -109,6 +109,8 @@ export class RaptorEngine implements View {
    * Renderiza una vista individual.
    *
    * @param view Nombre de la vista (sin .html)
+   * @param params Datos dinamicos que se inyectan en la vista HTML
+   * @returns Devuele el archivo de la vista HTML encontrado
    *
    * @example
    * renderView("profile")
@@ -123,6 +125,7 @@ export class RaptorEngine implements View {
    * Renderiza un layout.
    *
    * @param layout Nombre del layout.
+   * @returns Devuele el archivo de la vista HTML encontrado
    *
    * @example
    * renderLayout("main")
@@ -135,13 +138,11 @@ export class RaptorEngine implements View {
   }
 
   /**
-   * Renderiza cualquier archivo HTML.
+   * Busca y valida los archivos HTML si se encuentran en las rutas designadas
    *
-   * Es el método de bajo nivel encargado de:
-   * - Verificar existencia del archivo.
-   * - Leer contenido.
-   * - Procesarlo con SimpleTemplateEngine.
-   *
+   * @param filePath ruta del archivo HTML
+   * @param params Datos dinamicos que se inyectan en la vista HTML
+   * @returns Devuelve el arvhivo HTML encontrado renderizado
    * @throws FileExistsException si el archivo no existe.
    */
   private renderFile(filePath: string, params: TemplateContext = {}): string {
@@ -162,6 +163,9 @@ export class RaptorEngine implements View {
 
   /**
    * Registra un helper personalizado en el motor interno.
+   *
+   * @param name nombre del helper
+   * @param fn funcion callback del helper
    *
    * @example
    * view.registerHelper("upper", (str: string) => str.toUpperCase());
