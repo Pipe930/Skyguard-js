@@ -136,6 +136,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
       const text = String(str);
       return text.length > length ? text.substring(0, length) + "..." : text;
     });
+
+    this.helpers.set("currency", (amount: number) => {
+      return `$${amount.toFixed(2)}`;
+    });
   }
 
   /**
@@ -228,30 +232,30 @@ export class SimpleTemplateEngine implements TemplateEngine {
 
         return array
           .map((item: unknown, index: number) => {
-            let itemContent = content.replace(
-              /\{\{\s*this\.([a-zA-Z0-9_]+)\s*\}\}/g,
-              (m: string, prop: string) => {
-                const value = this.getPropertyValue(item, prop);
-                return this.escapeHtml(String(value ?? ""));
-              },
+            const itemContext: TemplateContext = {
+              ...context,
+              this: item,
+              "@index": index,
+              "@first": index === 0,
+              "@last": index === array.length - 1,
+            };
+
+            let itemContent = content;
+
+            // Orden de procesamiento dentro del each:
+            // 1. Condicionales (necesitan acceso a this.property)
+            itemContent = this.processIfWithContext(itemContent, itemContext);
+
+            // 2. Helpers (necesitan acceso a this.property)
+            itemContent = this.processHelpersWithContext(
+              itemContent,
+              itemContext,
             );
 
-            itemContent = itemContent.replace(
-              /\{\{\s*this\s*\}\}/g,
-              this.escapeHtml(String(item)),
-            );
-
-            itemContent = itemContent.replace(
-              /\{\{\s*@index\s*\}\}/g,
-              String(index),
-            );
-            itemContent = itemContent.replace(
-              /\{\{\s*@first\s*\}\}/g,
-              String(index === 0),
-            );
-            itemContent = itemContent.replace(
-              /\{\{\s*@last\s*\}\}/g,
-              String(index === array.length - 1),
+            // 3. Interpolaciones (reemplazan this.property y @variables)
+            itemContent = this.processInterpolationWithContext(
+              itemContent,
+              itemContext,
             );
 
             return itemContent;
@@ -259,6 +263,89 @@ export class SimpleTemplateEngine implements TemplateEngine {
           .join("");
       },
     );
+  }
+
+  /**
+   * Procesa bloques condicionales con un contexto personalizado.
+   * Versión que acepta contexto (usado dentro de #each).
+   */
+  private processIfWithContext(
+    template: string,
+    context: TemplateContext,
+  ): string {
+    const ifRegex =
+      /\{\{#if\s+([a-zA-Z0-9_.@]+)\s*\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
+
+    return template.replace(
+      ifRegex,
+      (
+        match: string,
+        condition: string,
+        truthyContent: string,
+        falsyContent: string = "",
+      ) => {
+        const value = this.resolveValue(condition, context);
+        const isTruthy = this.isTruthy(value);
+
+        return isTruthy ? truthyContent : falsyContent;
+      },
+    );
+  }
+
+  /**
+   * Procesa helpers con un contexto personalizado.
+   * Versión que acepta contexto (usado dentro de #each).
+   */
+  private processHelpersWithContext(
+    template: string,
+    context: TemplateContext,
+  ): string {
+    const helperRegex = /\{\{\s*([a-zA-Z0-9_]+)\s+([^}]+?)\s*\}\}/g;
+
+    return template.replace(
+      helperRegex,
+      (match: string, helperName: string, argsString: string) => {
+        const helper = this.helpers.get(helperName);
+        if (!helper) return match;
+
+        const args = this.parseHelperArgs(argsString.trim(), context);
+
+        try {
+          return helper(...args);
+        } catch (error) {
+          console.error(`Error executing helper ${helperName}:`, error);
+          return "";
+        }
+      },
+    );
+  }
+
+  /**
+   * Versión de processInterpolation que acepta un contexto personalizado.
+   */
+  private processInterpolationWithContext(
+    template: string,
+    context: TemplateContext,
+  ): string {
+    // Sin escape: {{{ variable }}}
+    template = template.replace(
+      /\{\{\{\s*([a-zA-Z0-9_.@]+)\s*\}\}\}/g,
+      (match: string, path: string) => {
+        const value = this.resolveValue(path, context);
+        return String(value ?? "");
+      },
+    );
+
+    // Con escape: {{ variable }}
+    template = template.replace(
+      /\{\{\s*([a-zA-Z0-9_.@]+)\s*\}\}/g,
+      (match: string, path: string) => {
+        const value = this.resolveValue(path, context);
+        return this.escapeHtml(String(value ?? ""));
+      },
+    );
+
+    return template;
   }
 
   /**
@@ -317,7 +404,7 @@ export class SimpleTemplateEngine implements TemplateEngine {
    * {{ truncate post.content 100 }}
    */
   private processHelpers(template: string, context: TemplateContext): string {
-    const helperRegex = /\{\{([a-zA-Z0-9_]+)\s+([^}]+)\}\}/g;
+    const helperRegex = /\{\{\s*([a-zA-Z0-9_]+)\s+([^}]+?)\s*\}\}/g;
 
     return template.replace(
       helperRegex,
@@ -326,21 +413,67 @@ export class SimpleTemplateEngine implements TemplateEngine {
 
         if (!helper) return match;
 
-        const args = argsString.split(/\s+/).map((arg: string): unknown => {
-          if (arg.startsWith('"') && arg.endsWith('"')) return arg.slice(1, -1);
-          if (!isNaN(Number(arg))) return Number(arg);
-
-          return this.resolveValue(arg, context);
-        });
+        const args = this.parseHelperArgs(argsString.trim(), context);
 
         try {
           return helper(...args);
         } catch (error) {
           console.error(`Error executing helper ${helperName}:`, error);
+          console.error(`Helper: ${helperName}, Args:`, args);
           return "";
         }
       },
     );
+  }
+
+  /**
+   * Parsea los argumentos de un helper respetando strings con comillas.
+   */
+  private parseHelperArgs(
+    argsString: string,
+    context: TemplateContext,
+  ): unknown[] {
+    const args: unknown[] = [];
+    let currentArg = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < argsString.length; i++) {
+      const char = argsString[i];
+
+      if (char === '"' && (i === 0 || argsString[i - 1] !== "\\")) {
+        inQuotes = !inQuotes;
+        currentArg += char;
+      } else if (char === " " && !inQuotes) {
+        if (currentArg.trim()) {
+          args.push(this.parseArgument(currentArg.trim(), context));
+          currentArg = "";
+        }
+      } else {
+        currentArg += char;
+      }
+    }
+
+    if (currentArg.trim())
+      args.push(this.parseArgument(currentArg.trim(), context));
+
+    return args;
+  }
+
+  private parseArgument(arg: string, context: TemplateContext): unknown {
+    if (arg.startsWith('"') && arg.endsWith('"')) return arg.slice(1, -1);
+    if (!isNaN(Number(arg)) && arg !== "") return Number(arg);
+
+    if (arg === "true") return true;
+    if (arg === "false") return false;
+
+    if (arg === "null") return null;
+
+    const value = this.resolveValue(arg, context);
+
+    if (value === undefined)
+      console.warn(`Helper argument "${arg}" resolved to undefined`);
+
+    return value;
   }
 
   /**
@@ -379,18 +512,6 @@ export class SimpleTemplateEngine implements TemplateEngine {
     );
 
     return template;
-  }
-
-  /**
-   * Obtiene el valor de una propiedad de un objeto desconocido.
-   */
-  private getPropertyValue(obj: unknown, prop: string): unknown {
-    if (obj === null || obj === undefined) return undefined;
-
-    if (typeof obj === "object" && prop in obj)
-      return (obj as Record<string, unknown>)[prop];
-
-    return undefined;
   }
 
   /**
