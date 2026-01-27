@@ -108,7 +108,7 @@ export class MultipartParser implements ContentParser {
 
     while ((pos = buffer.indexOf(delimiter, start)) !== -1) {
       if (pos > start) {
-        parts.push(buffer.slice(start, pos));
+        parts.push(buffer.subarray(start, pos));
       }
       start = pos + delimiter.length;
     }
@@ -126,8 +126,8 @@ export class MultipartParser implements ContentParser {
     const headerEndIndex = part.indexOf("\r\n\r\n");
     if (headerEndIndex === -1) return null;
 
-    const headerSection = part.slice(0, headerEndIndex).toString("utf-8");
-    const bodySection = part.slice(headerEndIndex + 4);
+    const headerSection = part.subarray(0, headerEndIndex).toString("utf-8");
+    const bodySection = part.subarray(headerEndIndex + 4);
     const headers = this.parseHeaders(headerSection);
     const disposition = headers["content-disposition"];
 

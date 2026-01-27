@@ -26,8 +26,7 @@ export class NodeServer implements Server {
     createServer((req, res) => {
       const adapter = new NodeHttpAdapter(req, res);
       void this.app.handle(adapter);
-    }).listen(port, () => {
-      console.log(`Server running on http://localhost:${port}`);
-    });
+    }).listen(port);
+    console.log(`Server running on http://localhost:${port}`);
   }
 }
