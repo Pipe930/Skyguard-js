@@ -4,6 +4,7 @@ import { HttpNotFoundException } from "./exceptions";
 import { Server, NodeServer } from "./server";
 import { View, RaptorEngine } from "./views";
 import { Container } from "./container/container";
+import { join } from "node:path";
 
 /**
  * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
@@ -70,7 +71,7 @@ export class App {
 
     app.router = new Router();
     app.server = new NodeServer(app);
-    app.view = new RaptorEngine(__dirname + "/../views");
+    app.view = new RaptorEngine(join(__dirname, "..", "views"));
 
     return app;
   }
