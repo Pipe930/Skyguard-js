@@ -1,5 +1,5 @@
 import { JsonParser } from "../src/parsers";
-import { ContentParseError } from "../src/exceptions";
+import { ContentParserException } from "../src/exceptions";
 
 describe("JsonParser", () => {
   let parser: JsonParser;
@@ -45,20 +45,22 @@ describe("JsonParser", () => {
     });
   });
 
-  it("should throw ContentParseError on invalid JSON", async () => {
+  it("should throw ContentParserException on invalid JSON", async () => {
     const body = '{"name": "Carlitos", }';
 
-    await expect(parser.parse(body)).rejects.toBeInstanceOf(ContentParseError);
+    await expect(parser.parse(body)).rejects.toBeInstanceOf(
+      ContentParserException,
+    );
   });
 
-  it("should throw ContentParseError with correct code", async () => {
+  it("should throw ContentParserException with correct code", async () => {
     const body = "{ invalid json";
 
     try {
       await parser.parse(body);
     } catch (err) {
-      expect(err).toBeInstanceOf(ContentParseError);
-      expect((err as ContentParseError).code).toBe("JSON_PARSE_ERROR");
+      expect(err).toBeInstanceOf(ContentParserException);
+      expect((err as ContentParserException).code).toBe("CONTENT_PARSER_ERROR");
     }
   });
 });

@@ -2,7 +2,7 @@ import { View } from "./view";
 import { SimpleTemplateEngine } from "./templateEngine";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { FileExistsException } from "../exceptions/fileExistsException";
+import { FileNotExistsException } from "../exceptions";
 import { HelperFunction, TemplateContext } from "../utils/types";
 
 /**
@@ -169,7 +169,7 @@ export class RaptorEngine implements View {
       this.cacheTemplates.set(filePath, fileContent);
       return this.templateEngine.render(fileContent, params);
     } catch {
-      throw new FileExistsException(`View file not found: ${filePath}`);
+      throw new FileNotExistsException(filePath);
     }
   }
 

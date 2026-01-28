@@ -3,7 +3,7 @@ import { IncomingMessage, ServerResponse } from "node:http";
 import { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
-import { ContentParseError } from "../exceptions";
+import { ReadBodyException } from "../exceptions";
 import { ContentParserManager } from "../parsers";
 
 /**
@@ -76,13 +76,7 @@ export class NodeHttpAdapter implements HttpAdapter {
       });
 
       this.req.on("error", (error) => {
-        reject(
-          new ContentParseError(
-            "Failed to read request body",
-            "READ_ERROR",
-            error,
-          ),
-        );
+        reject(new ReadBodyException());
       });
     });
   }

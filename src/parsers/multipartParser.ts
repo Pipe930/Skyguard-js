@@ -1,4 +1,4 @@
-import { ContentParseError } from "../exceptions";
+import { ContentParserException } from "../exceptions";
 import { ContentParser } from "./contentParser";
 import { MultipartData, ParsedPart } from "./parserInterface";
 
@@ -36,9 +36,8 @@ export class MultipartParser implements ContentParser {
     const boundary = this.extractBoundary(contentType);
 
     if (!boundary)
-      throw new ContentParseError(
+      throw new ContentParserException(
         "Missing boundary in multipart/form-data",
-        "MISSING_BOUNDARY",
       );
 
     return this.parseMultipart(buffer, boundary);

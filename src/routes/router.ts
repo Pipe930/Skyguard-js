@@ -51,7 +51,7 @@ export class Router {
       }
     }
 
-    throw new HttpNotFoundException("Route not found");
+    throw new HttpNotFoundException();
   }
 
   /**

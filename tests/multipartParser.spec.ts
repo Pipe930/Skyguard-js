@@ -1,5 +1,5 @@
 import { MultipartParser } from "../src/parsers";
-import { ContentParseError } from "../src/exceptions";
+import { ContentParserException } from "../src/exceptions";
 
 describe("MultipartParser", () => {
   let parser: MultipartParser;
@@ -22,7 +22,7 @@ describe("MultipartParser", () => {
 
     await expect(
       parser.parse(body, "multipart/form-data"),
-    ).rejects.toBeInstanceOf(ContentParseError);
+    ).rejects.toBeInstanceOf(ContentParserException);
   });
 
   it("should parse simple fields", async () => {

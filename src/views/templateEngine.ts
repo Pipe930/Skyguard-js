@@ -182,8 +182,7 @@ export class SimpleTemplateEngine implements TemplateEngine {
         const partialContent = await readFile(partialPath, "utf-8");
         const rendered = await this.render(partialContent, context);
         result = result.replace(match[0], rendered);
-      } catch (error) {
-        console.warn(`Partial not found: ${partialPath}`);
+      } catch {
         result = result.replace(match[0], "");
       }
     }

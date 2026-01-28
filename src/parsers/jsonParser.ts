@@ -1,4 +1,4 @@
-import { ContentParseError } from "../exceptions";
+import { ContentParserException } from "../exceptions";
 import { ContentParser } from "./contentParser";
 
 /**
@@ -17,11 +17,7 @@ export class JsonParser implements ContentParser {
       const text = Buffer.isBuffer(body) ? body.toString("utf-8") : body;
       return JSON.parse(text);
     } catch (error) {
-      throw new ContentParseError(
-        "Invalid JSON content",
-        "JSON_PARSE_ERROR",
-        error,
-      );
+      throw new ContentParserException("Invalid JSON content");
     }
   }
 }
