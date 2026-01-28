@@ -5,7 +5,7 @@ import { BaseException } from "./baseException";
  */
 export class HttpNotFoundException extends BaseException {
   constructor() {
-    super("Route not found", "HTTP_NOT_FOUND_EXCEPTION");
+    super("Route not found", "HTTP_NOT_FOUND_ERROR");
     this.name = "HttpNotFoundException";
   }
 }

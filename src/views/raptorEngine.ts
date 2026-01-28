@@ -160,7 +160,7 @@ export class RaptorEngine implements View {
   ): Promise<string> {
     try {
       if (this.cacheTemplates.has(filePath)) {
-        const cached = this.cacheTemplates.get(filePath)!;
+        const cached = this.cacheTemplates.get(filePath);
         return this.templateEngine.render(cached, params);
       }
 

@@ -1,3 +1,8 @@
+import {
+  HelperArgumentException,
+  HelperExecutionException,
+  HelperNotFoundException,
+} from "../exceptions";
 import { HelperFunction, TemplateContext } from "../utils/types";
 
 /**
@@ -73,19 +78,14 @@ export class HelpersManager {
   ): string {
     const helper = this.helpers.get(name);
 
-    if (!helper) {
-      console.warn(`Helper "${name}" not found`);
-      return "";
-    }
+    if (!helper) throw new HelperNotFoundException(name);
 
-    const args = this.parseArgs(argsString, context, resolveValue);
+    const args = this.parseArgs(argsString, context, resolveValue, name);
 
     try {
       return helper(...args);
-    } catch (error) {
-      console.error(`Error executing helper "${name}":`, error);
-      console.error(`Args:`, args);
-      return "";
+    } catch {
+      throw new HelperExecutionException(name);
     }
   }
 
@@ -113,6 +113,7 @@ export class HelpersManager {
     argsString: string,
     context: TemplateContext,
     resolveValue: (path: string, ctx: TemplateContext) => unknown,
+    nameHelper: string,
   ): unknown[] {
     const args: unknown[] = [];
     let currentArg = "";
@@ -125,7 +126,14 @@ export class HelpersManager {
         inQuotes = !inQuotes;
         currentArg += char;
       } else if (char === " " && !inQuotes && currentArg.trim()) {
-        args.push(this.parseArgument(currentArg.trim(), context, resolveValue));
+        args.push(
+          this.parseArgument(
+            currentArg.trim(),
+            context,
+            resolveValue,
+            nameHelper,
+          ),
+        );
         currentArg = "";
       } else {
         currentArg += char;
@@ -133,7 +141,14 @@ export class HelpersManager {
     }
 
     if (currentArg.trim())
-      args.push(this.parseArgument(currentArg.trim(), context, resolveValue));
+      args.push(
+        this.parseArgument(
+          currentArg.trim(),
+          context,
+          resolveValue,
+          nameHelper,
+        ),
+      );
 
     return args;
   }
@@ -151,6 +166,7 @@ export class HelpersManager {
     arg: string,
     context: TemplateContext,
     resolveValue: (path: string, ctx: TemplateContext) => unknown,
+    nameHelper: string,
   ): unknown {
     if (arg.startsWith('"') && arg.endsWith('"')) return arg.slice(1, -1);
     if (!isNaN(Number(arg)) && arg !== "") return Number(arg);
@@ -158,11 +174,9 @@ export class HelpersManager {
     if (arg === "false") return false;
     if (arg === "null") return null;
 
-    // Variable del contexto
     const value = resolveValue(arg, context);
 
-    if (value === undefined)
-      console.warn(`Helper argument "${arg}" resolved to undefined`);
+    if (!value) throw new HelperArgumentException(nameHelper);
 
     return value;
   }

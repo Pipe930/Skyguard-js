@@ -75,7 +75,7 @@ export class NodeHttpAdapter implements HttpAdapter {
         resolve(Buffer.concat(chunks));
       });
 
-      this.req.on("error", (error) => {
+      this.req.on("error", () => {
         reject(new ReadBodyException());
       });
     });

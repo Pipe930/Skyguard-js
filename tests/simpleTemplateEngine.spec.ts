@@ -75,10 +75,10 @@ describe("Simple Template Engine Test", () => {
   it("should render partials", async () => {
     const template = "<header>My App</header>";
 
-    (readFile as jest.Mock).mockResolvedValueOnce("<header>My App</header>");
+    (readFile as jest.Mock).mockResolvedValueOnce(template);
     const html = await engine.render("{{> header}}", {});
 
-    expect(html).toBe("<header>My App</header>");
+    expect(html).toBe(template);
   });
 
   it("should ignore missing partials", async () => {

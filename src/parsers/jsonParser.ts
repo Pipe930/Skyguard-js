@@ -16,7 +16,7 @@ export class JsonParser implements ContentParser {
     try {
       const text = Buffer.isBuffer(body) ? body.toString("utf-8") : body;
       return JSON.parse(text);
-    } catch (error) {
+    } catch {
       throw new ContentParserException("Invalid JSON content");
     }
   }
