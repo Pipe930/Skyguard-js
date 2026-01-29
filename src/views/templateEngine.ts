@@ -159,7 +159,7 @@ export class SimpleTemplateEngine implements TemplateEngine {
             let itemContent = content;
 
             // Pipeline dentro de each
-            itemContent = this.processIfWithContext(itemContent, itemContext);
+            itemContent = this.processIf(itemContent, itemContext, true);
             itemContent = this.processHelpersWithContext(
               itemContent,
               itemContext,
@@ -173,35 +173,6 @@ export class SimpleTemplateEngine implements TemplateEngine {
             return itemContent;
           })
           .join("");
-      },
-    );
-  }
-
-  /**
-   * Procesa condicionales con contexto específico (dentro de each).
-   *
-   * @param template Template o vista a procesar
-   * @param context Variables locales del template
-   * @returns Devuelve el template renderizado con los helpers cargados
-   */
-  private processIfWithContext(
-    template: string,
-    context: TemplateContext,
-  ): string {
-    const ifRegex =
-      /\{\{#if\s+([a-zA-Z0-9_.@]+)\s*\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
-
-    return template.replace(
-      ifRegex,
-      (
-        match: string,
-        condition: string,
-        truthyContent: string,
-        falsyContent: string = "",
-      ) => {
-        const value = this.resolveValue(condition, context);
-        const isTruthy = this.isTruthy(value);
-        return isTruthy ? truthyContent : falsyContent;
       },
     );
   }
@@ -241,9 +212,14 @@ export class SimpleTemplateEngine implements TemplateEngine {
    * @param context Variables locales del template
    * @returns Devuelve el template con los condicionales renderizados
    */
-  private processIf(template: string, context: TemplateContext): string {
-    const ifRegex =
-      /\{\{#if\s+([a-zA-Z0-9_.]+)\s*\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
+  private processIf(
+    template: string,
+    context: TemplateContext,
+    includeSpecialVars: boolean = false,
+  ): string {
+    const ifRegex = includeSpecialVars
+      ? /\{\{#if\s+([a-zA-Z0-9_.@]+)\s*\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g
+      : /\{\{#if\s+([a-zA-Z0-9_.]+)\s*\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
 
     return template.replace(
       ifRegex,

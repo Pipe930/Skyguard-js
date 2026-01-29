@@ -2,7 +2,7 @@
 
 {{#each products}}
 <li>
-    <strong>{{upper this.name}}</strong> - {{currency this.price}}
+    <strong>{{upper this.name}}</strong> - {{this.price}}
     {{#if this.inStock}}
     <span class="badge">En stock</span>
     {{else}}
@@ -10,3 +10,8 @@
     {{/if}}
 </li>
 {{/each}}
+{{#if title}}
+<strong><p>Hola soy un titulo {{title}}</p></strong>
+{{else}}
+<p>No hay titulo a</p>
+{{/if}}
