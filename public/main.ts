@@ -4,25 +4,30 @@ import { App } from "../src/app";
 import { Middleware } from "../src/http/middleware";
 import { NextFunction } from "../src/utils/types";
 import { Layer } from "../src/routes/layer";
+import { json, redirect, text, view } from "../src/helpers";
 
 const PORT = 3000;
 
 const app = App.bootstrap();
 
 app.router.get("/test/{param}", (request: Request) => {
-  return Response.json(request.getlayerParameters());
+  return json(request.getlayerParameters());
+});
+
+app.router.get("/test", (request: Request) => {
+  return text("holamundo");
 });
 
 app.router.post("/test", (request: Request) => {
-  return Response.json(request.getData());
+  return json(request.getData());
 });
 
 app.router.get("/redirect", (request: Request) => {
-  return Response.redirect("/test");
+  return redirect("/test");
 });
 
 app.router.get("/home", (request: Request) => {
-  return Response.view(
+  return view(
     "home",
     {
       title: "Productos",
@@ -42,7 +47,7 @@ app.router.get("/home", (request: Request) => {
 class AuthMiddleware implements Middleware {
   public async handle(request: Request, next: NextFunction): Promise<Response> {
     if (request.getHeaders["authorization"] !== "test") {
-      return Response.json({
+      return json({
         message: "NotAuthenticated",
       }).setStatus(401);
     }
@@ -53,7 +58,7 @@ class AuthMiddleware implements Middleware {
 
 Layer.getTest(
   "/middlewares",
-  (request: Request) => Response.json({ message: "hola" }),
+  (request: Request) => json({ message: "hola" }),
   app,
 ).setMiddlewares([AuthMiddleware]);
 
