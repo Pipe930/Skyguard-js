@@ -1,6 +1,6 @@
 import { Middleware } from "../http";
 import { RouteHandler } from "../utils/types";
-import { App } from "../app";
+import { app } from "../helpers";
 
 /**
  * Clase que representa una ruta individual en el sistema de enrutamiento
@@ -97,8 +97,8 @@ export class Layer {
     return this.middlewares.length > 0;
   }
 
-  public static getTest(url: string, action: RouteHandler, app: App): Layer {
-    return app.router.get(url, action);
+  public static get(url: string, action: RouteHandler): Layer {
+    return app().router.get(url, action);
   }
 
   /**

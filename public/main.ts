@@ -1,9 +1,7 @@
-import { Request } from "../src/http/request";
-import { Response } from "../src/http/response";
+import { Request, Response, Middleware } from "../src/http";
 import { App } from "../src/app";
-import { Middleware } from "../src/http/middleware";
 import { NextFunction } from "../src/utils/types";
-import { Layer } from "../src/routes/layer";
+import { Layer } from "../src/routes";
 import { json, redirect, text, view } from "../src/helpers";
 
 const PORT = 3000;
@@ -56,10 +54,8 @@ class AuthMiddleware implements Middleware {
   }
 }
 
-Layer.getTest(
-  "/middlewares",
-  (request: Request) => json({ message: "hola" }),
-  app,
+Layer.get("/middlewares", (request: Request) =>
+  json({ message: "hola" }),
 ).setMiddlewares([AuthMiddleware]);
 
 app.listen(PORT);

@@ -3,8 +3,8 @@ import { HttpAdapter, Response } from "./http";
 import { HttpNotFoundException } from "./exceptions";
 import { Server, NodeServer } from "./server";
 import { View, RaptorEngine } from "./views";
-import { Container } from "./container/container";
 import { join } from "node:path";
+import { singleton } from "./helpers";
 
 /**
  * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
@@ -67,7 +67,7 @@ export class App {
    * @returns {App} Retorna la instancia de la clase
    */
   public static bootstrap(): App {
-    const app = Container.singleton(App);
+    const app = singleton(App);
 
     app.router = new Router();
     app.server = new NodeServer(app);
