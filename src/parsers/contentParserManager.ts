@@ -3,6 +3,7 @@ import { JsonParser } from "./jsonParser";
 import { MultipartParser } from "./multipartParser";
 import { TextParser } from "./textParser";
 import { UrlEncodedParser } from "./urlEncodedParser";
+import { XmlParser } from "./xmlParser";
 
 /**
  * Gestor principal de parseo de contenido.
@@ -17,6 +18,7 @@ export class ContentParserManager {
     this.registerParser(new MultipartParser());
     this.registerParser(new UrlEncodedParser());
     this.registerParser(new TextParser());
+    this.registerParser(new XmlParser());
   }
 
   /**

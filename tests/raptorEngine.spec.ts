@@ -3,7 +3,7 @@ import { join } from "path";
 import { RaptorEngine } from "../src/views";
 import { FileNotExistsException } from "../src/exceptions";
 
-describe("RaptorEngine", () => {
+describe("RaptorEngineTest", () => {
   const tmpDir = join(__dirname, "__views__");
   const layoutsDir = join(tmpDir, "layouts");
   let engine: RaptorEngine;

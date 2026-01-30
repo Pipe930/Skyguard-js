@@ -1,6 +1,6 @@
 import { TextParser } from "../src/parsers";
 
-describe("JsonParser", () => {
+describe("JsonParserTest", () => {
   let parser: TextParser;
 
   beforeEach(() => {
@@ -9,12 +9,12 @@ describe("JsonParser", () => {
 
   it("should valid return true for content type text/, application/xml and application/xhtml", () => {
     expect(parser.canParse("text/plain")).toBe(true);
-    expect(parser.canParse("application/xml")).toBe(true);
     expect(parser.canParse("application/xhtml")).toBe(true);
   });
 
   it("should return false for non-text content types", () => {
     expect(parser.canParse("application/json")).toBe(false);
+    expect(parser.canParse("application/xml")).toBe(false);
     expect(parser.canParse("multipart/form-data")).toBe(false);
     expect(parser.canParse("image/png")).toBe(false);
   });

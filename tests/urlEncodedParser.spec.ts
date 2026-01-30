@@ -1,6 +1,6 @@
 import { UrlEncodedParser } from "../src/parsers";
 
-describe("UrlEncodedParser", () => {
+describe("UrlEncodedParserTest", () => {
   let parser: UrlEncodedParser;
 
   beforeEach(() => {

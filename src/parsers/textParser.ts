@@ -7,9 +7,7 @@ import { ContentParser } from "./contentParser";
 export class TextParser implements ContentParser {
   public canParse(contentType: string): boolean {
     return (
-      contentType.includes("text/") ||
-      contentType.includes("application/xml") ||
-      contentType.includes("application/xhtml")
+      contentType.includes("text/") || contentType.includes("application/xhtml")
     );
   }
 

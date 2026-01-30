@@ -20,6 +20,10 @@ app.router.post("/test", (request: Request) => {
   return json(request.getData());
 });
 
+app.router.post("/xml", (request: Request) => {
+  return json({ message: request.getData() });
+});
+
 app.router.get("/redirect", (request: Request) => {
   return redirect("/test");
 });

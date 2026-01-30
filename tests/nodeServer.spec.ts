@@ -11,7 +11,7 @@ jest.mock("../src/http/nodeNativeHttp", () => ({
   NodeHttpAdapter: jest.fn(),
 }));
 
-describe("NodeServer", () => {
+describe("NodeServerTest", () => {
   it("should create http server and delegate request to App.handle", () => {
     const handleMock = jest.fn();
 

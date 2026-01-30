@@ -1,7 +1,7 @@
 import { MultipartParser } from "../src/parsers";
 import { ContentParserException } from "../src/exceptions";
 
-describe("MultipartParser", () => {
+describe("MultipartParserTest", () => {
   let parser: MultipartParser;
 
   beforeEach(() => {

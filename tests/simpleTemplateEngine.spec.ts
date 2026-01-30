@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 jest.mock("node:fs/promises");
 
-describe("Simple Template Engine Test", () => {
+describe("SimpleTemplateEngineTest", () => {
   let engine: SimpleTemplateEngine;
 
   beforeEach(() => {
