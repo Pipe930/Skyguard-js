@@ -1,4 +1,4 @@
-import { Router } from "./routes";
+import { Router } from "./routers";
 import { HttpAdapter, Response } from "./http";
 import {
   ContentParserException,

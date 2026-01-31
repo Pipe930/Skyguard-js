@@ -1,7 +1,7 @@
 import { Request, Response, Middleware } from "../src/http";
 import { App } from "../src/app";
 import { NextFunction } from "../src/utils/types";
-import { Layer } from "../src/routes";
+import { Layer } from "../src/routers";
 import { json, redirect, text, view } from "../src/helpers";
 import { ValidationSchema, Validator } from "../src/validators";
 
