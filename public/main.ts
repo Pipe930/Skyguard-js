@@ -3,10 +3,29 @@ import { App } from "../src/app";
 import { NextFunction } from "../src/utils/types";
 import { Layer } from "../src/routes";
 import { json, redirect, text, view } from "../src/helpers";
+import { ValidationSchema, Validator } from "../src/validators";
 
 const PORT = 3000;
 
 const app = App.bootstrap();
+
+const userSchema = ValidationSchema.create()
+  .field("name")
+  .string({ maxLength: 60 })
+  .field("email")
+  .required()
+  .email()
+  .field("birthdate")
+  .date({ max: new Date() })
+  .field("age")
+  .number({ min: 18, max: 65 })
+  .field("active")
+  .required()
+  .boolean()
+  .field("bio")
+  .optional()
+  .string()
+  .build();
 
 app.router.get("/test/{param}", (request: Request) => {
   return json(request.getlayerParameters());
@@ -17,7 +36,11 @@ app.router.get("/test", (request: Request) => {
 });
 
 app.router.post("/test", (request: Request) => {
-  return json(request.getData());
+  const dataValid = Validator.validateOrFail(
+    request.getData() as Record<string, unknown>,
+    userSchema,
+  );
+  return json(dataValid);
 });
 
 app.router.post("/xml", (request: Request) => {
