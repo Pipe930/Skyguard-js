@@ -21,7 +21,10 @@ describe("RaptorEngineTest", () => {
       `<section>[[CONTENT]]</section>`,
     );
 
-    await writeFile(join(tmpDir, "home.html"), `<h1>Hola {{ user.name }}</h1>`);
+    await writeFile(
+      join(tmpDir, "home.html"),
+      `<h1>Hello {{ user.name }}</h1>`,
+    );
 
     await writeFile(join(tmpDir, "plain.html"), `<p>Plain</p>`);
 
@@ -32,15 +35,15 @@ describe("RaptorEngineTest", () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  it("renderiza una vista usando el layout por defecto", async () => {
+  it("should render a view using the default layout", async () => {
     const html = await engine.render("home", {
       user: { name: "Juan" },
     });
 
-    expect(html).toBe(`<html><body><h1>Hola Juan</h1></body></html>`);
+    expect(html).toBe(`<html><body><h1>Hello Juan</h1></body></html>`);
   });
 
-  it("renderiza usando un layout explícito", async () => {
+  it("should render using an explicit layout", async () => {
     engine.setContentAnnotation("[[CONTENT]]");
 
     const html = await engine.render("plain", {}, "alt");
@@ -48,7 +51,7 @@ describe("RaptorEngineTest", () => {
     expect(html).toBe(`<section><p>Plain</p></section>`);
   });
 
-  it("permite cambiar el layout por defecto", async () => {
+  it("should allow changing the default layout", async () => {
     engine.setDefaultLayout("alt");
     engine.setContentAnnotation("[[CONTENT]]");
 
@@ -57,7 +60,7 @@ describe("RaptorEngineTest", () => {
     expect(html).toBe(`<section><p>Plain</p></section>`);
   });
 
-  it("renderiza correctamente con helpers personalizados", async () => {
+  it("should render correctly with custom helpers", async () => {
     engine.registerHelper("upper", (value: string) => value.toUpperCase());
 
     await writeFile(
@@ -72,22 +75,22 @@ describe("RaptorEngineTest", () => {
     expect(html).toContain("<p>JUAN</p>");
   });
 
-  it("usa cache de templates (no vuelve a leer el archivo)", async () => {
+  it("should use template cache and avoid re-reading the file", async () => {
     const first = await engine.render("plain");
     const second = await engine.render("plain");
 
     expect(first).toBe(second);
   });
 
-  it("lanza FileNotExistsException si la vista no existe", async () => {
-    await expect(engine.render("no-existe")).rejects.toBeInstanceOf(
+  it("should throw FileNotExistsException when the view does not exist", async () => {
+    await expect(engine.render("non-existing")).rejects.toBeInstanceOf(
       FileNotExistsException,
     );
   });
 
-  it("lanza FileNotExistsException si el layout no existe", async () => {
+  it("should throw FileNotExistsException when the layout does not exist", async () => {
     await expect(
-      engine.render("plain", {}, "layout-fake"),
+      engine.render("plain", {}, "fake-layout"),
     ).rejects.toBeInstanceOf(FileNotExistsException);
   });
 });
