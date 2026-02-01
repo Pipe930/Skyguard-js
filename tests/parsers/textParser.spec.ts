@@ -3,6 +3,14 @@ import { TextParser } from "../../src/parsers";
 describe("TextParserTest", () => {
   let parser: TextParser;
 
+  const contentTypesInvalids = new Set<string>([
+    "application/x-www-form-urlencoded",
+    "application/json",
+    "text/html",
+    "multipart/form-data",
+    "application/xml",
+  ]);
+
   beforeEach(() => {
     parser = new TextParser();
   });
@@ -13,10 +21,9 @@ describe("TextParserTest", () => {
   });
 
   it("should return false for non-text content types", () => {
-    expect(parser.canParse("application/json")).toBe(false);
-    expect(parser.canParse("application/xml")).toBe(false);
-    expect(parser.canParse("multipart/form-data")).toBe(false);
-    expect(parser.canParse("image/png")).toBe(false);
+    for (const contentType of contentTypesInvalids) {
+      expect(parser.canParse(contentType)).toBe(false);
+    }
   });
 
   it("should return string when body is string", async () => {

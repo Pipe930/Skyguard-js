@@ -4,6 +4,14 @@ import { ContentParserException } from "../../src/exceptions";
 describe("MultipartParserTest", () => {
   let parser: MultipartParser;
 
+  const contentTypesInvalids = new Set<string>([
+    "application/json",
+    "text/plain",
+    "text/html",
+    "application/x-www-form-urlencoded",
+    "application/xml",
+  ]);
+
   beforeEach(() => {
     parser = new MultipartParser();
   });
@@ -13,8 +21,9 @@ describe("MultipartParserTest", () => {
   });
 
   it("should return false for other content types", () => {
-    expect(parser.canParse("application/json")).toBe(false);
-    expect(parser.canParse("text/plain")).toBe(false);
+    for (const contentType of contentTypesInvalids) {
+      expect(parser.canParse(contentType)).toBe(false);
+    }
   });
 
   it("should throw error if boundary is missing", async () => {

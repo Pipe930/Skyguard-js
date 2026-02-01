@@ -3,6 +3,14 @@ import { UrlEncodedParser } from "../../src/parsers";
 describe("UrlEncodedParserTest", () => {
   let parser: UrlEncodedParser;
 
+  const contentTypesInvalids = new Set<string>([
+    "application/json",
+    "text/plain",
+    "text/html",
+    "multipart/form-data",
+    "application/xml",
+  ]);
+
   beforeEach(() => {
     parser = new UrlEncodedParser();
   });
@@ -16,9 +24,9 @@ describe("UrlEncodedParserTest", () => {
   });
 
   it("should return false for other content types", () => {
-    expect(parser.canParse("application/json")).toBe(false);
-    expect(parser.canParse("text/plain")).toBe(false);
-    expect(parser.canParse("multipart/form-data")).toBe(false);
+    for (const contentType of contentTypesInvalids) {
+      expect(parser.canParse(contentType)).toBe(false);
+    }
   });
 
   it("should parse urlencoded string into object", async () => {

@@ -4,6 +4,14 @@ import { ContentParserException } from "../../src/exceptions";
 describe("JsonParserTest", () => {
   let parser: JsonParser;
 
+  const contentTypesInvalids = new Set<string>([
+    "application/x-www-form-urlencoded",
+    "text/plain",
+    "text/html",
+    "multipart/form-data",
+    "application/xml",
+  ]);
+
   beforeEach(() => {
     parser = new JsonParser();
   });
@@ -18,10 +26,9 @@ describe("JsonParserTest", () => {
   });
 
   it("should return false for non json content types", () => {
-    expect(parser.canParse("text/html")).toBe(false);
-    expect(parser.canParse("application/xml")).toBe(false);
-    expect(parser.canParse("multipart/form-data")).toBe(false);
-    expect(parser.canParse("application/x-www-form-urlencoded")).toBe(false);
+    for (const contentType of contentTypesInvalids) {
+      expect(parser.canParse(contentType)).toBe(false);
+    }
   });
 
   it("should parse valid JSON string", async () => {
