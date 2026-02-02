@@ -1,4 +1,4 @@
-import { Layer } from "../../src/routers";
+import { Layer } from "../../src/routing";
 
 describe("LayerTest", () => {
   let layer: Layer;

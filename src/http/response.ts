@@ -167,7 +167,7 @@ export class Response {
    * se usa el layout por defecto configurado en el motor de vistas.
    * @returns Respuesta HTTP lista para ser enviada al cliente.
    */
-  public static async view(
+  public static async render(
     view: string,
     params: TemplateContext,
     layout: string = null,

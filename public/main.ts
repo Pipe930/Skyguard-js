@@ -1,8 +1,8 @@
 import { Request, Response, Middleware } from "../src/http";
 import { App } from "../src/app";
 import { NextFunction } from "../src/utils/types";
-import { Layer } from "../src/routers";
-import { json, redirect, text, view } from "../src/helpers";
+import { Layer } from "../src/routing";
+import { json, redirect, text, render } from "../src/helpers";
 import { ValidationSchema, Validator } from "../src/validators";
 
 const PORT = 3000;
@@ -27,7 +27,7 @@ const userSchema = ValidationSchema.create()
   .string()
   .build();
 
-app.router.get("/test/{param}", (request: Request) => {
+app.router.get("/test/{id}", (request: Request) => {
   return json(request.getlayerParameters());
 });
 
@@ -52,7 +52,7 @@ app.router.get("/redirect", (request: Request) => {
 });
 
 app.router.get("/home", (request: Request) => {
-  return view(
+  return render(
     "home",
     {
       title: "Productos",
