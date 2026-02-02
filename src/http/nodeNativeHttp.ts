@@ -3,7 +3,6 @@ import { IncomingMessage, ServerResponse } from "node:http";
 import { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
-import { ReadBodyException } from "../exceptions";
 import { ContentParserManager } from "../parsers";
 
 /**
@@ -46,39 +45,10 @@ export class NodeHttpAdapter implements HttpAdapter {
       .setQueryParameters(Object.fromEntries(url.searchParams.entries()))
       .setHeaders(this.req.headers);
 
-    const body = await this.readBody();
-    if (body.length > 0) {
-      const contentType = this.req.headers["content-type"] || "text/plain";
-      const parsedData = await this.contentParser.parse(body, contentType);
-      request.setData(parsedData);
-    } else {
-      request.setData({});
-    }
+    const parsedData = await this.contentParser.parse(this.req);
+    request.setData(parsedData);
 
     return request;
-  }
-
-  /**
-   * Lee el body completo de la solicitud.
-   *
-   * @returns Devuelve un buffer en promesa
-   */
-  private readBody(): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-
-      this.req.on("data", (chunk: Buffer) => {
-        chunks.push(chunk);
-      });
-
-      this.req.on("end", () => {
-        resolve(Buffer.concat(chunks));
-      });
-
-      this.req.on("error", () => {
-        reject(new ReadBodyException());
-      });
-    });
   }
 
   /**

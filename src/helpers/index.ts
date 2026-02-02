@@ -1,2 +1,2 @@
-export { json, redirect, text, view } from "./http";
+export { json, redirect, text, render } from "./http";
 export { app, singleton } from "./app";

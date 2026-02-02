@@ -13,10 +13,10 @@ export function redirect(url: string): Response {
   return Response.redirect(url);
 }
 
-export async function view(
+export async function render(
   view: string,
   params: TemplateContext,
   layout: string,
 ): Promise<Response> {
-  return await Response.view(view, params, layout);
+  return await Response.render(view, params, layout);
 }

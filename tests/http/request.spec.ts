@@ -1,5 +1,5 @@
 import { Request, Response, HttpMethods } from "../../src/http";
-import { Layer } from "../../src/routers";
+import { Layer } from "../../src/routing";
 
 describe("RequestTest", () => {
   it("should request returns data obtained from server correctly", () => {

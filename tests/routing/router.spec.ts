@@ -1,4 +1,4 @@
-import { Router } from "../../src/routers";
+import { Router } from "../../src/routing";
 import { Response, Request, HttpMethods } from "../../src/http";
 import { createRequestMock } from "../utils";
 import { NextFunction } from "../../src/utils/types";
