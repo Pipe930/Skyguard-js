@@ -1,9 +1,11 @@
+import { IncomingMessage } from "node:http";
 import { ContentParser } from "./contentParser";
 import { JsonParser } from "./jsonParser";
 import { MultipartParser } from "./multipartParser";
 import { TextParser } from "./textParser";
 import { UrlEncodedParser } from "./urlEncodedParser";
 import { XmlParser } from "./xmlParser";
+import { ReadBodyException } from "../exceptions";
 
 /**
  * Gestor principal de parseo de contenido.
@@ -36,15 +38,40 @@ export class ContentParserManager {
    * @param body Cuerpo o contenido de la peticion
    * @param contentType Cabecera Content-Type de la petición
    */
-  public async parse(
-    body: Buffer | string,
-    contentType: string = "text/plain",
-  ): Promise<unknown> {
+  public async parse(req: IncomingMessage): Promise<unknown> {
+    const body = await this.readBody(req);
+
+    if (body.length <= 0) return {};
+
+    const contentType = req.headers["content-type"] || "text/plain";
     const parser = this.findParser(contentType);
 
     if (!parser) return Buffer.isBuffer(body) ? body : Buffer.from(body);
 
     return parser.parse(body, contentType);
+  }
+
+  /**
+   * Lee el body completo de la solicitud.
+   *
+   * @returns Devuelve un buffer en promesa
+   */
+  private readBody(req: IncomingMessage): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+
+      req.on("data", (chunk: Buffer) => {
+        chunks.push(chunk);
+      });
+
+      req.on("end", () => {
+        resolve(Buffer.concat(chunks));
+      });
+
+      req.on("error", () => {
+        reject(new ReadBodyException());
+      });
+    });
   }
 
   /**
@@ -55,6 +82,6 @@ export class ContentParserManager {
    * @returns Devuelve el parser encontrado en la lista
    */
   private findParser(contentType: string): ContentParser | null {
-    return this.parsers.find((p) => p.canParse(contentType)) || null;
+    return this.parsers.find((parser) => parser.canParse(contentType)) || null;
   }
 }
