@@ -27,11 +27,15 @@ const userSchema = ValidationSchema.create()
   .string()
   .build();
 
-app.router.get("/test/{id}", (request: Request) => {
-  return json(request.getlayerParameters());
+app.router.get("/test/{id}/nel/{param}", (request: Request) => {
+  const jsonTest = json({
+    params: request.getParams(),
+    queries: request.getQueryParams(),
+  });
+  return jsonTest;
 });
 
-app.router.get("/test", (request: Request) => {
+app.router.get("/test", () => {
   return text("holamundo");
 });
 
@@ -47,11 +51,11 @@ app.router.post("/xml", (request: Request) => {
   return json({ message: request.getData() });
 });
 
-app.router.get("/redirect", (request: Request) => {
+app.router.get("/redirect", () => {
   return redirect("/test");
 });
 
-app.router.get("/home", (request: Request) => {
+app.router.get("/home", () => {
   return render(
     "home",
     {
@@ -81,8 +85,8 @@ class AuthMiddleware implements Middleware {
   }
 }
 
-Layer.get("/middlewares", (request: Request) =>
-  json({ message: "hola" }),
-).setMiddlewares([AuthMiddleware]);
+Layer.get("/middlewares", () => json({ message: "hola" })).setMiddlewares([
+  AuthMiddleware,
+]);
 
 app.listen(PORT);

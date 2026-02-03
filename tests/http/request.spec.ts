@@ -12,13 +12,13 @@ describe("RequestTest", () => {
     const request = new Request()
       .setUrl(url)
       .setMethod(method)
-      .setParams(params)
+      .setQueryParams(params)
       .setHeaders(headers)
       .setData(data);
 
     expect(url).toBe(request.getUrl);
     expect(method).toBe(request.getMethod);
-    expect(params).toEqual(request.getParams());
+    expect(params).toEqual(request.getQueryParams());
     expect(headers).toEqual(request.getHeaders);
     expect(data).toEqual(request.getData());
   });
@@ -42,11 +42,11 @@ describe("RequestTest", () => {
       num: "2",
     };
 
-    const request = new Request().setParams(params);
+    const request = new Request().setQueryParams(params);
 
-    expect(params["test"]).toBe(request.getParams("test"));
-    expect(params["num"]).toBe(request.getParams("num"));
-    expect(request.getParams("notexists")).toBeNull();
+    expect(params["test"]).toBe(request.getQueryParams("test"));
+    expect(params["num"]).toBe(request.getQueryParams("num"));
+    expect(request.getQueryParams("notexists")).toBeNull();
   });
 
   it("should queries returns value if key is given", () => {
@@ -55,8 +55,8 @@ describe("RequestTest", () => {
     );
     const request = new Request().setLayer(layer).setUrl("/test/2/param/1");
 
-    expect(request.getlayerParameters("param")).toBe("2");
-    expect(request.getlayerParameters("bar")).toBe("1");
-    expect(request.getlayerParameters("notexists")).toBeNull();
+    expect(request.getParams("param")).toBe("2");
+    expect(request.getParams("bar")).toBe("1");
+    expect(request.getParams("notexists")).toBeNull();
   });
 });

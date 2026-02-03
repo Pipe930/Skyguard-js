@@ -12,7 +12,7 @@ export class JsonParser implements ContentParser {
     );
   }
 
-  public async parse(body: Buffer | string): Promise<unknown> {
+  public parse(body: Buffer | string): unknown {
     try {
       const text = Buffer.isBuffer(body) ? body.toString("utf-8") : body;
       return JSON.parse(text);

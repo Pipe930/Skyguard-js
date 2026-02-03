@@ -27,10 +27,10 @@ describe("XmlParserTest", () => {
     }
   });
 
-  it("should correctly parse a simple xml structure", async () => {
+  it("should correctly parse a simple xml structure", () => {
     const xml = `<user><name>Juan</name><age>30</age></user>`;
 
-    const result = await parser.parse(xml);
+    const result = parser.parse(xml);
 
     expect(result).toEqual({
       user: {
@@ -40,7 +40,7 @@ describe("XmlParserTest", () => {
     });
   });
 
-  it("should properly parse xml with repeated tags as arrays", async () => {
+  it("should properly parse xml with repeated tags as arrays", () => {
     const xml = `
       <items>
         <item>one</item>
@@ -48,7 +48,7 @@ describe("XmlParserTest", () => {
       </items>
     `;
 
-    const result = await parser.parse(xml);
+    const result = parser.parse(xml);
 
     expect(result).toEqual({
       items: {
@@ -57,7 +57,7 @@ describe("XmlParserTest", () => {
     });
   });
 
-  it("should correctly parse boolean and null values", async () => {
+  it("should correctly parse boolean and null values", () => {
     const xml = `
       <data>
         <active>true</active>
@@ -66,7 +66,7 @@ describe("XmlParserTest", () => {
       </data>
     `;
 
-    const result = await parser.parse(xml);
+    const result = parser.parse(xml);
 
     expect(result).toEqual({
       active: true,
@@ -75,64 +75,62 @@ describe("XmlParserTest", () => {
     });
   });
 
-  it("should properly decode html entities", async () => {
+  it("should properly decode html entities", () => {
     const xml = `<message>&lt;hello&gt; &amp; goodbye</message>`;
 
-    const result = await parser.parse(xml);
+    const result = parser.parse(xml);
 
     expect(result).toEqual({
       message: "<hello> & goodbye",
     });
   });
 
-  it("should correctly unwrap generic root elements", async () => {
+  it("should correctly unwrap generic root elements", () => {
     const xml = `
       <data>
         <name>Juan</name>
       </data>
     `;
 
-    const result = await parser.parse(xml);
+    const result = parser.parse(xml);
 
     expect(result).toEqual({
       name: "Juan",
     });
   });
 
-  it("should properly throw error when xml is empty", async () => {
-    await expect(parser.parse("")).rejects.toBeInstanceOf(
-      ContentParserException,
-    );
+  it("should properly throw error when xml is empty", () => {
+    expect(() => parser.parse("")).toThrow(ContentParserException);
+    expect(() => parser.parse("")).toThrow("XML input is empty");
   });
 
-  it("should properly throw error when xml structure is invalid", async () => {
+  it("should properly throw error when xml structure is invalid", () => {
     const xml = `name>Juan</name>`;
 
-    await expect(parser.parse(xml)).rejects.toBeInstanceOf(
-      ContentParserException,
-    );
+    expect(() => parser.parse(xml)).toThrow(ContentParserException);
+    expect(() => parser.parse(xml)).toThrow("Invalid XML structure");
   });
 
-  it("should properly throw error on mismatched closing tags", async () => {
+  it("should properly throw error on mismatched closing tags", () => {
     const xml = `<user><name>Juan</age></user>`;
 
-    await expect(parser.parse(xml)).rejects.toBeInstanceOf(
-      ContentParserException,
+    expect(() => parser.parse(xml)).toThrow(ContentParserException);
+    expect(() => parser.parse(xml)).toThrow(
+      "Tag de cierre inesperado o mal emparejado: </age>",
     );
   });
 
-  it("should properly throw error on unclosed tags", async () => {
+  it("should properly throw error on unclosed tags", () => {
     const xml = `<user><name>Juan</name>`;
 
-    await expect(parser.parse(xml)).rejects.toBeInstanceOf(
-      ContentParserException,
-    );
+    expect(() => parser.parse(xml)).toThrow(ContentParserException);
+    expect(() => parser.parse(xml)).toThrow("Tag sin cerrar: <user>");
   });
 
-  it("should correctly parse xml from buffer input", async () => {
+  it("should correctly parse xml from buffer input", () => {
     const xml = Buffer.from(`<user><id>1</id></user>`);
 
-    const result = await parser.parse(xml);
+    const result = parser.parse(xml);
 
     expect(result).toEqual({
       user: {

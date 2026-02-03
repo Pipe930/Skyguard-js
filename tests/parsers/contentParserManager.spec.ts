@@ -40,7 +40,7 @@ describe("ContentParserManager", () => {
       canParse() {
         return true;
       }
-      async parse() {
+      parse() {
         return "custom";
       }
     }

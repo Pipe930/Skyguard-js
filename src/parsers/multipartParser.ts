@@ -28,10 +28,7 @@ export class MultipartParser implements ContentParser {
    * @returns Devuelve un objeto con los campos y archivos parseados.
    * @throws  Si no se encuentra el boundary.
    */
-  public async parse(
-    body: Buffer | string,
-    contentType: string,
-  ): Promise<MultipartData> {
+  public parse(body: Buffer | string, contentType: string): MultipartData {
     const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
     const boundary = this.extractBoundary(contentType);
 

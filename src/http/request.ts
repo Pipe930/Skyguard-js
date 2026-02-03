@@ -32,7 +32,7 @@ export class Request {
   private data: Record<string, any> = {};
 
   /** Parámetros de params string */
-  private params: Record<string, string | string[]> = {};
+  private query: Record<string, string> = {};
 
   get getUrl(): string {
     return this.url;
@@ -78,13 +78,13 @@ export class Request {
    * request.getParams();        // { page: "2", limit: "10" }
    * request.getParams("page"); // "2"
    */
-  public getParams(key: string = null): HttpValue {
-    if (key === null) return this.params;
-    return (this.params[key] as string) ?? null;
+  public getQueryParams(key: string = null): HttpValue {
+    if (key === null) return this.query;
+    return this.query[key] ?? null;
   }
 
-  public setParams(params: Record<string, string | string[]>): this {
-    this.params = params;
+  public setQueryParams(query: Record<string, string>): this {
+    this.query = query;
     return this;
   }
 
@@ -98,7 +98,7 @@ export class Request {
    * request.getlayerParameters();      // { id: "42" }
    * request.getlayerParameters("id");  // "42"
    */
-  public getlayerParameters(key: string = null): HttpValue {
+  public getParams(key: string = null): HttpValue {
     const parameters = this.layer.parseParameters(this.url);
     if (key === null) return parameters;
     return parameters[key] ?? null;

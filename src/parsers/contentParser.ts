@@ -19,5 +19,5 @@ export interface ContentParser {
    * @param contentType - Content-Type completo (puede incluir charset, boundary, etc)
    * @returns Devuelve un objeto parseado o el contenido original si no se puede parsear
    */
-  parse(body: Buffer | string, contentType: string): Promise<unknown>;
+  parse(body: Buffer | string, contentType: string): unknown;
 }
