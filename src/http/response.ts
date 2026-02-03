@@ -1,6 +1,6 @@
 import { Container } from "../container/container";
 import { App } from "../app";
-import { Headers, TemplateContext } from "../utils/types";
+import { Headers, TemplateContext } from "../types";
 
 /**
  * Esta clase representa el contrato de salida del framework: todo controlador,

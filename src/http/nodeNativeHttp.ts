@@ -42,7 +42,7 @@ export class NodeHttpAdapter implements HttpAdapter {
     const request = new Request()
       .setUrl(url.pathname)
       .setMethod((this.req.method as HttpMethods) || HttpMethods.get)
-      .setQueryParameters(Object.fromEntries(url.searchParams.entries()))
+      .setParams(Object.fromEntries(url.searchParams.entries()))
       .setHeaders(this.req.headers);
 
     const parsedData = await this.contentParser.parse(this.req);

@@ -62,18 +62,6 @@ export type Headers = IncomingHttpHeaders;
 export type HttpValue = Record<string, unknown> | string | null;
 
 /**
- * Función de continuación del pipeline de middlewares.
- *
- * Representa el "next" dentro del patrón Chain of Responsibility.
- *
- * Cada middleware debe:
- * 1. Ejecutar su lógica.
- * 2. Invocar a `next(request)` para delegar
- *    al siguiente middleware.
- */
-export type NextFunction = (request: Request) => Response | Promise<Response>;
-
-/**
  * Función helper para motores de plantillas.
  *
  * Representa una función utilitaria invocable desde

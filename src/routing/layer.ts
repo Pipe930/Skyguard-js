@@ -1,5 +1,5 @@
 import { Middleware } from "../http";
-import { RouteHandler } from "../utils/types";
+import { RouteHandler } from "../types";
 import { app } from "../helpers";
 
 /**

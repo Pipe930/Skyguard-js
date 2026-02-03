@@ -3,7 +3,7 @@ import { SimpleTemplateEngine } from "./templateEngine";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { FileNotExistsException } from "../exceptions";
-import { HelperFunction, TemplateContext } from "../utils/types";
+import { HelperFunction, TemplateContext } from "../types";
 
 /**
  * Motor de vistas principal del framework.

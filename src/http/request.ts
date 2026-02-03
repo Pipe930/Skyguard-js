@@ -1,5 +1,5 @@
 import { HttpMethods } from "./httpMethods";
-import { Headers, HttpValue } from "../utils/types";
+import { Headers, HttpValue } from "../types";
 import { Layer } from "../routing";
 
 /**
@@ -31,8 +31,8 @@ export class Request {
   /** Cuerpo de la petición (payload ya procesado) */
   private data: Record<string, any> = {};
 
-  /** Parámetros de query string */
-  private query: Record<string, any> = {};
+  /** Parámetros de params string */
+  private params: Record<string, string | string[]> = {};
 
   get getUrl(): string {
     return this.url;
@@ -71,7 +71,7 @@ export class Request {
   }
 
   /**
-   * Obtiene parámetros de query string.
+   * Obtiene parámetros de params string.
    *
    * @example
    * // URL: /users?page=2&limit=10
@@ -79,12 +79,12 @@ export class Request {
    * request.getParams("page"); // "2"
    */
   public getParams(key: string = null): HttpValue {
-    if (key === null) return this.query;
-    return (this.query[key] as string) ?? null;
+    if (key === null) return this.params;
+    return (this.params[key] as string) ?? null;
   }
 
-  public setQueryParameters(query: Record<string, any>): this {
-    this.query = query;
+  public setParams(params: Record<string, string | string[]>): this {
+    this.params = params;
     return this;
   }
 

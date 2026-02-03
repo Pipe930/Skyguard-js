@@ -1,4 +1,4 @@
-import { TemplateContext } from "../utils/types";
+import { TemplateContext } from "../types";
 
 /**
  * Contrato de alto nivel para motores de vistas del framework.

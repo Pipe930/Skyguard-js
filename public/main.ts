@@ -1,6 +1,6 @@
 import { Request, Response, Middleware } from "../src/http";
 import { App } from "../src/app";
-import { NextFunction } from "../src/utils/types";
+import { RouteHandler } from "../src/types";
 import { Layer } from "../src/routing";
 import { json, redirect, text, render } from "../src/helpers";
 import { ValidationSchema, Validator } from "../src/validators";
@@ -70,7 +70,7 @@ app.router.get("/home", (request: Request) => {
 });
 
 class AuthMiddleware implements Middleware {
-  public async handle(request: Request, next: NextFunction): Promise<Response> {
+  public async handle(request: Request, next: RouteHandler): Promise<Response> {
     if (request.getHeaders["authorization"] !== "test") {
       return json({
         message: "NotAuthenticated",

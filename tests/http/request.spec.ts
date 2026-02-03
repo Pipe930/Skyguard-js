@@ -5,14 +5,14 @@ describe("RequestTest", () => {
   it("should request returns data obtained from server correctly", () => {
     const url = "/test/route";
     const method = HttpMethods.post;
-    const params = { id: 1 };
+    const params = { id: "1" };
     const headers = { "content-type": "application/json" };
     const data = { search: "gemini" };
 
     const request = new Request()
       .setUrl(url)
       .setMethod(method)
-      .setQueryParameters(params)
+      .setParams(params)
       .setHeaders(headers)
       .setData(data);
 
@@ -37,15 +37,15 @@ describe("RequestTest", () => {
   });
 
   it("should queries returns value if key is given", () => {
-    const query = {
+    const params = {
       test: "hola",
-      num: 2,
+      num: "2",
     };
 
-    const request = new Request().setQueryParameters(query);
+    const request = new Request().setParams(params);
 
-    expect(query["test"]).toBe(request.getParams("test"));
-    expect(query["num"]).toBe(request.getParams("num"));
+    expect(params["test"]).toBe(request.getParams("test"));
+    expect(params["num"]).toBe(request.getParams("num"));
     expect(request.getParams("notexists")).toBeNull();
   });
 

@@ -1,4 +1,4 @@
-import { NextFunction } from "../utils/types";
+import { RouteHandler } from "../types";
 import { Request } from "./request";
 import { Response } from "./response";
 
@@ -40,5 +40,5 @@ export interface Middleware {
    *
    * @returns Debe retornar siempre una instancia de Response.
    */
-  handle(request: Request, next: NextFunction): Response | Promise<Response>;
+  handle(request: Request, next: RouteHandler): Response | Promise<Response>;
 }

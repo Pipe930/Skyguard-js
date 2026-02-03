@@ -1,4 +1,4 @@
-import { Constructor } from "../utils/types";
+import { Constructor } from "../types";
 
 /**
  * Contenedor de Inyección de Dependencias.
