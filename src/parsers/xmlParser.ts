@@ -53,7 +53,7 @@ export class XmlParser implements ContentParser {
    * - Si la estructura es inválida
    * - Si los tags están mal cerrados o desbalanceados
    */
-  public async parse(input: string | Buffer): Promise<Record<string, unknown>> {
+  public parse(input: string | Buffer): Record<string, unknown> {
     const text = Buffer.isBuffer(input) ? input.toString("utf-8") : input;
 
     if (!text || text.trim().length === 0)

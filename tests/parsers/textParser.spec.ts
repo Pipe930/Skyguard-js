@@ -26,27 +26,27 @@ describe("TextParserTest", () => {
     }
   });
 
-  it("should return string when body is string", async () => {
+  it("should return string when body is string", () => {
     const body = "hola mundo";
-    const result = await parser.parse(body);
+    const result = parser.parse(body);
 
     expect(result).toBe(body);
   });
 
-  it("should convert Buffer to string using utf-8", async () => {
+  it("should convert Buffer to string using utf-8", () => {
     const body = Buffer.from("Hello buffer", "utf-8");
-    const result = await parser.parse(body);
+    const result = parser.parse(body);
 
     expect(result).toBe("Hello buffer");
   });
 
-  it("should handle empty string", async () => {
-    const result = await parser.parse("");
+  it("should handle empty string", () => {
+    const result = parser.parse("");
     expect(result).toBe("");
   });
 
-  it("should handle empty buffer", async () => {
-    const result = await parser.parse(Buffer.from(""));
+  it("should handle empty buffer", () => {
+    const result = parser.parse(Buffer.from(""));
     expect(result).toBe("");
   });
 });

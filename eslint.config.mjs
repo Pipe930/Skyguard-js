@@ -41,6 +41,7 @@ export default defineConfig(
       "@typescript-eslint/no-duplicate-enum-values": "warn",
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/no-unsafe-argument": "warn",
+      "@typescript-eslint/unbound-method": "off",
     },
   },
 );

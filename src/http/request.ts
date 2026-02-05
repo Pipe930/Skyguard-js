@@ -1,5 +1,5 @@
 import { HttpMethods } from "./httpMethods";
-import { Headers, HttpValue } from "../utils/types";
+import { Headers, HttpValue } from "../types";
 import { Layer } from "../routing";
 
 /**
@@ -31,16 +31,15 @@ export class Request {
   /** Cuerpo de la petición (payload ya procesado) */
   private data: Record<string, any> = {};
 
-  /** Parámetros de query string */
-  private query: Record<string, any> = {};
+  /** Parámetros de params string */
+  private query: Record<string, string> = {};
+
+  constructor(url: string) {
+    this.url = url;
+  }
 
   get getUrl(): string {
     return this.url;
-  }
-
-  public setUrl(url: string): this {
-    this.url = url;
-    return this;
   }
 
   get getMethod(): HttpMethods {
@@ -71,19 +70,19 @@ export class Request {
   }
 
   /**
-   * Obtiene parámetros de query string.
+   * Obtiene parámetros de params string.
    *
    * @example
    * // URL: /users?page=2&limit=10
    * request.getParams();        // { page: "2", limit: "10" }
    * request.getParams("page"); // "2"
    */
-  public getParams(key: string = null): HttpValue {
+  public getQueryParams(key: string = null): HttpValue {
     if (key === null) return this.query;
-    return (this.query[key] as string) ?? null;
+    return this.query[key] ?? null;
   }
 
-  public setQueryParameters(query: Record<string, any>): this {
+  public setQueryParams(query: Record<string, string>): this {
     this.query = query;
     return this;
   }
@@ -98,7 +97,7 @@ export class Request {
    * request.getlayerParameters();      // { id: "42" }
    * request.getlayerParameters("id");  // "42"
    */
-  public getlayerParameters(key: string = null): HttpValue {
+  public getParams(key: string = null): HttpValue {
     const parameters = this.layer.parseParameters(this.url);
     if (key === null) return parameters;
     return parameters[key] ?? null;

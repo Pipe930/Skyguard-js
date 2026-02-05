@@ -1,7 +1,8 @@
-import { HashMapRouters, RouteHandler } from "../utils/types";
+import { HashMapRouters, ListMiddlewares, RouteHandler } from "../types";
 import { Request, Response, HttpMethods, Middleware } from "../http";
 import { HttpNotFoundException } from "../exceptions";
 import { Layer } from "./layer";
+import { RouterGroup } from "./routerGroup";
 
 /**
  * Clase que representa el sistema central de enrutamiento del framework
@@ -17,6 +18,11 @@ export class Router {
    * Estructura: { 'GET': [Layer, Layer], 'POST': [Layer], ... }
    */
   private routes: HashMapRouters = Object.create(null) as HashMapRouters;
+
+  /**
+   * Middlewares globales que se ejecutan en todas las rutas
+   */
+  private globalMiddlewares: ListMiddlewares = [];
 
   /**
    * Inicializa el router creando arrays vacíos para cada método HTTP
@@ -75,8 +81,13 @@ export class Router {
     request.setLayer(layer);
     const action = layer.getAction;
 
-    if (layer.hasMiddlewares())
-      return this.runMiddlewares(request, layer.getMiddlewares, action);
+    const allMiddlewares = [
+      ...this.globalMiddlewares.map((middleware) => new middleware()),
+      ...layer.getMiddlewares,
+    ];
+
+    if (allMiddlewares.length > 0)
+      return this.runMiddlewares(request, allMiddlewares, action);
 
     return action(request);
   }
@@ -132,6 +143,49 @@ export class Router {
     const layer = new Layer(path, action);
     this.routes[method].push(layer);
     return layer;
+  }
+
+  /**
+   * Crea un grupo de rutas bajo un prefijo común.
+   *
+   * Este método permite organizar rutas relacionadas
+   * y aplicar middlewares compartidos sin duplicación.
+   *
+   * Internamente crea una instancia de `RouterGroup`
+   * que se encarga de componer las rutas y delegar
+   * su registro final al Router actual.
+   *
+   * Las rutas quedan completamente registradas
+   * al finalizar la ejecución del callback.
+   *
+   * @param prefix Prefijo base para todas las rutas del grupo
+   * @param callback Función que recibe el RouterGroup para definir rutas
+   *
+   * @example
+   * router.group("/api", (api) => {
+   *   api.use(AuthMiddleware);
+   *
+   *   api.get("/users", listUsers);
+   *   api.post("/users", createUser);
+   * });
+   */
+  public group(prefix: string, callback: (group: RouterGroup) => void): void {
+    const group = new RouterGroup(prefix, this);
+    callback(group);
+  }
+
+  /**
+   * Registra middlewares globales que se ejecutarán en todas las rutas
+   *
+   * @param middlewares - Array de constructores de middleware
+   * @returns this para encadenamiento
+   *
+   * @example
+   * router.middlewares([LoggerMiddleware, CorsMiddleware]);
+   */
+  public middlewares(middlewares: ListMiddlewares): this {
+    this.globalMiddlewares.push(...middlewares);
+    return this;
   }
 
   /**

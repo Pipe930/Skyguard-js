@@ -7,11 +7,12 @@ import { ContentParser } from "./contentParser";
 export class TextParser implements ContentParser {
   public canParse(contentType: string): boolean {
     return (
-      contentType.includes("text/plain") || contentType.includes("application/xhtml")
+      contentType.includes("text/plain") ||
+      contentType.includes("application/xhtml")
     );
   }
 
-  public async parse(body: Buffer | string): Promise<string> {
+  public parse(body: Buffer | string): string {
     return Buffer.isBuffer(body) ? body.toString("utf-8") : body;
   }
 }

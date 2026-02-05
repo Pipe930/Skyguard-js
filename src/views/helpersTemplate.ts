@@ -3,7 +3,7 @@ import {
   HelperExecutionException,
   HelperNotFoundException,
 } from "../exceptions";
-import { HelperFunction, TemplateContext } from "../utils/types";
+import { HelperFunction, TemplateContext } from "../types";
 
 /**
  * Gestor de helpers para el motor de plantillas.

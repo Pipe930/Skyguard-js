@@ -9,7 +9,7 @@ export class UrlEncodedParser implements ContentParser {
     return contentType.includes("application/x-www-form-urlencoded");
   }
 
-  public async parse(body: Buffer | string): Promise<Record<string, string>> {
+  public parse(body: Buffer | string): Record<string, string> {
     const text = Buffer.isBuffer(body) ? body.toString("utf-8") : body;
     const params = new URLSearchParams(text);
     return Object.fromEntries(params.entries());

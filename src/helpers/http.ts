@@ -1,4 +1,4 @@
-import { TemplateContext } from "utils/types";
+import { TemplateContext } from "types";
 import { Response } from "../http";
 
 export function json<T>(data: T): Response {

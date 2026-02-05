@@ -1,7 +1,7 @@
 import { Router } from "../../src/routing";
 import { Response, Request, HttpMethods } from "../../src/http";
 import { createRequestMock } from "../utils";
-import { NextFunction } from "../../src/utils/types";
+import { RouteHandler } from "../../src/types";
 
 describe("RouterTest", () => {
   let router: Router;
@@ -99,7 +99,7 @@ describe("RouterTest", () => {
     const middleware1 = class {
       public async handle(
         request: Request,
-        next: NextFunction,
+        next: RouteHandler,
       ): Promise<Response> {
         const response = await next(request);
         response.setHeader("x-test-one", "one");
@@ -110,7 +110,7 @@ describe("RouterTest", () => {
     const middleware2 = class {
       public async handle(
         request: Request,
-        next: NextFunction,
+        next: RouteHandler,
       ): Promise<Response> {
         const response = await next(request);
         response.setHeader("x-test-two", "two");
@@ -135,7 +135,7 @@ describe("RouterTest", () => {
 
   it("should middleware stack can be stopped", async () => {
     const middlewareStopped = class {
-      public handle(request: Request, next: NextFunction): Response {
+      public handle(request: Request, next: RouteHandler): Response {
         return Response.text("stopped");
       }
     };
@@ -143,7 +143,7 @@ describe("RouterTest", () => {
     const middleware2 = class {
       public async handle(
         request: Request,
-        next: NextFunction,
+        next: RouteHandler,
       ): Promise<Response> {
         const response = await next(request);
         response.setHeader("x-test-two", "two");

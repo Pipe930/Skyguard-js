@@ -1,5 +1,5 @@
-import { MultipartParser } from "../../src/parsers";
 import { ContentParserException } from "../../src/exceptions";
+import { MultipartParser } from "../../src/parsers";
 
 describe("MultipartParserTest", () => {
   let parser: MultipartParser;
@@ -26,15 +26,18 @@ describe("MultipartParserTest", () => {
     }
   });
 
-  it("should throw error if boundary is missing", async () => {
+  it("should throw error if boundary is missing", () => {
     const body = "test";
 
-    await expect(
-      parser.parse(body, "multipart/form-data"),
-    ).rejects.toBeInstanceOf(ContentParserException);
+    expect(() => parser.parse(body, "multipart/form-data")).toThrow(
+      ContentParserException,
+    );
+    expect(() => parser.parse(body, "multipart/form-data")).toThrow(
+      "Missing boundary in multipart/form-data",
+    );
   });
 
-  it("should parse simple fields", async () => {
+  it("should parse simple fields", () => {
     const boundary = "boundary123";
     const contentType = `multipart/form-data; boundary=${boundary}`;
 
@@ -48,7 +51,7 @@ describe("MultipartParserTest", () => {
         `--${boundary}--`,
     );
 
-    const result = await parser.parse(body, contentType);
+    const result = parser.parse(body, contentType);
 
     expect(result.fields).toEqual({
       username: "juan\r\n",
@@ -58,7 +61,7 @@ describe("MultipartParserTest", () => {
     expect(result.files.length).toBe(0);
   });
 
-  it("should parse file upload", async () => {
+  it("should parse file upload", () => {
     const boundary = "boundary123";
     const contentType = `multipart/form-data; boundary=${boundary}`;
 
@@ -72,7 +75,7 @@ describe("MultipartParserTest", () => {
         `--${boundary}--`,
     );
 
-    const result = await parser.parse(body, contentType);
+    const result = parser.parse(body, contentType);
 
     expect(result.fields).toEqual({});
     expect(result.files.length).toBe(1);
@@ -86,7 +89,7 @@ describe("MultipartParserTest", () => {
     expect(file.size).toBe(Buffer.from("hello world\r\n").length);
   });
 
-  it("should parse fields and files together", async () => {
+  it("should parse fields and files together", () => {
     const boundary = "mix123";
     const contentType = `multipart/form-data; boundary=${boundary}`;
 
@@ -101,7 +104,7 @@ describe("MultipartParserTest", () => {
         `--${boundary}--`,
     );
 
-    const result = await parser.parse(body, contentType);
+    const result = parser.parse(body, contentType);
 
     expect(result.fields).toEqual({
       title: "My Post\r\n",
@@ -112,7 +115,7 @@ describe("MultipartParserTest", () => {
     expect(result.files[0].mimeType).toBe("image/png");
   });
 
-  it("should ignore invalid parts", async () => {
+  it("should ignore invalid parts", () => {
     const boundary = "invalid123";
     const contentType = `multipart/form-data; boundary=${boundary}`;
 
@@ -123,7 +126,7 @@ describe("MultipartParserTest", () => {
         `--${boundary}--`,
     );
 
-    const result = await parser.parse(body, contentType);
+    const result = parser.parse(body, contentType);
 
     expect(result.fields).toEqual({});
     expect(result.files).toEqual([]);

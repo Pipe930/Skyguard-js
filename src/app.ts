@@ -1,4 +1,4 @@
-import { Router } from "./routing";
+import { Layer, Router, RouterGroup } from "./routing";
 import { HttpAdapter, Response } from "./http";
 import {
   ContentParserException,
@@ -9,6 +9,7 @@ import { Server, NodeServer } from "./server";
 import { View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers";
+import { ListMiddlewares, RouteHandler } from "./types";
 
 /**
  * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
@@ -32,7 +33,7 @@ export class App {
    * Sistema de enrutamiento principal.
    * Responsable de registrar y resolver las rutas definidas por el usuario.
    */
-  public router: Router;
+  private router: Router;
 
   /**
    * Servidor subyacente responsable de aceptar conexiones
@@ -121,6 +122,90 @@ export class App {
     this.server.listen(port);
   }
 
+  // ========== MÉTODOS DE ENRUTAMIENTO DELEGADOS ==========
+
+  /**
+   * Registra una ruta GET
+   *
+   * @example
+   * app.get('/users', listUsers);
+   * app.get('/users/{id}', getUser).setMiddlewares([AuthMiddleware]);
+   */
+  public get(path: string, action: RouteHandler): Layer {
+    return this.router.get(path, action);
+  }
+
+  /**
+   * Registra una ruta POST
+   *
+   * @example
+   * app.post('/users', createUser);
+   */
+  public post(path: string, action: RouteHandler): Layer {
+    return this.router.post(path, action);
+  }
+
+  /**
+   * Registra una ruta PUT
+   *
+   * @example
+   * app.put('/users/{id}', updateUserFull);
+   */
+  public put(path: string, action: RouteHandler): Layer {
+    return this.router.put(path, action);
+  }
+
+  /**
+   * Registra una ruta PATCH
+   *
+   * @example
+   * app.patch('/users/{id}', updateUserPartial);
+   */
+  public patch(path: string, action: RouteHandler): Layer {
+    return this.router.patch(path, action);
+  }
+
+  /**
+   * Registra una ruta DELETE
+   *
+   * @example
+   * app.delete('/users/{id}', deleteUser);
+   */
+  public delete(path: string, action: RouteHandler): Layer {
+    return this.router.delete(path, action);
+  }
+
+  /**
+   * Registra middlewares globales que se ejecutarán en todas las rutas
+   *
+   * @example
+   * app.middlewares([LoggerMiddleware, CorsMiddleware]);
+   */
+  public middlewares(middlewares: ListMiddlewares): this {
+    this.router.middlewares(middlewares);
+    return this;
+  }
+
+  /**
+   * Crea un grupo de rutas con un prefijo común
+   *
+   * @example
+   * app.group('/api', (api) => {
+   *   api.get('/users', listUsers);
+   *   api.post('/users', createUser);
+   * });
+   *
+   * @example
+   * // Con middlewares
+   * app.group('/admin', (admin) => {
+   *   admin.use(AuthMiddleware);
+   *   admin.get('/dashboard', dashboardHandler);
+   * });
+   */
+  public group(prefix: string, callback: (group: RouterGroup) => void): void {
+    return this.router.group(prefix, callback);
+  }
+
   /**
    * Se encarga de traducir excepciones del dominio
    * a respuestas HTTP válidas.
@@ -160,3 +245,7 @@ export class App {
     console.error(error);
   }
 }
+
+export const createApp = () => {
+  return App.bootstrap();
+};

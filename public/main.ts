@@ -1,13 +1,12 @@
 import { Request, Response, Middleware } from "../src/http";
-import { App } from "../src/app";
-import { NextFunction } from "../src/utils/types";
-import { Layer } from "../src/routing";
+import { createApp } from "../src/app";
+import { RouteHandler } from "../src/types";
 import { json, redirect, text, render } from "../src/helpers";
 import { ValidationSchema, Validator } from "../src/validators";
 
 const PORT = 3000;
 
-const app = App.bootstrap();
+const app = createApp();
 
 const userSchema = ValidationSchema.create()
   .field("name")
@@ -27,15 +26,19 @@ const userSchema = ValidationSchema.create()
   .string()
   .build();
 
-app.router.get("/test/{id}", (request: Request) => {
-  return json(request.getlayerParameters());
+app.get("/test/{id}/nel/{param}", (request: Request) => {
+  const jsonTest = json({
+    params: request.getParams(),
+    queries: request.getQueryParams(),
+  });
+  return jsonTest;
 });
 
-app.router.get("/test", (request: Request) => {
+app.get("/test", () => {
   return text("holamundo");
 });
 
-app.router.post("/test", (request: Request) => {
+app.post("/test", (request: Request) => {
   const dataValid = Validator.validateOrFail(
     request.getData() as Record<string, unknown>,
     userSchema,
@@ -43,15 +46,15 @@ app.router.post("/test", (request: Request) => {
   return json(dataValid);
 });
 
-app.router.post("/xml", (request: Request) => {
+app.post("/xml", (request: Request) => {
   return json({ message: request.getData() });
 });
 
-app.router.get("/redirect", (request: Request) => {
+app.get("/redirect", () => {
   return redirect("/test");
 });
 
-app.router.get("/home", (request: Request) => {
+app.get("/home", () => {
   return render(
     "home",
     {
@@ -69,8 +72,31 @@ app.router.get("/home", (request: Request) => {
   );
 });
 
+app.group("/tienda", (tienda) => {
+  tienda.get("/pagina", () => {
+    return json({ message: "desde ruta grupada" });
+  });
+
+  tienda.get("/holamundo/{param}", (request) => {
+    return json({
+      message: "desde ruta agrupada con parametros",
+      params: request.getParams(),
+    });
+  });
+});
+
+class TestMiddleware implements Middleware {
+  public async handle(request: Request, next: RouteHandler): Promise<Response> {
+    console.log("hola mundo");
+
+    return await next(request);
+  }
+}
+
+app.middlewares([TestMiddleware]);
+
 class AuthMiddleware implements Middleware {
-  public async handle(request: Request, next: NextFunction): Promise<Response> {
+  public async handle(request: Request, next: RouteHandler): Promise<Response> {
     if (request.getHeaders["authorization"] !== "test") {
       return json({
         message: "NotAuthenticated",
@@ -81,8 +107,8 @@ class AuthMiddleware implements Middleware {
   }
 }
 
-Layer.get("/middlewares", (request: Request) =>
-  json({ message: "hola" }),
-).setMiddlewares([AuthMiddleware]);
+app
+  .get("/middlewares", () => json({ message: "hola" }))
+  .setMiddlewares([AuthMiddleware]);
 
 app.listen(PORT);

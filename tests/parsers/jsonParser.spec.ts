@@ -31,10 +31,10 @@ describe("JsonParserTest", () => {
     }
   });
 
-  it("should parse valid JSON string", async () => {
+  it("should parse valid JSON string", () => {
     const body = '{"name":"Juan","age":30}';
 
-    const result = await parser.parse(body);
+    const result = parser.parse(body);
 
     expect(result).toEqual({
       name: "Juan",
@@ -42,21 +42,21 @@ describe("JsonParserTest", () => {
     });
   });
 
-  it("should parse valid JSON buffer", async () => {
+  it("should parse valid JSON buffer", () => {
     const body = Buffer.from('{"framework":"Raptor"}');
 
-    const result = await parser.parse(body);
+    const result = parser.parse(body);
 
     expect(result).toEqual({
       framework: "Raptor",
     });
   });
 
-  it("should throw ContentParserException on invalid JSON and with correct code", async () => {
+  it("should throw ContentParserException on invalid JSON and with correct code", () => {
     const body = "{ invalid json";
 
     try {
-      await parser.parse(body);
+      parser.parse(body);
     } catch (err) {
       expect(err).toBeInstanceOf(ContentParserException);
       expect((err as ContentParserException).code).toBe("CONTENT_PARSER_ERROR");
