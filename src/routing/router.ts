@@ -2,6 +2,7 @@ import { HashMapRouters, RouteHandler } from "../types";
 import { Request, Response, HttpMethods, Middleware } from "../http";
 import { HttpNotFoundException } from "../exceptions";
 import { Layer } from "./layer";
+import { RouterGroup } from "./routerGroup";
 
 /**
  * Clase que representa el sistema central de enrutamiento del framework
@@ -132,6 +133,35 @@ export class Router {
     const layer = new Layer(path, action);
     this.routes[method].push(layer);
     return layer;
+  }
+
+  /**
+   * Crea un grupo de rutas bajo un prefijo común.
+   *
+   * Este método permite organizar rutas relacionadas
+   * y aplicar middlewares compartidos sin duplicación.
+   *
+   * Internamente crea una instancia de `RouterGroup`
+   * que se encarga de componer las rutas y delegar
+   * su registro final al Router actual.
+   *
+   * Las rutas quedan completamente registradas
+   * al finalizar la ejecución del callback.
+   *
+   * @param prefix Prefijo base para todas las rutas del grupo
+   * @param callback Función que recibe el RouterGroup para definir rutas
+   *
+   * @example
+   * router.group("/api", (api) => {
+   *   api.use(AuthMiddleware);
+   *
+   *   api.get("/users", listUsers);
+   *   api.post("/users", createUser);
+   * });
+   */
+  public group(prefix: string, callback: (group: RouterGroup) => void): void {
+    const group = new RouterGroup(prefix, this);
+    callback(group);
   }
 
   /**

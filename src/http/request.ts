@@ -34,13 +34,12 @@ export class Request {
   /** Parámetros de params string */
   private query: Record<string, string> = {};
 
-  get getUrl(): string {
-    return this.url;
+  constructor(url: string) {
+    this.url = url;
   }
 
-  public setUrl(url: string): this {
-    this.url = url;
-    return this;
+  get getUrl(): string {
+    return this.url;
   }
 
   get getMethod(): HttpMethods {

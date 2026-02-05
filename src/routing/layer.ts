@@ -1,6 +1,5 @@
 import { Middleware } from "../http";
-import { RouteHandler } from "../types";
-import { app } from "../helpers";
+import { ListMiddlewares, RouteHandler } from "../types";
 
 /**
  * Clase que representa una ruta individual en el sistema de enrutamiento
@@ -82,7 +81,7 @@ export class Layer {
    * @example
    * layer.setMiddlewares([AuthMiddleware, LoggerMiddleware])
    */
-  public setMiddlewares(middlewares: Array<new () => Middleware>): this {
+  public setMiddlewares(middlewares: ListMiddlewares): this {
     this.middlewares = middlewares.map((middleware) => new middleware());
     return this;
   }
@@ -95,10 +94,6 @@ export class Layer {
    */
   public hasMiddlewares(): boolean {
     return this.middlewares.length > 0;
-  }
-
-  public static get(url: string, action: RouteHandler): Layer {
-    return app().router.get(url, action);
   }
 
   /**

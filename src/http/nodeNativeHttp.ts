@@ -39,8 +39,7 @@ export class NodeHttpAdapter implements HttpAdapter {
   public async getRequest(): Promise<Request> {
     const url = new URL(this.req.url || "", `http://${this.req.headers.host}`);
 
-    const request = new Request()
-      .setUrl(url.pathname)
+    const request = new Request(url.pathname)
       .setMethod((this.req.method as HttpMethods) || HttpMethods.get)
       .setQueryParams(Object.fromEntries(url.searchParams.entries()))
       .setHeaders(this.req.headers);

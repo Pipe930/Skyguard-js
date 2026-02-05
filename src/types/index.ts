@@ -1,4 +1,4 @@
-import { Response, Request, HttpMethods } from "../http";
+import { Response, Request, HttpMethods, Middleware } from "../http";
 import { Layer } from "../routing";
 import { IncomingHttpHeaders } from "node:http";
 
@@ -105,3 +105,29 @@ export type TemplateContext = Record<string, unknown>;
  * }
  */
 export type Constructor<T = unknown> = new (...args: unknown[]) => T;
+
+/**
+ * Lista de middlewares registrados para una ruta o grupo de rutas.
+ *
+ * Los middlewares se definen como **clases** (constructores),
+ * no como instancias. Esto permite:
+ *
+ * - Crear una nueva instancia del middleware por request
+ * - Evitar estado compartido entre requests
+ * - Mantener compatibilidad con inyección de dependencias futura
+ *
+ * Cada clase debe implementar la interfaz `Middleware`
+ * y definir el método `handle`.
+ *
+ * @example
+ * class AuthMiddleware implements Middleware {
+ *   async handle(request: Request, next: RouteHandler): Promise<Response> {
+ *     // ...
+ *   }
+ * }
+ *
+ * const middlewares: ListMiddlewares = [
+ *   AuthMiddleware,
+ * ];
+ */
+export type ListMiddlewares = Array<new () => Middleware>;

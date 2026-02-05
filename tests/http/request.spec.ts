@@ -9,8 +9,7 @@ describe("RequestTest", () => {
     const headers = { "content-type": "application/json" };
     const data = { search: "gemini" };
 
-    const request = new Request()
-      .setUrl(url)
+    const request = new Request(url)
       .setMethod(method)
       .setQueryParams(params)
       .setHeaders(headers)
@@ -29,7 +28,7 @@ describe("RequestTest", () => {
       num: 2,
     };
 
-    const request = new Request().setData(data);
+    const request = new Request("").setData(data);
 
     expect(data["test"]).toBe(request.getData("test"));
     expect(data["num"]).toBe(request.getData("num"));
@@ -42,7 +41,7 @@ describe("RequestTest", () => {
       num: "2",
     };
 
-    const request = new Request().setQueryParams(params);
+    const request = new Request("").setQueryParams(params);
 
     expect(params["test"]).toBe(request.getQueryParams("test"));
     expect(params["num"]).toBe(request.getQueryParams("num"));
@@ -53,7 +52,7 @@ describe("RequestTest", () => {
     const layer = new Layer("/test/{param}/param/{bar}", () =>
       Response.text("holamundo"),
     );
-    const request = new Request().setLayer(layer).setUrl("/test/2/param/1");
+    const request = new Request("/test/2/param/1").setLayer(layer);
 
     expect(request.getParams("param")).toBe("2");
     expect(request.getParams("bar")).toBe("1");
