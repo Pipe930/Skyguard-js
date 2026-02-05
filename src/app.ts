@@ -1,4 +1,4 @@
-import { Layer, Router, RouterGroup } from "./routing";
+import { Router, RouterGroup } from "./routing";
 import { HttpAdapter, Response } from "./http";
 import {
   ContentParserException,
@@ -122,7 +122,20 @@ export class App {
     this.server.listen(port);
   }
 
-  // ========== MÉTODOS DE ENRUTAMIENTO DELEGADOS ==========
+  /**
+   * Establece un prefijo global para todas las rutas de la aplicación
+   *
+   * @param prefix - Prefijo a aplicar (ej: "api", "/v1", "test")
+   * @returns this para encadenamiento
+   *
+   * @example
+   * app.setPrefix("api");
+   * app.get("/users", handler); // Resultado: /api/users
+   */
+  public setPrefix(prefix: string): this {
+    this.router.setPrefix(prefix);
+    return this;
+  }
 
   /**
    * Registra una ruta GET
@@ -131,8 +144,12 @@ export class App {
    * app.get('/users', listUsers);
    * app.get('/users/{id}', getUser).setMiddlewares([AuthMiddleware]);
    */
-  public get(path: string, action: RouteHandler): Layer {
-    return this.router.get(path, action);
+  public get(
+    path: string,
+    action: RouteHandler,
+    middlewares?: ListMiddlewares,
+  ) {
+    this.router.get(path, action, middlewares);
   }
 
   /**
@@ -141,8 +158,12 @@ export class App {
    * @example
    * app.post('/users', createUser);
    */
-  public post(path: string, action: RouteHandler): Layer {
-    return this.router.post(path, action);
+  public post(
+    path: string,
+    action: RouteHandler,
+    middlewares?: ListMiddlewares,
+  ) {
+    this.router.post(path, action, middlewares);
   }
 
   /**
@@ -151,8 +172,12 @@ export class App {
    * @example
    * app.put('/users/{id}', updateUserFull);
    */
-  public put(path: string, action: RouteHandler): Layer {
-    return this.router.put(path, action);
+  public put(
+    path: string,
+    action: RouteHandler,
+    middlewares?: ListMiddlewares,
+  ) {
+    this.router.put(path, action, middlewares);
   }
 
   /**
@@ -161,8 +186,12 @@ export class App {
    * @example
    * app.patch('/users/{id}', updateUserPartial);
    */
-  public patch(path: string, action: RouteHandler): Layer {
-    return this.router.patch(path, action);
+  public patch(
+    path: string,
+    action: RouteHandler,
+    middlewares?: ListMiddlewares,
+  ) {
+    this.router.patch(path, action, middlewares);
   }
 
   /**
@@ -171,8 +200,12 @@ export class App {
    * @example
    * app.delete('/users/{id}', deleteUser);
    */
-  public delete(path: string, action: RouteHandler): Layer {
-    return this.router.delete(path, action);
+  public delete(
+    path: string,
+    action: RouteHandler,
+    middlewares?: ListMiddlewares,
+  ) {
+    this.router.delete(path, action, middlewares);
   }
 
   /**
@@ -215,7 +248,7 @@ export class App {
    * - Páginas de error custom.
    * - Logging estructurado.
    *
-   * @param {unknown} err - Error capturado durante la ejecución.
+   * @param {unknown} error - Error capturado durante la ejecución.
    * @param {HttpAdapter} adapter - Adaptador de salida.
    */
   private handleError(error: unknown, adapter: HttpAdapter): void {

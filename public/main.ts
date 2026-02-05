@@ -107,8 +107,6 @@ class AuthMiddleware implements Middleware {
   }
 }
 
-app
-  .get("/middlewares", () => json({ message: "hola" }))
-  .setMiddlewares([AuthMiddleware]);
+app.get("/middlewares", () => json({ message: "hola" }), [AuthMiddleware]);
 
 app.listen(PORT);

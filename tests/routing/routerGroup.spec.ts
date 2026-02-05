@@ -10,11 +10,7 @@ class TestMiddlewareB implements Middleware {
   handle = jest.fn();
 }
 
-/* ----------------- Dummy Handler ----------------- */
-
 const handler: RouteHandler = jest.fn();
-
-/* ----------------- Layer Mock ----------------- */
 
 function createLayerMock() {
   return {
@@ -29,6 +25,7 @@ function createRouterMock(): Router {
     put: jest.fn(() => createLayerMock()),
     patch: jest.fn(() => createLayerMock()),
     delete: jest.fn(() => createLayerMock()),
+    buildFullPath: jest.fn(),
   } as unknown as Router;
 }
 
@@ -42,16 +39,25 @@ describe("RouterGroup", () => {
   });
 
   it("registra una ruta GET con el prefijo correcto", () => {
+    const router = createRouterMock();
+    const group = new RouterGroup("/api", router);
+
+    (router.buildFullPath as jest.Mock).mockReturnValue("/api/users");
+
     group.get("/users", handler);
 
+    expect(router.buildFullPath).toHaveBeenCalledWith("/users", "/api");
     expect(router.get).toHaveBeenCalledWith("/api/users", handler);
   });
 
   it("normaliza slashes duplicados", () => {
     const g = new RouterGroup("api/", router);
 
+    (router.buildFullPath as jest.Mock).mockReturnValue("/api/users");
+
     g.get("/users/", handler);
 
+    expect(router.buildFullPath).toHaveBeenCalledWith("/users/", "api/");
     expect(router.get).toHaveBeenCalledWith("/api/users", handler);
   });
 
@@ -88,26 +94,38 @@ describe("RouterGroup", () => {
   });
 
   it("usa el método POST correctamente", () => {
+    (router.buildFullPath as jest.Mock).mockReturnValue("/api/users");
+
     group.post("/users", handler);
 
+    expect(router.buildFullPath).toHaveBeenCalledWith("/users", "/api");
     expect(router.post).toHaveBeenCalledWith("/api/users", handler);
   });
 
   it("usa el método PUT correctamente", () => {
+    (router.buildFullPath as jest.Mock).mockReturnValue("/api/users/1");
+
     group.put("/users/1", handler);
 
+    expect(router.buildFullPath).toHaveBeenCalledWith("/users/1", "/api");
     expect(router.put).toHaveBeenCalledWith("/api/users/1", handler);
   });
 
   it("usa el método PATCH correctamente", () => {
+    (router.buildFullPath as jest.Mock).mockReturnValue("/api/users/1");
+
     group.patch("/users/1", handler);
 
+    expect(router.buildFullPath).toHaveBeenCalledWith("/users/1", "/api");
     expect(router.patch).toHaveBeenCalledWith("/api/users/1", handler);
   });
 
   it("usa el método DELETE correctamente", () => {
+    (router.buildFullPath as jest.Mock).mockReturnValue("/api/users/1");
+
     group.delete("/users/1", handler);
 
+    expect(router.buildFullPath).toHaveBeenCalledWith("/users/1", "/api");
     expect(router.delete).toHaveBeenCalledWith("/api/users/1", handler);
   });
 

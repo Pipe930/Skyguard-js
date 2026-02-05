@@ -23,7 +23,7 @@ export class RouterGroup {
    * path   = "/users"
    * result = "/api/users"
    */
-  private prefix: string;
+  private prefix = "";
 
   /**
    * Middlewares que se aplican a **todas las rutas** del grupo.
@@ -84,7 +84,7 @@ export class RouterGroup {
     action: RouteHandler,
     middlewares: ListMiddlewares = [],
   ): Layer {
-    const fullPath = this.buildFullPath(path);
+    const fullPath = this.parentRouter.buildFullPath(path, this.prefix);
     const totalMiddlewares = [...this.middlewaresGroup, ...middlewares];
     const layer = this.parentRouter[method](fullPath, action);
 
@@ -93,33 +93,6 @@ export class RouterGroup {
     }
 
     return layer;
-  }
-
-  /**
-   * Construye el path final combinando el prefijo del grupo
-   * con el path específico de la ruta.
-   *
-   * Normaliza:
-   * - Slashes duplicados
-   * - Prefijos sin "/"
-   * - Trailing slash innecesario
-   *
-   * @param path Path relativo de la ruta
-   * @returns Path final normalizado
-   */
-  private buildFullPath(path: string): string {
-    const cleanPrefix = this.prefix.startsWith("/")
-      ? this.prefix
-      : `/${this.prefix}`;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-
-    let fullPath = `${cleanPrefix}${cleanPath}`.replace(/\/+/g, "/");
-
-    if (fullPath.length > 1 && fullPath.endsWith("/")) {
-      fullPath = fullPath.slice(0, -1);
-    }
-
-    return fullPath;
   }
 
   /**
