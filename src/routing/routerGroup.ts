@@ -1,5 +1,4 @@
 import { ListMiddlewares, RouteHandler } from "../types";
-import { Middleware } from "../http";
 import { Router } from "./router";
 import { Layer } from "./layer";
 
@@ -32,7 +31,7 @@ export class RouterGroup {
    * Se almacenan como clases (constructores),
    * las instancias se crean posteriormente dentro de `Layer`.
    */
-  private middlewares: ListMiddlewares = [];
+  private middlewaresGroup: ListMiddlewares = [];
 
   /**
    * Router principal encargado de registrar y resolver las rutas.
@@ -53,16 +52,16 @@ export class RouterGroup {
   }
 
   /**
-   * Registra un middleware que será ejecutado
-   * antes de todas las rutas definidas dentro del grupo.
+   * Registra middlewares que se ejecutarán en todas las rutas de este grupo
    *
-   * El middleware debe ser una clase que implemente la interfaz `Middleware`.
+   * @param middlewares - Array de constructores de middleware
+   * @returns this para encadenamiento
    *
-   * @param middleware Clase del middleware
-   * @returns La instancia actual para permitir chaining
+   * @example
+   * group.middlewares([AuthMiddleware, AdminMiddleware]);
    */
-  public use(middleware: new () => Middleware): this {
-    this.middlewares.push(middleware);
+  public middlewares(middlewares: ListMiddlewares): this {
+    this.middlewaresGroup.push(...middlewares);
     return this;
   }
 
@@ -86,7 +85,7 @@ export class RouterGroup {
     middlewares: ListMiddlewares = [],
   ): Layer {
     const fullPath = this.buildFullPath(path);
-    const totalMiddlewares = [...this.middlewares, ...middlewares];
+    const totalMiddlewares = [...this.middlewaresGroup, ...middlewares];
     const layer = this.parentRouter[method](fullPath, action);
 
     if (totalMiddlewares.length > 0) {

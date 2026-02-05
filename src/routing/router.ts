@@ -1,4 +1,4 @@
-import { HashMapRouters, RouteHandler } from "../types";
+import { HashMapRouters, ListMiddlewares, RouteHandler } from "../types";
 import { Request, Response, HttpMethods, Middleware } from "../http";
 import { HttpNotFoundException } from "../exceptions";
 import { Layer } from "./layer";
@@ -18,6 +18,11 @@ export class Router {
    * Estructura: { 'GET': [Layer, Layer], 'POST': [Layer], ... }
    */
   private routes: HashMapRouters = Object.create(null) as HashMapRouters;
+
+  /**
+   * Middlewares globales que se ejecutan en todas las rutas
+   */
+  private globalMiddlewares: ListMiddlewares = [];
 
   /**
    * Inicializa el router creando arrays vacíos para cada método HTTP
@@ -76,8 +81,13 @@ export class Router {
     request.setLayer(layer);
     const action = layer.getAction;
 
-    if (layer.hasMiddlewares())
-      return this.runMiddlewares(request, layer.getMiddlewares, action);
+    const allMiddlewares = [
+      ...this.globalMiddlewares.map((middleware) => new middleware()),
+      ...layer.getMiddlewares,
+    ];
+
+    if (allMiddlewares.length > 0)
+      return this.runMiddlewares(request, allMiddlewares, action);
 
     return action(request);
   }
@@ -162,6 +172,20 @@ export class Router {
   public group(prefix: string, callback: (group: RouterGroup) => void): void {
     const group = new RouterGroup(prefix, this);
     callback(group);
+  }
+
+  /**
+   * Registra middlewares globales que se ejecutarán en todas las rutas
+   *
+   * @param middlewares - Array de constructores de middleware
+   * @returns this para encadenamiento
+   *
+   * @example
+   * router.middlewares([LoggerMiddleware, CorsMiddleware]);
+   */
+  public middlewares(middlewares: ListMiddlewares): this {
+    this.globalMiddlewares.push(...middlewares);
+    return this;
   }
 
   /**

@@ -87,16 +87,6 @@ export class Layer {
   }
 
   /**
-   * Verifica si la lista de middlewares de esta ruta tiene middlewares
-   * configurados
-   *
-   * @returns Devuelve un booleano
-   */
-  public hasMiddlewares(): boolean {
-    return this.middlewares.length > 0;
-  }
-
-  /**
    * Verifica si una URL entrante coincide con el patrón de la ruta actual
    *
    * @param url - URL de la petición HTTP

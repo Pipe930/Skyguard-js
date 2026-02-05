@@ -9,7 +9,7 @@ import { Server, NodeServer } from "./server";
 import { View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers";
-import { RouteHandler } from "./types";
+import { ListMiddlewares, RouteHandler } from "./types";
 
 /**
  * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
@@ -173,6 +173,17 @@ export class App {
    */
   public delete(path: string, action: RouteHandler): Layer {
     return this.router.delete(path, action);
+  }
+
+  /**
+   * Registra middlewares globales que se ejecutarán en todas las rutas
+   *
+   * @example
+   * app.middlewares([LoggerMiddleware, CorsMiddleware]);
+   */
+  public middlewares(middlewares: ListMiddlewares): this {
+    this.router.middlewares(middlewares);
+    return this;
   }
 
   /**

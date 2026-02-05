@@ -85,6 +85,16 @@ app.group("/tienda", (tienda) => {
   });
 });
 
+class TestMiddleware implements Middleware {
+  public async handle(request: Request, next: RouteHandler): Promise<Response> {
+    console.log("hola mundo");
+
+    return await next(request);
+  }
+}
+
+app.middlewares([TestMiddleware]);
+
 class AuthMiddleware implements Middleware {
   public async handle(request: Request, next: RouteHandler): Promise<Response> {
     if (request.getHeaders["authorization"] !== "test") {
