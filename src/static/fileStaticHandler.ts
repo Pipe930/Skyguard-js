@@ -4,8 +4,8 @@ import { mimeTypesObject } from "./mimeTypes";
 import { Response } from "../http";
 
 export class StaticFileHandler {
-  private publicPath: string;
-  private urlPrefix: string;
+  private publicPath = "";
+  private urlPrefix = "";
   private mimeTypes: Record<string, string>;
 
   constructor(publicPath: string) {
@@ -62,7 +62,7 @@ export class StaticFileHandler {
         .setHeaders({
           "content-type": contentType,
           "content-length": content.length.toString(),
-          "cache-control": "public, max-age=31536000", // Cache por 1 año
+          "cache-control": "public, max-age=31536000",
           "last-modified": stats.mtime.toUTCString(),
           ETag: `"${stats.size}-${stats.mtime.getTime()}"`,
         })

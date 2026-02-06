@@ -35,12 +35,12 @@ npm install my-framework
 ## 🏁 Uso básico
 
 ```ts
-import { App } from "my-framework";
+import { createApp } from "my-framework";
 import { text } from "my-framework/helpers";
 
-const app = App.bootstrap();
+const app = createApp();
 
-app.router.get("/test", (request: Request) => {
+app.get("/test", () => {
   return text("Hello, World!");
 });
 
@@ -51,26 +51,40 @@ app.listen(3000);
 
 ## 🛣️ Rutas
 
-Las rutas se registran por método HTTP y path.
+Las rutas se registran utilizando los metodos HTTP de la instancia app.
 
 ```ts
-app.router.get("/test/{param}", (request: Request) => {
+app.get("/test/{param}", (request: Request) => {
   return json(request.getlayerParameters());
 });
 
-app.router.post("/test", (request: Request) => {
-  return json(request.getData());
+app.post("/test", (request: Request) => {
+  const data = request.getData();
+  return json(data);
 });
 ```
-
 Internamente, el framework mantiene una estructura de datos para mapear métodos HTTP a sus rutas correspondientes.
+
+## 🚀 Rutas Agrupadas
+
+Para agrupar rutas, puedes utilizar el método `group` de la instancia app, el cual recibe como primer parametro un string con el prefijo de las rutas y como segundo parametro una función donde se registran las rutas del grupo.
+
+```ts
+app.group("/api", (group) => {
+  group.get("/users", () => {
+    return json({ message: "Users" });
+  });
+  group.get("/products", () => {
+    return json({ message: "Products" });
+  });
+});
+```
 
 ## 🛠️ Middlewares
 Para registrar middlewares, tienes que crear una clase que implemente la interfaz `Middleware`, con el metodo handle donde se ejecutara la funcionalidad que quieras que ejecute el middleware, y luego registrar el middleware en la aplicación.
 
 ```ts
-import { Middleware, Request } from "my-framework/http";
-import { Layer } from "my-framework/routes";
+import { Middleware, Request, Response } from "my-framework/http";
 import { NextFunction } from "my-framework/utils/types";
 
 class TestMiddleware implements Middleware {
@@ -85,10 +99,57 @@ class TestMiddleware implements Middleware {
   }
 }
 
-Layer.get("/testMiddleware", (request: Request) =>
-  json({ message: "hola" }),
-).setMiddlewares([TestMiddleware]);
+// Registrar middleware globalmente
+app.middlewares([TestMiddleware]);
 
+app.group("/api", (group) => {
+  group.use(TestMiddleware); // Registrar middleware para un grupo de rutas
+
+  group.get("/users", () => {
+    return json({ message: "Users" });
+  });
+  group.get("/products", () => {
+    return json({ message: "Products" });
+  });
+});
+
+// Registrar middleware en una ruta específica
+app.get("/testMiddleware", (request: Request) =>
+  json({ message: "hola" }), [TestMiddleware])
+```
+
+## 📦 Validacion de datos
+Para validar los datos de una petición, tenemos una clase que se llama `ValidationSchema`, la cual se utiliza para definir un esquema de validación para los datos de una petición, y luego se puede utilizar ese esquema para validar los datos de la petición.
+
+```ts
+import { ValidationSchema } from "my-framework/validation";
+
+const userSchema = ValidationSchema.create()
+  .field("name")
+  .string({ maxLength: 60 })
+  .field("email")
+  .required()
+  .email()
+  .field("birthdate")
+  .date({ max: new Date() })
+  .field("age")
+  .number({ min: 18, max: 65 })
+  .field("active")
+  .required()
+  .boolean()
+  .field("bio")
+  .optional()
+  .string()
+  .build();
+
+app.post("/users", (request: Request) => {
+  const data = request.getData();
+  const validationResult = Validator.validateOrFail(
+    data as Record<string, unknown>,
+    userSchema,
+  );
+  return json(validationResult);
+});
 ```
 
 ## 📄 Motor de Plantillas o Vistas
@@ -139,8 +200,8 @@ Por ahora el motor se encuentra en una etapa muy temprana de desarrollo, por lo 
 * Middlewares (✅)
 * Motor de plantillas simple (✅)
 * Contexto de request/response (✅)
+* Validación de datos (✅)
 * Manejo de errores
-* Validación de datos
 * ORM y bases de datos
 * Autenticación y autorización
 * Sessiones y cookies

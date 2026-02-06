@@ -111,11 +111,9 @@ export class Request {
    * // Body: { "name": "Felipe" }
    *
    * request.getData();        // { name: "Felipe" }
-   * request.getData("name"); // "Felipe"
    */
-  public getData(key: string = null): HttpValue {
-    if (key === null) return this.data;
-    return (this.data[key] as string) ?? null;
+  public getData(): Record<string, unknown> {
+    return this.data;
   }
 
   public setData(data: Record<string, any>): this {
