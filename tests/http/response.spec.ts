@@ -35,7 +35,10 @@ describe("ResponseTest", () => {
     response.setHeader("content-length", "10");
     response.prepare();
 
-    expect(response.getHeaders).toEqual({});
+    expect(response.getHeaders).toEqual({
+      "content-length": "10",
+      "content-type": "test",
+    });
   });
 
   it("should prepare method adds content length header if there is content", () => {

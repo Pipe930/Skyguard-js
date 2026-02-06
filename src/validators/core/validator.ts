@@ -56,10 +56,8 @@ export class Validator {
         data,
       };
 
-      // Campos opcionales: si no existen, se omiten
       if (fieldDef.optional && value === undefined) continue;
 
-      // Ejecutar reglas del campo (fail-fast por campo)
       for (const { rule, options } of fieldDef.rules) {
         const error = rule.validate(context, options);
 
