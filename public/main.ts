@@ -1,4 +1,4 @@
-import { Request, Response, Middleware } from "../src/http";
+import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
 import { json, redirect, text, render, download } from "../src/helpers";
@@ -85,29 +85,29 @@ app.group("/tienda", (tienda) => {
   });
 });
 
-class TestMiddleware implements Middleware {
-  public async handle(request: Request, next: RouteHandler): Promise<Response> {
-    console.log("hola mundo");
+const testMiddleware = async (
+  request: Request,
+  next: RouteHandler,
+): Promise<Response> => {
+  console.log("hola mundo");
+  return await next(request);
+};
 
-    return await next(request);
+app.middlewares([testMiddleware]);
+
+const authMiddleware = async (
+  request: Request,
+  next: RouteHandler,
+): Promise<Response> => {
+  if (request.getHeaders["authorization"] !== "test") {
+    return json({
+      message: "NotAuthenticated",
+    }).setStatus(401);
   }
-}
+  return await next(request);
+};
 
-app.middlewares([TestMiddleware]);
-
-class AuthMiddleware implements Middleware {
-  public async handle(request: Request, next: RouteHandler): Promise<Response> {
-    if (request.getHeaders["authorization"] !== "test") {
-      return json({
-        message: "NotAuthenticated",
-      }).setStatus(401);
-    }
-
-    return await next(request);
-  }
-}
-
-app.get("/middlewares", () => json({ message: "hola" }), [AuthMiddleware]);
+app.get("/middlewares", () => json({ message: "hola" }), [authMiddleware]);
 
 app.get("/download/report", async () => {
   return await download(

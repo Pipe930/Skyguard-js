@@ -1,14 +1,9 @@
 import { RouteHandler } from "../../src/types";
-import { Middleware } from "../../src/http";
 import { Layer, Router, RouterGroup } from "../../src/routing";
 
-class TestMiddlewareA implements Middleware {
-  handle = jest.fn();
-}
+const testMiddlewareA = jest.fn();
 
-class TestMiddlewareB implements Middleware {
-  handle = jest.fn();
-}
+const testMiddlewareB = jest.fn();
 
 const handler: RouteHandler = jest.fn();
 
@@ -65,22 +60,22 @@ describe("RouterGroup", () => {
     const layer = createLayerMock();
     (router.get as jest.Mock).mockReturnValue(layer);
 
-    group.middlewares([TestMiddlewareA]);
+    group.middlewares([testMiddlewareA]);
     group.get("/users", handler);
 
-    expect(layer.setMiddlewares).toHaveBeenCalledWith([TestMiddlewareA]);
+    expect(layer.setMiddlewares).toHaveBeenCalledWith([testMiddlewareA]);
   });
 
   it("combina middlewares de grupo y de ruta", () => {
     const layer = createLayerMock();
     (router.get as jest.Mock).mockReturnValue(layer);
 
-    group.middlewares([TestMiddlewareA]);
-    group.get("/users", handler, [TestMiddlewareB]);
+    group.middlewares([testMiddlewareA]);
+    group.get("/users", handler, [testMiddlewareB]);
 
     expect(layer.setMiddlewares).toHaveBeenCalledWith([
-      TestMiddlewareA,
-      TestMiddlewareB,
+      testMiddlewareA,
+      testMiddlewareB,
     ]);
   });
 
@@ -130,7 +125,7 @@ describe("RouterGroup", () => {
   });
 
   it("permite encadenar middlewares()", () => {
-    const result = group.middlewares([TestMiddlewareA]);
+    const result = group.middlewares([testMiddlewareA]);
 
     expect(result).toBe(group);
   });

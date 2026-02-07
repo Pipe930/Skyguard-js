@@ -96,34 +96,28 @@ describe("RouterTest", () => {
   });
 
   it("should valid run middlewares", async () => {
-    const middleware1 = class {
-      public async handle(
-        request: Request,
-        next: RouteHandler,
-      ): Promise<Response> {
-        const response = await next(request);
-        response.setHeader("x-test-one", "one");
-        return response;
-      }
+    const middleware1 = async (
+      request: Request,
+      next: RouteHandler,
+    ): Promise<Response> => {
+      const response = await next(request);
+      response.setHeader("x-test-one", "one");
+      return response;
     };
 
-    const middleware2 = class {
-      public async handle(
-        request: Request,
-        next: RouteHandler,
-      ): Promise<Response> {
-        const response = await next(request);
-        response.setHeader("x-test-two", "two");
-        return response;
-      }
+    const middleware2 = async (
+      request: Request,
+      next: RouteHandler,
+    ): Promise<Response> => {
+      const response = await next(request);
+      response.setHeader("x-test-two", "two");
+      return response;
     };
 
     const responseExcepted = Response.text("hola");
     const url = "/test/hola";
 
-    router
-      .get(url, () => responseExcepted)
-      .setMiddlewares([middleware1, middleware2]);
+    router.get(url, () => responseExcepted, [middleware1, middleware2]);
 
     const requestMock = await createRequestMock(url, HttpMethods.get);
     const response = await router.resolve(requestMock);
@@ -134,29 +128,23 @@ describe("RouterTest", () => {
   });
 
   it("should middleware stack can be stopped", async () => {
-    const middlewareStopped = class {
-      public handle(): Response {
-        return Response.text("stopped");
-      }
+    const middlewareStopped = (): Response => {
+      return Response.text("stopped");
     };
 
-    const middleware2 = class {
-      public async handle(
-        request: Request,
-        next: RouteHandler,
-      ): Promise<Response> {
-        const response = await next(request);
-        response.setHeader("x-test-two", "two");
-        return response;
-      }
+    const middleware2 = async (
+      request: Request,
+      next: RouteHandler,
+    ): Promise<Response> => {
+      const response = await next(request);
+      response.setHeader("x-test-two", "two");
+      return response;
     };
 
     const responseExcepted = Response.text("Unreachable");
     const url = "/test/hola";
 
-    router
-      .get(url, () => responseExcepted)
-      .setMiddlewares([middlewareStopped, middleware2]);
+    router.get(url, () => responseExcepted, [middlewareStopped, middleware2]);
 
     const requestMock = await createRequestMock(url, HttpMethods.get);
     const response = await router.resolve(requestMock);

@@ -1,5 +1,5 @@
-import { HashMapRouters, ListMiddlewares, RouteHandler } from "../types";
-import { Request, Response, HttpMethods, Middleware } from "../http";
+import { HashMapRouters, Middleware, RouteHandler } from "../types";
+import { Request, Response, HttpMethods } from "../http";
 import { HttpNotFoundException } from "../exceptions";
 import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
@@ -22,7 +22,7 @@ export class Router {
   /**
    * Middlewares globales que se ejecutan en todas las rutas
    */
-  private globalMiddlewares: ListMiddlewares = [];
+  private globalMiddlewares: Middleware[] = [];
 
   /**
    * Prefijo global para todas las rutas
@@ -86,10 +86,7 @@ export class Router {
     request.setLayer(layer);
     const action = layer.getAction;
 
-    const allMiddlewares = [
-      ...this.globalMiddlewares.map((middleware) => new middleware()),
-      ...layer.getMiddlewares,
-    ];
+    const allMiddlewares = [...this.globalMiddlewares, ...layer.getMiddlewares];
 
     if (allMiddlewares.length > 0)
       return this.runMiddlewares(request, allMiddlewares, action);
@@ -127,7 +124,7 @@ export class Router {
   ): Response | Promise<Response> {
     if (middlewares.length === 0) return target(request);
 
-    return middlewares[0].handle(request, (request) =>
+    return middlewares[0](request, (request) =>
       this.runMiddlewares(request, middlewares.slice(1), target),
     );
   }
@@ -144,12 +141,11 @@ export class Router {
     method: HttpMethods,
     path: string,
     action: RouteHandler,
-    middlewares?: ListMiddlewares,
+    middlewares: Middleware[] = [],
   ): Layer {
     const fullPath = this.buildFullPath(path, this.globalPrefix);
     const layer = new Layer(fullPath, action);
-    if (middlewares && middlewares.length > 0)
-      layer.setMiddlewares(middlewares);
+    if (middlewares.length > 0) layer.setMiddlewares(middlewares);
     this.routes[method].push(layer);
     return layer;
   }
@@ -229,7 +225,7 @@ export class Router {
    * @example
    * router.middlewares([LoggerMiddleware, CorsMiddleware]);
    */
-  public middlewares(middlewares: ListMiddlewares): this {
+  public middlewares(middlewares: Middleware[]): this {
     this.globalMiddlewares.push(...middlewares);
     return this;
   }
@@ -244,7 +240,7 @@ export class Router {
   public get(
     path: string,
     action: RouteHandler,
-    middlewares?: ListMiddlewares,
+    middlewares?: Middleware[],
   ): Layer {
     return this.registerRoute(HttpMethods.get, path, action, middlewares);
   }
@@ -258,7 +254,7 @@ export class Router {
   public post(
     path: string,
     action: RouteHandler,
-    middlewares?: ListMiddlewares,
+    middlewares?: Middleware[],
   ): Layer {
     return this.registerRoute(HttpMethods.post, path, action, middlewares);
   }
@@ -272,7 +268,7 @@ export class Router {
   public patch(
     path: string,
     action: RouteHandler,
-    middlewares?: ListMiddlewares,
+    middlewares?: Middleware[],
   ): Layer {
     return this.registerRoute(HttpMethods.patch, path, action, middlewares);
   }
@@ -286,7 +282,7 @@ export class Router {
   public put(
     path: string,
     action: RouteHandler,
-    middlewares?: ListMiddlewares,
+    middlewares?: Middleware[],
   ): Layer {
     return this.registerRoute(HttpMethods.put, path, action, middlewares);
   }
@@ -300,7 +296,7 @@ export class Router {
   public delete(
     path: string,
     action: RouteHandler,
-    middlewares?: ListMiddlewares,
+    middlewares?: Middleware[],
   ): Layer {
     return this.registerRoute(HttpMethods.delete, path, action, middlewares);
   }

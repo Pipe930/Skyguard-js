@@ -9,7 +9,7 @@ import { Server, NodeServer } from "./server";
 import { View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers";
-import { ListMiddlewares, RouteHandler } from "./types";
+import { Middleware, RouteHandler } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
 
 /**
@@ -175,11 +175,7 @@ export class App {
    * app.get('/users', listUsers);
    * app.get('/users/{id}', getUser).setMiddlewares([AuthMiddleware]);
    */
-  public get(
-    path: string,
-    action: RouteHandler,
-    middlewares?: ListMiddlewares,
-  ) {
+  public get(path: string, action: RouteHandler, middlewares?: Middleware[]) {
     this.router.get(path, action, middlewares);
   }
 
@@ -189,11 +185,7 @@ export class App {
    * @example
    * app.post('/users', createUser);
    */
-  public post(
-    path: string,
-    action: RouteHandler,
-    middlewares?: ListMiddlewares,
-  ) {
+  public post(path: string, action: RouteHandler, middlewares?: Middleware[]) {
     this.router.post(path, action, middlewares);
   }
 
@@ -203,11 +195,7 @@ export class App {
    * @example
    * app.put('/users/{id}', updateUserFull);
    */
-  public put(
-    path: string,
-    action: RouteHandler,
-    middlewares?: ListMiddlewares,
-  ) {
+  public put(path: string, action: RouteHandler, middlewares?: Middleware[]) {
     this.router.put(path, action, middlewares);
   }
 
@@ -217,11 +205,7 @@ export class App {
    * @example
    * app.patch('/users/{id}', updateUserPartial);
    */
-  public patch(
-    path: string,
-    action: RouteHandler,
-    middlewares?: ListMiddlewares,
-  ) {
+  public patch(path: string, action: RouteHandler, middlewares?: Middleware[]) {
     this.router.patch(path, action, middlewares);
   }
 
@@ -234,7 +218,7 @@ export class App {
   public delete(
     path: string,
     action: RouteHandler,
-    middlewares?: ListMiddlewares,
+    middlewares?: Middleware[],
   ) {
     this.router.delete(path, action, middlewares);
   }
@@ -245,7 +229,7 @@ export class App {
    * @example
    * app.middlewares([LoggerMiddleware, CorsMiddleware]);
    */
-  public middlewares(middlewares: ListMiddlewares) {
+  public middlewares(middlewares: Middleware[]) {
     this.router.middlewares(middlewares);
   }
 

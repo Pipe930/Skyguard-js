@@ -81,29 +81,29 @@ app.group("/api", (group) => {
 ```
 
 ## 🛠️ Middlewares
-Para registrar middlewares, tienes que crear una clase que implemente la interfaz `Middleware`, con el metodo handle donde se ejecutara la funcionalidad que quieras que ejecute el middleware, y luego registrar el middleware en la aplicación.
+Para registrar middlewares, tienes que crear una función que reciba como parametros un objeto `Request` y una función `next`, la cual se encarga de ejecutar el siguiente middleware o la ruta correspondiente. Luego, puedes registrar esa función como middleware global, para un grupo de rutas o para una ruta específica.
 
 ```ts
-import { Middleware, Request, Response } from "my-framework/http";
-import { NextFunction } from "my-framework/utils/types";
+import { Request, Response } from "my-framework/http";
+import { RouteHandler } from "my-framework/types";
 
-class TestMiddleware implements Middleware {
-  public async handle(request: Request, next: NextFunction): Promise<Response> {
-    if (request.getHeaders["authorization"] !== "test") {
-      return json({
-        message: "NotAuthenticated",
-      }).setStatus(401);
-    }
-
-    return await next(request);
+const authMiddleware = async (
+  request: Request,
+  next: RouteHandler,
+): Promise<Response> => {
+  if (request.getHeaders["authorization"] !== "test") {
+    return json({
+      message: "NotAuthenticated",
+    }).setStatus(401);
   }
-}
+  return await next(request);
+};
 
 // Registrar middleware globalmente
-app.middlewares([TestMiddleware]);
+app.middlewares([authMiddleware]);
 
 app.group("/api", (group) => {
-  group.use(TestMiddleware); // Registrar middleware para un grupo de rutas
+  group.middlewares([authMiddleware]); // Registrar middleware para un grupo de rutas
 
   group.get("/users", () => {
     return json({ message: "Users" });
@@ -115,7 +115,7 @@ app.group("/api", (group) => {
 
 // Registrar middleware en una ruta específica
 app.get("/testMiddleware", (request: Request) =>
-  json({ message: "hola" }), [TestMiddleware])
+  json({ message: "hola" }), [authMiddleware])
 ```
 
 ## 📦 Validacion de datos
@@ -156,7 +156,7 @@ app.post("/users", (request: Request) => {
 Para poder utilizar el motor de plantillas del framework, debes utilizar el helper `view`, el cual recibe como primer parametro el nombre de la vista (archivo .html) y como segundo parametro un objeto con las variables que quieres pasar a la vista.
 
 ```ts
-app.get("/home", (request: Request) => {
+app.get("/home", () => {
   return view(
     "home", // nombre de la vista (archivo .html)
     {
