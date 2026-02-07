@@ -122,7 +122,7 @@ describe("RouterTest", () => {
     const url = "/test/hola";
 
     router
-      .get(url, (request: Request) => responseExcepted)
+      .get(url, () => responseExcepted)
       .setMiddlewares([middleware1, middleware2]);
 
     const requestMock = await createRequestMock(url, HttpMethods.get);
@@ -135,7 +135,7 @@ describe("RouterTest", () => {
 
   it("should middleware stack can be stopped", async () => {
     const middlewareStopped = class {
-      public handle(request: Request, next: RouteHandler): Response {
+      public handle(): Response {
         return Response.text("stopped");
       }
     };
@@ -155,7 +155,7 @@ describe("RouterTest", () => {
     const url = "/test/hola";
 
     router
-      .get(url, (request: Request) => responseExcepted)
+      .get(url, () => responseExcepted)
       .setMiddlewares([middlewareStopped, middleware2]);
 
     const requestMock = await createRequestMock(url, HttpMethods.get);

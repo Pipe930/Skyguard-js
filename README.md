@@ -156,7 +156,7 @@ app.post("/users", (request: Request) => {
 Para poder utilizar el motor de plantillas del framework, debes utilizar el helper `view`, el cual recibe como primer parametro el nombre de la vista (archivo .html) y como segundo parametro un objeto con las variables que quieres pasar a la vista.
 
 ```ts
-app.router.get("/home", (request: Request) => {
+app.get("/home", (request: Request) => {
   return view(
     "home", // nombre de la vista (archivo .html)
     {
@@ -217,4 +217,4 @@ Este proyecto nace como una forma de entender mejor cómo funcionan frameworks c
 
 ## 📄 Licencia
 
-MIT
+MIT License

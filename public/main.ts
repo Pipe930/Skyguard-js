@@ -1,12 +1,15 @@
 import { Request, Response, Middleware } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
-import { json, redirect, text, render } from "../src/helpers";
+import { json, redirect, text, render, download } from "../src/helpers";
 import { ValidationSchema, Validator } from "../src/validators";
+import { join } from "node:path";
 
 const PORT = 3000;
 
 const app = createApp();
+
+app.staticFiles(join(__dirname, "..", "static"));
 
 const userSchema = ValidationSchema.create()
   .field("name")
@@ -39,10 +42,7 @@ app.get("/test", () => {
 });
 
 app.post("/test", (request: Request) => {
-  const dataValid = Validator.validateOrFail(
-    request.getData() as Record<string, unknown>,
-    userSchema,
-  );
+  const dataValid = Validator.validateOrFail(request.getData(), userSchema);
   return json(dataValid);
 });
 
@@ -108,5 +108,12 @@ class AuthMiddleware implements Middleware {
 }
 
 app.get("/middlewares", () => json({ message: "hola" }), [AuthMiddleware]);
+
+app.get("/download/report", async () => {
+  return await download(
+    join(__dirname, "..", "files", "report.pdf"),
+    "reporte-2024.pdf",
+  );
+});
 
 app.listen(PORT);

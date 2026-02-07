@@ -192,12 +192,7 @@ export class SimpleTemplateEngine implements TemplateEngine {
 
     return template.replace(
       ifRegex,
-      (
-        match: string,
-        condition: string,
-        truthyContent: string,
-        falsyContent: string = "",
-      ) => {
+      (condition: string, truthyContent: string, falsyContent: string = "") => {
         const value = this.resolveValue(condition, context);
         const isTruthy = this.isTruthy(value);
         return isTruthy ? truthyContent : falsyContent;
