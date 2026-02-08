@@ -1,12 +1,15 @@
-import { Request, Response, Middleware } from "../src/http";
+import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
-import { json, redirect, text, render } from "../src/helpers";
+import { json, redirect, text, render, download } from "../src/helpers";
 import { ValidationSchema, Validator } from "../src/validators";
+import { join } from "node:path";
 
 const PORT = 3000;
 
 const app = createApp();
+
+app.staticFiles(join(__dirname, "..", "static"));
 
 const userSchema = ValidationSchema.create()
   .field("name")
@@ -39,10 +42,7 @@ app.get("/test", () => {
 });
 
 app.post("/test", (request: Request) => {
-  const dataValid = Validator.validateOrFail(
-    request.getData() as Record<string, unknown>,
-    userSchema,
-  );
+  const dataValid = Validator.validateOrFail(request.getData(), userSchema);
   return json(dataValid);
 });
 
@@ -85,30 +85,35 @@ app.group("/tienda", (tienda) => {
   });
 });
 
-class TestMiddleware implements Middleware {
-  public async handle(request: Request, next: RouteHandler): Promise<Response> {
-    console.log("hola mundo");
+const testMiddleware = async (
+  request: Request,
+  next: RouteHandler,
+): Promise<Response> => {
+  console.log("hola mundo");
+  return await next(request);
+};
 
-    return await next(request);
+app.middlewares([testMiddleware]);
+
+const authMiddleware = async (
+  request: Request,
+  next: RouteHandler,
+): Promise<Response> => {
+  if (request.getHeaders["authorization"] !== "test") {
+    return json({
+      message: "NotAuthenticated",
+    }).setStatus(401);
   }
-}
+  return await next(request);
+};
 
-app.middlewares([TestMiddleware]);
+app.get("/middlewares", () => json({ message: "hola" }), [authMiddleware]);
 
-class AuthMiddleware implements Middleware {
-  public async handle(request: Request, next: RouteHandler): Promise<Response> {
-    if (request.getHeaders["authorization"] !== "test") {
-      return json({
-        message: "NotAuthenticated",
-      }).setStatus(401);
-    }
-
-    return await next(request);
-  }
-}
-
-app
-  .get("/middlewares", () => json({ message: "hola" }))
-  .setMiddlewares([AuthMiddleware]);
+app.get("/download/report", async () => {
+  return await download(
+    join(__dirname, "..", "files", "report.pdf"),
+    "reporte-2024.pdf",
+  );
+});
 
 app.listen(PORT);

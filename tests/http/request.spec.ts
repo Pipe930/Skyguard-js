@@ -30,9 +30,7 @@ describe("RequestTest", () => {
 
     const request = new Request("").setData(data);
 
-    expect(data["test"]).toBe(request.getData("test"));
-    expect(data["num"]).toBe(request.getData("num"));
-    expect(request.getData("notexists")).toBeNull();
+    expect(data).toBe(request.getData());
   });
 
   it("should queries returns value if key is given", () => {

@@ -13,3 +13,5 @@ export {
   ValidationException,
   ValidatorFieldException,
 } from "./validationException";
+export { ContentDispositionException } from "./contentDispositionException";
+export { FileDownloadException } from "./fileDownloadException";

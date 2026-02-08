@@ -1,5 +1,5 @@
-import { Layer, Router, RouterGroup } from "./routing";
-import { HttpAdapter, Response } from "./http";
+import { Router, RouterGroup } from "./routing";
+import { HttpAdapter, HttpMethods, Response } from "./http";
 import {
   ContentParserException,
   HttpNotFoundException,
@@ -9,7 +9,8 @@ import { Server, NodeServer } from "./server";
 import { View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers";
-import { ListMiddlewares, RouteHandler } from "./types";
+import { Middleware, RouteHandler } from "./types";
+import { StaticFileHandler } from "./static/fileStaticHandler";
 
 /**
  * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
@@ -51,6 +52,11 @@ export class App {
    * para generar respuestas HTML.
    */
   public view: View;
+
+  /**
+   * Manejador de archivos estáticos
+   */
+  private staticFileHandler: StaticFileHandler | null = null;
 
   /**
    * Inicializa y configura la aplicación.
@@ -99,12 +105,38 @@ export class App {
   public async handle(adapter: HttpAdapter): Promise<void> {
     try {
       const request = await adapter.getRequest();
+
+      if (this.staticFileHandler && request.getMethod === HttpMethods.get) {
+        const staticResponse = await this.staticFileHandler.tryServeFile(
+          request.getUrl,
+        );
+
+        if (staticResponse) {
+          adapter.sendResponse(staticResponse);
+          return;
+        }
+      }
+
       const response = await this.router.resolve(request);
 
       adapter.sendResponse(response);
     } catch (err) {
       this.handleError(err, adapter);
     }
+  }
+
+  /**
+   * Configura el directorio para servir archivos estáticos
+   *
+   * @param publicPath - Ruta absoluta o relativa al directorio público
+   * @returns this para encadenamiento
+   *
+   * @example
+   * app.static(join(__dirname, "public"));
+   * // Archivos en /public/css/style.css accesibles en /css/style.css
+   */
+  public staticFiles(publicPath: string) {
+    this.staticFileHandler = new StaticFileHandler(publicPath);
   }
 
   /**
@@ -122,7 +154,19 @@ export class App {
     this.server.listen(port);
   }
 
-  // ========== MÉTODOS DE ENRUTAMIENTO DELEGADOS ==========
+  /**
+   * Establece un prefijo global para todas las rutas de la aplicación
+   *
+   * @param prefix - Prefijo a aplicar (ej: "api", "/v1", "test")
+   * @returns this para encadenamiento
+   *
+   * @example
+   * app.setPrefix("api");
+   * app.get("/users", handler); // Resultado: /api/users
+   */
+  public setPrefix(prefix: string) {
+    this.router.setPrefix(prefix);
+  }
 
   /**
    * Registra una ruta GET
@@ -131,8 +175,8 @@ export class App {
    * app.get('/users', listUsers);
    * app.get('/users/{id}', getUser).setMiddlewares([AuthMiddleware]);
    */
-  public get(path: string, action: RouteHandler): Layer {
-    return this.router.get(path, action);
+  public get(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+    this.router.get(path, action, middlewares);
   }
 
   /**
@@ -141,8 +185,8 @@ export class App {
    * @example
    * app.post('/users', createUser);
    */
-  public post(path: string, action: RouteHandler): Layer {
-    return this.router.post(path, action);
+  public post(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+    this.router.post(path, action, middlewares);
   }
 
   /**
@@ -151,8 +195,8 @@ export class App {
    * @example
    * app.put('/users/{id}', updateUserFull);
    */
-  public put(path: string, action: RouteHandler): Layer {
-    return this.router.put(path, action);
+  public put(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+    this.router.put(path, action, middlewares);
   }
 
   /**
@@ -161,8 +205,8 @@ export class App {
    * @example
    * app.patch('/users/{id}', updateUserPartial);
    */
-  public patch(path: string, action: RouteHandler): Layer {
-    return this.router.patch(path, action);
+  public patch(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+    this.router.patch(path, action, middlewares);
   }
 
   /**
@@ -171,8 +215,12 @@ export class App {
    * @example
    * app.delete('/users/{id}', deleteUser);
    */
-  public delete(path: string, action: RouteHandler): Layer {
-    return this.router.delete(path, action);
+  public delete(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ) {
+    this.router.delete(path, action, middlewares);
   }
 
   /**
@@ -181,9 +229,8 @@ export class App {
    * @example
    * app.middlewares([LoggerMiddleware, CorsMiddleware]);
    */
-  public middlewares(middlewares: ListMiddlewares): this {
+  public middlewares(middlewares: Middleware[]) {
     this.router.middlewares(middlewares);
-    return this;
   }
 
   /**
@@ -215,7 +262,7 @@ export class App {
    * - Páginas de error custom.
    * - Logging estructurado.
    *
-   * @param {unknown} err - Error capturado durante la ejecución.
+   * @param {unknown} error - Error capturado durante la ejecución.
    * @param {HttpAdapter} adapter - Adaptador de salida.
    */
   private handleError(error: unknown, adapter: HttpAdapter): void {

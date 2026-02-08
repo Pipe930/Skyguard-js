@@ -1,5 +1,5 @@
-import { HashMapRouters, ListMiddlewares, RouteHandler } from "../types";
-import { Request, Response, HttpMethods, Middleware } from "../http";
+import { HashMapRouters, Middleware, RouteHandler } from "../types";
+import { Request, Response, HttpMethods } from "../http";
 import { HttpNotFoundException } from "../exceptions";
 import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
@@ -22,7 +22,12 @@ export class Router {
   /**
    * Middlewares globales que se ejecutan en todas las rutas
    */
-  private globalMiddlewares: ListMiddlewares = [];
+  private globalMiddlewares: Middleware[] = [];
+
+  /**
+   * Prefijo global para todas las rutas
+   */
+  private globalPrefix = "";
 
   /**
    * Inicializa el router creando arrays vacíos para cada método HTTP
@@ -81,10 +86,7 @@ export class Router {
     request.setLayer(layer);
     const action = layer.getAction;
 
-    const allMiddlewares = [
-      ...this.globalMiddlewares.map((middleware) => new middleware()),
-      ...layer.getMiddlewares,
-    ];
+    const allMiddlewares = [...this.globalMiddlewares, ...layer.getMiddlewares];
 
     if (allMiddlewares.length > 0)
       return this.runMiddlewares(request, allMiddlewares, action);
@@ -122,7 +124,7 @@ export class Router {
   ): Response | Promise<Response> {
     if (middlewares.length === 0) return target(request);
 
-    return middlewares[0].handle(request, (request) =>
+    return middlewares[0](request, (request) =>
       this.runMiddlewares(request, middlewares.slice(1), target),
     );
   }
@@ -139,10 +141,47 @@ export class Router {
     method: HttpMethods,
     path: string,
     action: RouteHandler,
+    middlewares: Middleware[] = [],
   ): Layer {
-    const layer = new Layer(path, action);
+    const fullPath = this.buildFullPath(path, this.globalPrefix);
+    const layer = new Layer(fullPath, action);
+    if (middlewares.length > 0) layer.setMiddlewares(middlewares);
     this.routes[method].push(layer);
     return layer;
+  }
+
+  /**
+   * Establece un prefijo global para todas las rutas
+   *
+   * @param prefix - Prefijo a aplicar (ej: "api", "/v1", "test")
+   * @returns this para encadenamiento
+   *
+   * @example
+   * router.setPrefix("api");
+   * router.get("/users", handler); // Resultado: /api/users
+   */
+  public setPrefix(prefix: string): this {
+    this.globalPrefix = prefix;
+    return this;
+  }
+
+  /**
+   * Construye la ruta completa con el prefijo global
+   *
+   * @param path - Ruta original
+   * @returns Ruta con prefijo aplicado y normalizada
+   */
+  public buildFullPath(path: string, prefix: string): string {
+    if (!prefix) return path;
+
+    const cleanPrefix = prefix.startsWith("/") ? prefix : `/${prefix}`;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    let fullPath = `${cleanPrefix}${cleanPath}`.replace(/\/+/g, "/");
+
+    if (fullPath.length > 1 && fullPath.endsWith("/"))
+      fullPath = fullPath.slice(0, -1);
+
+    return fullPath;
   }
 
   /**
@@ -170,7 +209,10 @@ export class Router {
    * });
    */
   public group(prefix: string, callback: (group: RouterGroup) => void): void {
-    const group = new RouterGroup(prefix, this);
+    const fullPrefix = this.globalPrefix
+      ? `${this.globalPrefix}/${prefix}`.replace(/\/+/g, "/")
+      : prefix;
+    const group = new RouterGroup(fullPrefix, this);
     callback(group);
   }
 
@@ -183,7 +225,7 @@ export class Router {
    * @example
    * router.middlewares([LoggerMiddleware, CorsMiddleware]);
    */
-  public middlewares(middlewares: ListMiddlewares): this {
+  public middlewares(middlewares: Middleware[]): this {
     this.globalMiddlewares.push(...middlewares);
     return this;
   }
@@ -195,8 +237,12 @@ export class Router {
    * router.get('/users', listUsers);
    * router.get('/users/{id}', getUser).setMiddlewares([AuthMiddleware]);
    */
-  public get(path: string, action: RouteHandler): Layer {
-    return this.registerRoute(HttpMethods.get, path, action);
+  public get(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): Layer {
+    return this.registerRoute(HttpMethods.get, path, action, middlewares);
   }
 
   /**
@@ -205,8 +251,12 @@ export class Router {
    * @example
    * router.post('/users', createUser);
    */
-  public post(path: string, action: RouteHandler): Layer {
-    return this.registerRoute(HttpMethods.post, path, action);
+  public post(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): Layer {
+    return this.registerRoute(HttpMethods.post, path, action, middlewares);
   }
 
   /**
@@ -215,8 +265,12 @@ export class Router {
    * @example
    * router.patch('/users/{id}', updateUserPartial);
    */
-  public patch(path: string, action: RouteHandler): Layer {
-    return this.registerRoute(HttpMethods.patch, path, action);
+  public patch(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): Layer {
+    return this.registerRoute(HttpMethods.patch, path, action, middlewares);
   }
 
   /**
@@ -225,8 +279,12 @@ export class Router {
    * @example
    * router.put('/users/{id}', updateUserFull);
    */
-  public put(path: string, action: RouteHandler): Layer {
-    return this.registerRoute(HttpMethods.put, path, action);
+  public put(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): Layer {
+    return this.registerRoute(HttpMethods.put, path, action, middlewares);
   }
 
   /**
@@ -235,7 +293,11 @@ export class Router {
    * @example
    * router.delete('/users/{id}', deleteUser);
    */
-  public delete(path: string, action: RouteHandler): Layer {
-    return this.registerRoute(HttpMethods.delete, path, action);
+  public delete(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): Layer {
+    return this.registerRoute(HttpMethods.delete, path, action, middlewares);
   }
 }

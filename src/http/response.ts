@@ -30,7 +30,7 @@ export class Response {
   /**
    * Contenido del cuerpo de la respuesta.
    */
-  private content?: string = null;
+  private content: string | Buffer | null = null;
 
   get getStatus(): number {
     return this.status;
@@ -43,6 +43,15 @@ export class Response {
 
   get getHeaders(): Headers {
     return this.headers;
+  }
+
+  public setHeaders(headers: Headers): this {
+    this.headers = this.merge(this.headers, headers);
+    return this;
+  }
+
+  private merge<T, U>(a: T, b: U): T & U {
+    return { ...a, ...b };
   }
 
   public setHeader(header: string, value: string): this {
@@ -70,11 +79,11 @@ export class Response {
     return this;
   }
 
-  get getContent(): string | null {
+  get getContent(): string | Buffer | null {
     return this.content;
   }
 
-  public setContent(content: string): this {
+  public setContent(content: string | Buffer): this {
     this.content = content;
     return this;
   }
@@ -91,11 +100,20 @@ export class Response {
    * adapter.send(response);
    */
   public prepare(): void {
-    if (!this.content) {
-      this.removeHeader("content-type");
-      this.removeHeader("content-length");
-    } else {
-      this.setHeader("content-length", this.content.length.toString());
+    if (!this.headers["content-type"] && this.content) {
+      if (Buffer.isBuffer(this.content)) {
+        this.headers["content-type"] = "application/octet-stream";
+      } else {
+        this.headers["content-type"] = "text/plain";
+      }
+    }
+
+    if (this.content && !this.headers["content-length"]) {
+      const length = Buffer.isBuffer(this.content)
+        ? this.content.length
+        : Buffer.byteLength(this.content, "utf-8");
+
+      this.headers["content-length"] = length.toString();
     }
   }
 

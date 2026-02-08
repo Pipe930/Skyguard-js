@@ -1,4 +1,4 @@
-import { ListMiddlewares, RouteHandler } from "../types";
+import { Middleware, RouteHandler } from "../types";
 import { Router } from "./router";
 import { Layer } from "./layer";
 
@@ -23,7 +23,7 @@ export class RouterGroup {
    * path   = "/users"
    * result = "/api/users"
    */
-  private prefix: string;
+  private prefix = "";
 
   /**
    * Middlewares que se aplican a **todas las rutas** del grupo.
@@ -31,7 +31,7 @@ export class RouterGroup {
    * Se almacenan como clases (constructores),
    * las instancias se crean posteriormente dentro de `Layer`.
    */
-  private middlewaresGroup: ListMiddlewares = [];
+  private middlewaresGroup: Middleware[] = [];
 
   /**
    * Router principal encargado de registrar y resolver las rutas.
@@ -60,7 +60,7 @@ export class RouterGroup {
    * @example
    * group.middlewares([AuthMiddleware, AdminMiddleware]);
    */
-  public middlewares(middlewares: ListMiddlewares): this {
+  public middlewares(middlewares: Middleware[]): this {
     this.middlewaresGroup.push(...middlewares);
     return this;
   }
@@ -82,44 +82,15 @@ export class RouterGroup {
     method: keyof Pick<Router, Methods>,
     path: string,
     action: RouteHandler,
-    middlewares: ListMiddlewares = [],
+    middlewares: Middleware[] = [],
   ): Layer {
-    const fullPath = this.buildFullPath(path);
+    const fullPath = this.parentRouter.buildFullPath(path, this.prefix);
     const totalMiddlewares = [...this.middlewaresGroup, ...middlewares];
     const layer = this.parentRouter[method](fullPath, action);
 
-    if (totalMiddlewares.length > 0) {
-      layer.setMiddlewares(totalMiddlewares);
-    }
+    if (totalMiddlewares.length > 0) layer.setMiddlewares(totalMiddlewares);
 
     return layer;
-  }
-
-  /**
-   * Construye el path final combinando el prefijo del grupo
-   * con el path específico de la ruta.
-   *
-   * Normaliza:
-   * - Slashes duplicados
-   * - Prefijos sin "/"
-   * - Trailing slash innecesario
-   *
-   * @param path Path relativo de la ruta
-   * @returns Path final normalizado
-   */
-  private buildFullPath(path: string): string {
-    const cleanPrefix = this.prefix.startsWith("/")
-      ? this.prefix
-      : `/${this.prefix}`;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-
-    let fullPath = `${cleanPrefix}${cleanPath}`.replace(/\/+/g, "/");
-
-    if (fullPath.length > 1 && fullPath.endsWith("/")) {
-      fullPath = fullPath.slice(0, -1);
-    }
-
-    return fullPath;
   }
 
   /**
@@ -133,7 +104,7 @@ export class RouterGroup {
   public get(
     path: string,
     action: RouteHandler,
-    middlewares: ListMiddlewares = [],
+    middlewares?: Middleware[],
   ): Layer {
     return this.addRoute("get", path, action, middlewares);
   }
@@ -144,7 +115,7 @@ export class RouterGroup {
   public post(
     path: string,
     action: RouteHandler,
-    middlewares: ListMiddlewares = [],
+    middlewares?: Middleware[],
   ): Layer {
     return this.addRoute("post", path, action, middlewares);
   }
@@ -155,7 +126,7 @@ export class RouterGroup {
   public put(
     path: string,
     action: RouteHandler,
-    middlewares: ListMiddlewares = [],
+    middlewares?: Middleware[],
   ): Layer {
     return this.addRoute("put", path, action, middlewares);
   }
@@ -166,7 +137,7 @@ export class RouterGroup {
   public patch(
     path: string,
     action: RouteHandler,
-    middlewares: ListMiddlewares = [],
+    middlewares?: Middleware[],
   ): Layer {
     return this.addRoute("patch", path, action, middlewares);
   }
@@ -177,7 +148,7 @@ export class RouterGroup {
   public delete(
     path: string,
     action: RouteHandler,
-    middlewares: ListMiddlewares = [],
+    middlewares?: Middleware[],
   ): Layer {
     return this.addRoute("delete", path, action, middlewares);
   }
