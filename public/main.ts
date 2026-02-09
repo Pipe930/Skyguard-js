@@ -79,7 +79,7 @@ app.group("/tienda", (tienda) => {
     return json({ message: "desde ruta grupada" });
   });
 
-  tienda.get("/holamundo/{param}", (request) => {
+  tienda.get("/holamundo/{param}", (request: Request) => {
     return json({
       message: "desde ruta agrupada con parametros",
       params: request.getParams(),
@@ -110,7 +110,7 @@ app.get("/download/report", async () => {
 
 app.middlewares([sessionMiddleware(MemorySessionStorage)]);
 
-app.post("/login", (request) => {
+app.post("/login", (request: Request) => {
   const { username, password } = request.getData();
 
   if (username === "admin" && password === "secret") {
@@ -126,7 +126,7 @@ app.post("/login", (request) => {
   return json({ error: "Invalid credentials" }).setStatus(401);
 });
 
-app.get("/me", (request) => {
+app.get("/me", (request: Request) => {
   const user = request.getSession.get("user");
 
   if (!user) {
@@ -136,7 +136,7 @@ app.get("/me", (request) => {
   return json({ user });
 });
 
-app.post("/logout", (request) => {
+app.post("/logout", (request: Request) => {
   request.getSession.destroy();
   return json({ message: "Logged out" });
 });

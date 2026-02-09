@@ -2,7 +2,7 @@ import { HttpMethods } from "./httpMethods";
 import type { Headers, HttpValue } from "types";
 import { Layer } from "@routing/layer";
 import { Validator, FieldDefinition } from "@validators/index";
-import { Session } from "sessions/session";
+import { Session } from "@sessions/session";
 
 /**
  * Esta clase representa el contrato de entrada del framework: todo controlador
