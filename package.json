@@ -1,5 +1,5 @@
 {
-  "name": "express-typescript",
+  "name": "raptor-js",
   "version": "1.0.0",
   "description": "simple Typescript framework project inspired by express",
   "main": "public/main.ts",
@@ -28,12 +28,13 @@
   "scripts": {
     "exec": "ts-node public/main.ts",
     "lint": "eslint \"{src,tests}/**/*.ts\" --fix",
-    "dev": "NODE_ENV=development nodemon public/main.ts",
+    "dev": "NODE_ENV=development nodemon -r tsconfig-paths/register public/main.ts",
+    "start": "node dist/public/index.js",
     "test": "NODE_ENV=test jest --verbose",
     "test:watch": "jest --watch --onlyChanged",
     "test:cov": "jest --coverage",
-    "build": "tsc",
-    "watch": "tsc -w"
+    "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
+    "watch": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")"
   },
   "author": "Pipe930",
   "license": "ISC",
@@ -48,6 +49,8 @@
     "nodemon": "3.1.11",
     "ts-jest": "29.4.6",
     "ts-node": "10.9.2",
+    "tsc-alias": "1.8.16",
+    "tsconfig-paths": "4.2.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.53.0"
   }

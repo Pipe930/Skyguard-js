@@ -4,6 +4,8 @@
  */
 
 import type { Config } from "jest";
+import { pathsToModuleNameMapper } from "ts-jest";
+import { compilerOptions } from "./tsconfig.json";
 
 const config: Config = {
   clearMocks: true,
@@ -27,6 +29,8 @@ const config: Config = {
   transform: {
     "^.+\\.(t|j)s$": "ts-jest",
   },
+
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
 };
 
 export default config;
