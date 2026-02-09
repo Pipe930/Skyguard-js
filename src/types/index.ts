@@ -106,6 +106,30 @@ export type TemplateContext = Record<string, unknown>;
  */
 export type Constructor<T = unknown> = new (...args: unknown[]) => T;
 
+/**
+ * Representa un middleware del framework.
+ *
+ * Un middleware es una función que intercepta el ciclo de vida
+ * de una request HTTP antes y después de que llegue al handler final.
+ *
+ * El middleware puede ser síncrono o asíncrono.
+ *
+ * @param request Instancia de {@link Request} que representa la request HTTP actual.
+ * @param next Función que ejecuta el siguiente middleware o el handler de la ruta.
+ *
+ * @returns Una {@link Response} o una Promise que resuelve en {@link Response}.
+ *
+ * @example
+ * const loggerMiddleware: Middleware = async (request, next) => {
+ *   console.log(request.getMethod, request.getUrl);
+ *
+ *   const response = await next(request);
+ *
+ *   return response;
+ * };
+ *
+ * app.middlewares([loggerMiddleware]);
+ */
 export type Middleware = (
   request: Request,
   next: RouteHandler,

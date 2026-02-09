@@ -143,11 +143,7 @@ const userSchema = ValidationSchema.create()
   .build();
 
 app.post("/users", (request: Request) => {
-  const data = request.getData();
-  const validationResult = Validator.validateOrFail(
-    data as Record<string, unknown>,
-    userSchema,
-  );
+  const validationResult = request.validateData(userSchema);
   return json(validationResult);
 });
 ```
@@ -157,7 +153,7 @@ Para poder utilizar el motor de plantillas del framework, debes utilizar el help
 
 ```ts
 app.get("/home", () => {
-  return view(
+  return render(
     "home", // nombre de la vista (archivo .html)
     {
       title: "Productos",
@@ -205,7 +201,6 @@ Por ahora el motor se encuentra en una etapa muy temprana de desarrollo, por lo 
 * ORM y bases de datos
 * Autenticación y autorización
 * Sessiones y cookies
-* Sistema de plugins
 
 ---
 

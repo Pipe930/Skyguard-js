@@ -3,6 +3,7 @@ import { HttpAdapter, HttpMethods, Response } from "./http";
 import {
   ContentParserException,
   HttpNotFoundException,
+  SessionException,
   ValidationException,
 } from "./exceptions";
 import { Server, NodeServer } from "./server";
@@ -278,12 +279,19 @@ export class App {
       return;
     }
 
+    if (error instanceof SessionException) {
+      adapter.sendResponse(
+        Response.json({ message: error.message }).setStatus(401),
+      );
+      return;
+    }
+
     if (error instanceof ValidationException) {
       adapter.sendResponse(
         Response.json({
           success: false,
           errors: error.getErrorsByField(),
-        }).setStatus(422),
+        }).setStatus(400),
       );
       return;
     }

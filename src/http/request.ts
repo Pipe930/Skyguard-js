@@ -1,6 +1,9 @@
 import { HttpMethods } from "./httpMethods";
 import { Headers, HttpValue } from "../types";
 import { Layer } from "../routing";
+import { Validator } from "../validators";
+import { FieldDefinition } from "../validators/core/validationSchema";
+import { Session } from "sessions/session";
 
 /**
  * Esta clase representa el contrato de entrada del framework: todo controlador
@@ -33,6 +36,8 @@ export class Request {
 
   /** Parámetros de params string */
   private query: Record<string, string> = {};
+
+  private session: Session;
 
   constructor(url: string) {
     this.url = url;
@@ -119,5 +124,17 @@ export class Request {
   public setData(data: Record<string, any>): this {
     this.data = data;
     return this;
+  }
+
+  get getSession(): Session {
+    return this.session;
+  }
+
+  public setSession(session: Session) {
+    this.session = session;
+  }
+
+  public validateData(schema: Map<string, FieldDefinition>) {
+    return Validator.validateOrFail(this.data, schema);
   }
 }

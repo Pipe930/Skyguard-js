@@ -15,3 +15,4 @@ export {
 } from "./validationException";
 export { ContentDispositionException } from "./contentDispositionException";
 export { FileDownloadException } from "./fileDownloadException";
+export { SessionException } from "./sessionException";
