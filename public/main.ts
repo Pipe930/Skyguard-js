@@ -15,7 +15,7 @@ app.staticFiles(join(__dirname, "..", "static"));
 
 const userSchema = ValidationSchema.create()
   .field("name")
-  .string({ maxLength: 60 })
+  .string({ maxLength: 60, isEmpty: false })
   .field("email")
   .required()
   .email()

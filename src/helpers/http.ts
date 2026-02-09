@@ -26,7 +26,7 @@ export async function download(
 export async function render(
   view: string,
   params: TemplateContext,
-  layout: string,
+  layout?: string,
 ): Promise<Response> {
   return await Response.render(view, params, layout);
 }

@@ -1,4 +1,4 @@
-import { join, normalize, extname, basename } from "node:path";
+import { normalize, extname, basename, sep, resolve } from "node:path";
 import { readFile, stat } from "node:fs/promises";
 import { mimeTypesObject } from "./mimeTypes";
 import { Response } from "../http";
@@ -43,11 +43,13 @@ export class StaticFileHandler {
     try {
       if (!this.matchesPrefix(requestPath)) return null;
 
-      const relativePath = requestPath.substring(this.urlPrefix.length);
-      const normalizedPath = this.normalizedPath(relativePath);
-      const filePath = join(this.publicPath, normalizedPath);
+      const relativePath = requestPath.slice(this.urlPrefix.length);
+      const filePath = resolve(
+        this.publicPath,
+        relativePath.replace(/^[/\\]+/, ""),
+      );
 
-      if (!filePath.startsWith(this.publicPath)) return null;
+      if (!filePath.startsWith(this.publicPath + sep)) return null;
 
       const stats = await stat(filePath);
 
@@ -83,9 +85,5 @@ export class StaticFileHandler {
 
     const ext = extname(requestPath);
     return ext !== "" && ext in this.mimeTypes;
-  }
-
-  private normalizedPath(path: string): string {
-    return normalize(path).replace(/^(\.\.[\/\\])+/, "");
   }
 }

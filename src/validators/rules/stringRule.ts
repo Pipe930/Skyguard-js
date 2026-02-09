@@ -2,6 +2,7 @@ import { BaseValidationRule } from "../core/validationRule";
 import { RuleOptions, ValidationContext, ValidationError } from "../types";
 
 export interface StringRuleOptions extends RuleOptions {
+  isEmpty?: boolean;
   minLength?: number;
   maxLength?: number;
   pattern?: RegExp;
@@ -30,6 +31,10 @@ export class StringRule extends BaseValidationRule {
       );
 
     let str = value;
+
+    if (options?.isEmpty !== undefined && !options.isEmpty && str === "")
+      return this.createError(field, `${field} cannot be empty`, value);
+
     if (options?.trim) str = str.trim();
 
     if (options?.minLength !== undefined && str.length < options.minLength)

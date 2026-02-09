@@ -1,6 +1,22 @@
 import { ContentDispositionException } from "../exceptions";
 
 /**
+ * Opciones para la generación de Content-Disposition
+ */
+export interface ContentDispositionOptions {
+  /**
+   * Tipo de disposición
+   * @default 'attachment'
+   */
+  type?: "attachment" | "inline";
+
+  /**
+   * Fallback ASCII personalizado
+   */
+  fallback?: string;
+}
+
+/**
  * Genera headers Content-Disposition seguros para descargas de archivos
  *
  * Implementa RFC 6266 y RFC 8187 para máxima compatibilidad entre navegadores
@@ -215,20 +231,4 @@ export class ContentDisposition {
 
     return { type, filename };
   }
-}
-
-/**
- * Opciones para la generación de Content-Disposition
- */
-export interface ContentDispositionOptions {
-  /**
-   * Tipo de disposición
-   * @default 'attachment'
-   */
-  type?: "attachment" | "inline";
-
-  /**
-   * Fallback ASCII personalizado
-   */
-  fallback?: string;
 }
