@@ -1,4 +1,4 @@
-import { ContentDisposition } from "@static/contentDisposition";
+import { ContentDisposition } from "../../src/static/contentDisposition";
 
 describe("ContentDispositionTest", () => {
   let contentDisposition: ContentDisposition;

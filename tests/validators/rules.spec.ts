@@ -5,7 +5,7 @@ import {
   NumberRule,
   RequiredRule,
   StringRule,
-} from "@validators/index";
+} from "../../src/validators/index";
 
 describe("RulesTest", () => {
   describe("RequiredRuleTest", () => {

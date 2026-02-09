@@ -1,5 +1,5 @@
-import { ContentParserException } from "@exceptions/contentParserException";
-import { MultipartParser } from "@parsers/multipartParser";
+import { ContentParserException } from "../../src/exceptions/contentParserException";
+import { MultipartParser } from "../../src/parsers/multipartParser";
 
 describe("MultipartParserTest", () => {
   let parser: MultipartParser;

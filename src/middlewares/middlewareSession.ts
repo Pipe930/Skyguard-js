@@ -2,8 +2,8 @@ import {
   type SessionStorage,
   type CookieOptions,
   Session,
-} from "@sessions/index";
-import type { Middleware } from "types";
+} from "../sessions/index";
+import type { Middleware } from "../types";
 
 /**
  * Tipo que representa un constructor de `SessionStorage`.

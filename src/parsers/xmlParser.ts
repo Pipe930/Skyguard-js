@@ -1,4 +1,4 @@
-import { ContentParserException } from "@exceptions/contentParserException";
+import { ContentParserException } from "../exceptions/contentParserException";
 import type { ContentParser } from "./contentParser";
 
 /**

@@ -1,4 +1,4 @@
-import { ContentDispositionException } from "@exceptions/contentDispositionException";
+import { ContentDispositionException } from "../exceptions/contentDispositionException";
 
 /**
  * Opciones para la generación de Content-Disposition

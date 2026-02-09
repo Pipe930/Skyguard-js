@@ -1,5 +1,5 @@
-import { NodeServer } from "@server/nodeNativeServer";
-import { NodeHttpAdapter } from "@http/nodeNativeHttp";
+import { NodeServer } from "../../src/server/nodeNativeServer";
+import { NodeHttpAdapter } from "../../src/http/nodeNativeHttp";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { App } from "../../src/app";
 

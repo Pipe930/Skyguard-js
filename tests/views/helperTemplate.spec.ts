@@ -2,8 +2,8 @@ import {
   HelperArgumentException,
   HelperExecutionException,
   HelperNotFoundException,
-} from "@exceptions/helperExceptions";
-import { HelpersManager } from "@views/helpersTemplate";
+} from "../../src/exceptions/helperExceptions";
+import { HelpersManager } from "../../src/views/helpersTemplate";
 
 describe("HelpersManager", () => {
   let manager: HelpersManager;

@@ -1,4 +1,4 @@
-import { SimpleTemplateEngine } from "@views/templateEngine";
+import { SimpleTemplateEngine } from "../../src/views/templateEngine";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 

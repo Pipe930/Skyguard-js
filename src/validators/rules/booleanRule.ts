@@ -1,5 +1,5 @@
 import type { RuleOptions, ValidationContext, ValidationError } from "../types";
-import { BaseValidationRule } from "../core/validationRule";
+import { BaseValidationRule } from "../validationRule";
 
 /**
  * Regla que valida booleanos.

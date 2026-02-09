@@ -1,4 +1,4 @@
-import type { Middleware, RouteHandler } from "types";
+import type { Middleware, RouteHandler } from "../types";
 
 /**
  * Clase que representa una ruta individual en el sistema de enrutamiento
