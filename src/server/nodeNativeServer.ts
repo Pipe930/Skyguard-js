@@ -1,7 +1,6 @@
 import { App } from "../app";
 import { createServer } from "node:http";
-import { NodeHttpAdapter } from "../http";
-import { Server } from "./server";
+import { NodeHttpAdapter } from "@http/nodeNativeHttp";
 
 /**
  * Esta clase representa el iniciador del servidor de NodeJS de manera
@@ -10,7 +9,7 @@ import { Server } from "./server";
  * En términos de arquitectura, esta clase pertenece a la capa de *delivery* o
  * *infrastructure layer*, y no contiene ninguna lógica de negocio.
  */
-export class NodeServer implements Server {
+export class NodeServer {
   /**
    * @param app - Instancia del núcleo del framework que gestiona
    * el ciclo de vida de cada request.

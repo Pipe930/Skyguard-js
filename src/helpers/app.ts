@@ -1,5 +1,5 @@
 import { App } from "../app";
-import { Constructor } from "../types";
+import type { Constructor } from "types";
 import { Container } from "../container/container";
 
 export function app(target: Constructor<App> = App as Constructor<App>): App {

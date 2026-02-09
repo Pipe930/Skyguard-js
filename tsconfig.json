@@ -4,6 +4,23 @@
     "module": "commonjs",
     "baseUrl": "./src",
     "outDir": "./dist",
+    "rootDir": "./",
+    "paths": {
+      "@exceptions/*": ["exceptions/*"],
+      "@helpers/*": ["helpers/*"],
+      "@http/*": ["http/*"],
+      "@middlewares/*": ["middlewares/*"],
+      "@parsers/*": ["parsers/*"],
+      "@routing/*": ["routing/*"],
+      "@server/*": ["server/*"],
+      "@sessions/*": ["sessions/*"],
+      "@static/*": ["static/*"],
+      "@types/*": ["types/*"],
+      "@validators/*": ["validators/*"],
+      "@views/*": ["views/*"]
+    },
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -14,5 +31,10 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
+  },
+  "include": ["src/**/*", "tests/**/*", "public/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    "files": true
   }
 }

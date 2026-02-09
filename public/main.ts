@@ -2,8 +2,10 @@ import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
 import { json, redirect, text, render, download } from "../src/helpers";
-import { ValidationSchema, Validator } from "../src/validators";
+import { ValidationSchema } from "../src/validators";
 import { join } from "node:path";
+import { sessionMiddleware } from "../src/middlewares/middlewareSession";
+import { MemorySessionStorage } from "../src/sessions";
 
 const PORT = 3000;
 
@@ -13,7 +15,7 @@ app.staticFiles(join(__dirname, "..", "static"));
 
 const userSchema = ValidationSchema.create()
   .field("name")
-  .string({ maxLength: 60 })
+  .string({ maxLength: 60, isEmpty: false })
   .field("email")
   .required()
   .email()
@@ -42,7 +44,7 @@ app.get("/test", () => {
 });
 
 app.post("/test", (request: Request) => {
-  const dataValid = Validator.validateOrFail(request.getData(), userSchema);
+  const dataValid = request.validateData(userSchema);
   return json(dataValid);
 });
 
@@ -85,16 +87,6 @@ app.group("/tienda", (tienda) => {
   });
 });
 
-const testMiddleware = async (
-  request: Request,
-  next: RouteHandler,
-): Promise<Response> => {
-  console.log("hola mundo");
-  return await next(request);
-};
-
-app.middlewares([testMiddleware]);
-
 const authMiddleware = async (
   request: Request,
   next: RouteHandler,
@@ -114,6 +106,39 @@ app.get("/download/report", async () => {
     join(__dirname, "..", "files", "report.pdf"),
     "reporte-2024.pdf",
   );
+});
+
+app.middlewares([sessionMiddleware(MemorySessionStorage)]);
+
+app.post("/login", (request) => {
+  const { username, password } = request.getData();
+
+  if (username === "admin" && password === "secret") {
+    request.getSession.set("user", {
+      id: 1,
+      username: "admin",
+      role: "admin",
+    });
+
+    return json({ message: "Logged in" });
+  }
+
+  return json({ error: "Invalid credentials" }).setStatus(401);
+});
+
+app.get("/me", (request) => {
+  const user = request.getSession.get("user");
+
+  if (!user) {
+    return json({ error: "Not authenticated" }).setStatus(401);
+  }
+
+  return json({ user });
+});
+
+app.post("/logout", (request) => {
+  request.getSession.destroy();
+  return json({ message: "Logged out" });
 });
 
 app.listen(PORT);

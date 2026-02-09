@@ -1,4 +1,4 @@
-import { TextParser } from "../../src/parsers";
+import { TextParser } from "@parsers/textParser";
 
 describe("TextParserTest", () => {
   let parser: TextParser;

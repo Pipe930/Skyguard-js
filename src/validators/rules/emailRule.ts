@@ -1,5 +1,5 @@
 import { BaseValidationRule } from "../core/validationRule";
-import { RuleOptions, ValidationContext, ValidationError } from "../types";
+import type { RuleOptions, ValidationContext, ValidationError } from "../types";
 
 /**
  * Regla que valida emails.

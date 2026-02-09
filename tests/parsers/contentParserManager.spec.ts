@@ -1,9 +1,9 @@
 import { IncomingMessage } from "node:http";
 import {
   ContentParserManager,
-  ContentParser,
-  MultipartData,
-} from "../../src/parsers";
+  type ContentParser,
+  type MultipartData,
+} from "@parsers/index";
 import { Readable } from "node:stream";
 
 function createMockReq(options: {

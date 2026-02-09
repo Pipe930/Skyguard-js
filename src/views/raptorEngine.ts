@@ -1,9 +1,9 @@
-import { View } from "./view";
+import type { View } from "./view";
 import { SimpleTemplateEngine } from "./templateEngine";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { FileNotExistsException } from "../exceptions";
-import { HelperFunction, TemplateContext } from "../types";
+import { FileNotExistsException } from "@exceptions/fileExistsException";
+import type { HelperFunction, TemplateContext } from "types";
 
 /**
  * Motor de vistas principal del framework.

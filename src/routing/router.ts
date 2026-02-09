@@ -1,6 +1,6 @@
-import { HashMapRouters, Middleware, RouteHandler } from "../types";
-import { Request, Response, HttpMethods } from "../http";
-import { HttpNotFoundException } from "../exceptions";
+import type { HashMapRouters, Middleware, RouteHandler } from "types";
+import { Request, Response, HttpMethods } from "@http/index";
+import { HttpNotFoundException } from "@exceptions/httpNotFoundException";
 import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
 

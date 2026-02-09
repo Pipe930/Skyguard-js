@@ -27,7 +27,7 @@ Actualmente, el enfoque principal está en el **manejo de rutas**, **estructura 
 ## 📦 Instalación
 
 ```bash
-npm install my-framework
+npm install raptor-js
 ```
 
 ---
@@ -35,8 +35,8 @@ npm install my-framework
 ## 🏁 Uso básico
 
 ```ts
-import { createApp } from "my-framework";
-import { text } from "my-framework/helpers";
+import { createApp } from "raptor-js";
+import { text } from "raptor-js/helpers";
 
 const app = createApp();
 
@@ -55,7 +55,7 @@ Las rutas se registran utilizando los metodos HTTP de la instancia app.
 
 ```ts
 app.get("/test/{param}", (request: Request) => {
-  return json(request.getlayerParameters());
+  return json(request.getParams());
 });
 
 app.post("/test", (request: Request) => {
@@ -84,8 +84,8 @@ app.group("/api", (group) => {
 Para registrar middlewares, tienes que crear una función que reciba como parametros un objeto `Request` y una función `next`, la cual se encarga de ejecutar el siguiente middleware o la ruta correspondiente. Luego, puedes registrar esa función como middleware global, para un grupo de rutas o para una ruta específica.
 
 ```ts
-import { Request, Response } from "my-framework/http";
-import { RouteHandler } from "my-framework/types";
+import { Request, Response } from "raptor-js/http";
+import { RouteHandler } from "raptor-js/types";
 
 const authMiddleware = async (
   request: Request,
@@ -122,7 +122,7 @@ app.get("/testMiddleware", (request: Request) =>
 Para validar los datos de una petición, tenemos una clase que se llama `ValidationSchema`, la cual se utiliza para definir un esquema de validación para los datos de una petición, y luego se puede utilizar ese esquema para validar los datos de la petición.
 
 ```ts
-import { ValidationSchema } from "my-framework/validation";
+import { ValidationSchema } from "raptor-js/validation";
 
 const userSchema = ValidationSchema.create()
   .field("name")
@@ -143,21 +143,17 @@ const userSchema = ValidationSchema.create()
   .build();
 
 app.post("/users", (request: Request) => {
-  const data = request.getData();
-  const validationResult = Validator.validateOrFail(
-    data as Record<string, unknown>,
-    userSchema,
-  );
+  const validationResult = request.validateData(userSchema);
   return json(validationResult);
 });
 ```
 
 ## 📄 Motor de Plantillas o Vistas
-Para poder utilizar el motor de plantillas del framework, debes utilizar el helper `view`, el cual recibe como primer parametro el nombre de la vista (archivo .html) y como segundo parametro un objeto con las variables que quieres pasar a la vista.
+Para poder utilizar el motor de plantillas del framework, debes utilizar el helper `render`, el cual recibe como primer parametro el nombre de la vista (archivo .html) y como segundo parametro un objeto con las variables que quieres pasar a la vista.
 
 ```ts
 app.get("/home", () => {
-  return view(
+  return render(
     "home", // nombre de la vista (archivo .html)
     {
       title: "Productos",
@@ -191,7 +187,7 @@ Por ahora el motor se encuentra en una etapa muy temprana de desarrollo, por lo 
 * EL framework aún no está completo.
 * No se encuentra en una versión 100% estable.
 * Muchas funcionalidades aún no están implementadas.
-* No se recomienda su uso en producción.
+* No se recomienda su uso en producción, por el momento.
 
 ---
 
@@ -205,7 +201,6 @@ Por ahora el motor se encuentra en una etapa muy temprana de desarrollo, por lo 
 * ORM y bases de datos
 * Autenticación y autorización
 * Sessiones y cookies
-* Sistema de plugins
 
 ---
 

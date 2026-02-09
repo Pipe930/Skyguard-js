@@ -1,4 +1,20 @@
-import { ContentDispositionException } from "../exceptions";
+import { ContentDispositionException } from "@exceptions/contentDispositionException";
+
+/**
+ * Opciones para la generación de Content-Disposition
+ */
+export interface ContentDispositionOptions {
+  /**
+   * Tipo de disposición
+   * @default 'attachment'
+   */
+  type?: "attachment" | "inline";
+
+  /**
+   * Fallback ASCII personalizado
+   */
+  fallback?: string;
+}
 
 /**
  * Genera headers Content-Disposition seguros para descargas de archivos
@@ -215,20 +231,4 @@ export class ContentDisposition {
 
     return { type, filename };
   }
-}
-
-/**
- * Opciones para la generación de Content-Disposition
- */
-export interface ContentDispositionOptions {
-  /**
-   * Tipo de disposición
-   * @default 'attachment'
-   */
-  type?: "attachment" | "inline";
-
-  /**
-   * Fallback ASCII personalizado
-   */
-  fallback?: string;
 }

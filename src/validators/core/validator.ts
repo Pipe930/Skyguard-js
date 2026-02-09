@@ -1,6 +1,10 @@
-import { ValidationException } from "../../exceptions";
-import { ValidationContext, ValidationError, ValidationResult } from "../types";
-import { FieldDefinition } from "./validationSchema";
+import { ValidationException } from "@exceptions/validationException";
+import type {
+  ValidationContext,
+  ValidationError,
+  ValidationResult,
+} from "../types";
+import type { FieldDefinition } from "./validationSchema";
 
 /**
  * Motor de validación del framework.

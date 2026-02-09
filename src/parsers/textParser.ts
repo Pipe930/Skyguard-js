@@ -1,4 +1,4 @@
-import { ContentParser } from "./contentParser";
+import type { ContentParser } from "./contentParser";
 
 /**
  * Parser para contenido de texto plano.

@@ -1,6 +1,6 @@
-import { TemplateContext } from "types";
-import { Response } from "../http";
-import { FileDownloadHelper } from "../static/fileDownload";
+import type { TemplateContext } from "types";
+import { Response } from "@http/response";
+import { FileDownloadHelper } from "@static/fileDownload";
 
 export function json<T>(data: T): Response {
   return Response.json(data);
@@ -26,7 +26,7 @@ export async function download(
 export async function render(
   view: string,
   params: TemplateContext,
-  layout: string,
+  layout?: string,
 ): Promise<Response> {
   return await Response.render(view, params, layout);
 }

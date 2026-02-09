@@ -1,6 +1,6 @@
-import { NodeHttpAdapter, Request, HttpMethods } from "../src/http";
+import { NodeHttpAdapter, Request, HttpMethods } from "@http/index";
 import { IncomingMessage, ServerResponse } from "node:http";
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 
 export const createRequestMock = async (
   url: string,

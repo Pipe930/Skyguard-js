@@ -1,4 +1,4 @@
-import { RuleOptions, ValidationContext, ValidationError } from "../types";
+import type { RuleOptions, ValidationContext, ValidationError } from "../types";
 import { BaseValidationRule } from "../core/validationRule";
 
 /**
