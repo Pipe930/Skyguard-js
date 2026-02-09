@@ -1,6 +1,6 @@
-import { ContentParserException } from "../exceptions";
-import { ContentParser } from "./contentParser";
-import { MultipartData, ParsedPart } from "./parserInterface";
+import { ContentParserException } from "@exceptions/contentParserException";
+import type { ContentParser } from "./contentParser";
+import type { MultipartData, ParsedPart } from "./parserInterface";
 
 /**
  * Parser para contenido multipart/form-data.

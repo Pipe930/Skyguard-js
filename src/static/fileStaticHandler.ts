@@ -1,7 +1,7 @@
 import { normalize, extname, basename, sep, resolve } from "node:path";
 import { readFile, stat } from "node:fs/promises";
 import { mimeTypesObject } from "./mimeTypes";
-import { Response } from "../http";
+import { Response } from "@http/response";
 
 export class StaticFileHandler {
   private publicPath = "";

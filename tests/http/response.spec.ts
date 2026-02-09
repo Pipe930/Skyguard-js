@@ -1,4 +1,4 @@
-import { Response } from "../../src/http";
+import { Response } from "@http/response";
 
 describe("ResponseTest", () => {
   it("should json response is constructed correctly", () => {

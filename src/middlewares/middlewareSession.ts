@@ -1,5 +1,5 @@
 import type { SessionStorage } from "../sessions/sessionStorage";
-import type { Middleware } from "../types";
+import type { Middleware } from "types";
 import type { CookieOptions } from "../sessions/cookieOptions";
 import { Session } from "../sessions/session";
 

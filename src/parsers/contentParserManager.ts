@@ -1,5 +1,5 @@
 import { IncomingMessage } from "node:http";
-import { ContentParser } from "./contentParser";
+import type { ContentParser } from "./contentParser";
 import { JsonParser } from "./jsonParser";
 import { MultipartParser } from "./multipartParser";
 import { TextParser } from "./textParser";

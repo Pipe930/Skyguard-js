@@ -1,5 +1,5 @@
-import { ContentParserException } from "../exceptions";
-import { ContentParser } from "./contentParser";
+import { ContentParserException } from "@exceptions/contentParserException";
+import type { ContentParser } from "./contentParser";
 
 /**
  * Parser de contenido XML.

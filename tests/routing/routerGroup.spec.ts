@@ -1,5 +1,5 @@
-import { RouteHandler } from "../../src/types";
-import { Layer, Router, RouterGroup } from "../../src/routing";
+import { RouteHandler } from "types";
+import { Layer, Router, RouterGroup } from "@routing/index";
 
 const testMiddlewareA = jest.fn();
 

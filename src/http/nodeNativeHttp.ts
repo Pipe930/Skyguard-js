@@ -1,9 +1,9 @@
 import { HttpMethods } from "./httpMethods";
 import { IncomingMessage, ServerResponse } from "node:http";
-import { HttpAdapter } from "./httpAdapter";
+import type { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
-import { ContentParserManager } from "../parsers";
+import { ContentParserManager } from "@parsers/contentParserManager";
 
 /**
  * Esta clase actúa como un *bridge* entre la API nativa de Node.js

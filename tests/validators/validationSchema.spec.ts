@@ -1,4 +1,4 @@
-import { ValidatorFieldException } from "../../src/exceptions";
+import { ValidatorFieldException } from "@exceptions/validationException";
 import {
   EmailRule,
   NumberRule,
@@ -6,7 +6,7 @@ import {
   StringRule,
   ValidationRule,
   ValidationSchema,
-} from "../../src/validators";
+} from "@validators/index";
 
 describe("ValidationSchemaTest", () => {
   it("should create a new ValidationSchema instance using create()", () => {

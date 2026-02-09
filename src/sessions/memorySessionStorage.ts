@@ -1,4 +1,4 @@
-import { SessionException } from "../exceptions";
+import { SessionException } from "@exceptions/sessionException";
 import type { SessionData, SessionStorage } from "./sessionStorage";
 import { randomBytes } from "node:crypto";
 

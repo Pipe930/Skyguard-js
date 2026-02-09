@@ -4,6 +4,7 @@
     "module": "commonjs",
     "baseUrl": "./src",
     "outDir": "./dist",
+    "rootDir": "./",
     "paths": {
       "@exceptions/*": ["exceptions/*"],
       "@helpers/*": ["helpers/*"],
@@ -31,7 +32,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*", "public/**/*"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "files": true

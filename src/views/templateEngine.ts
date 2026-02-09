@@ -1,8 +1,8 @@
-import { TemplateEngine } from "./view";
+import type { TemplateEngine } from "./view";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { HelpersManager } from "./helpersTemplate";
-import { HelperFunction, TemplateContext } from "../types";
+import type { HelperFunction, TemplateContext } from "types";
 
 /**
  * Motor de plantillas minimalista inspirado en Handlebars.

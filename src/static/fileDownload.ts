@@ -2,8 +2,8 @@ import { stat, readFile } from "node:fs/promises";
 import { resolve, basename, extname } from "node:path";
 import { mimeTypesObject } from "./mimeTypes";
 import { ContentDisposition } from "./contentDisposition";
-import { Response } from "../http";
-import { FileDownloadException } from "../exceptions";
+import { Response } from "@http/response";
+import { FileDownloadException } from "@exceptions/fileDownloadException";
 
 export class FileDownloadHelper {
   private contentDisposition: ContentDisposition;

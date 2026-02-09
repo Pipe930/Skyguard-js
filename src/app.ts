@@ -1,17 +1,17 @@
-import { Router, RouterGroup } from "./routing";
-import { HttpAdapter, HttpMethods, Response } from "./http";
+import { Router, RouterGroup } from "@routing/index";
+import { type HttpAdapter, HttpMethods, Response } from "@http/index";
 import {
   ContentParserException,
   HttpNotFoundException,
   SessionException,
   ValidationException,
-} from "./exceptions";
-import { Server, NodeServer } from "./server";
-import { View, RaptorEngine } from "./views";
+} from "@exceptions/index";
+import { NodeServer } from "@server/nodeNativeServer";
+import { type View, RaptorEngine } from "@views/index";
 import { join } from "node:path";
-import { singleton } from "./helpers";
-import { Middleware, RouteHandler } from "./types";
-import { StaticFileHandler } from "./static/fileStaticHandler";
+import { singleton } from "@helpers/app";
+import type { Middleware, RouteHandler } from "types";
+import { StaticFileHandler } from "@static/fileStaticHandler";
 
 /**
  * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
@@ -41,7 +41,7 @@ export class App {
    * Servidor subyacente responsable de aceptar conexiones
    * desde la plataforma de ejecución (Node, etc).
    */
-  private server: Server;
+  private server: NodeServer;
 
   /**
    * Motor de vistas responsable del renderizado de plantillas.

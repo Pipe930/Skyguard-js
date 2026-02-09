@@ -1,7 +1,7 @@
-import { Router } from "../../src/routing";
-import { Response, Request, HttpMethods } from "../../src/http";
+import { Router } from "@routing/router";
+import { Response, Request, HttpMethods } from "@http/index";
 import { createRequestMock } from "../utils";
-import { RouteHandler } from "../../src/types";
+import { RouteHandler } from "types";
 
 describe("RouterTest", () => {
   let router: Router;
