@@ -2,7 +2,7 @@ import type { TemplateEngine } from "./view";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { HelpersManager } from "./helpersTemplate";
-import type { HelperFunction, TemplateContext } from "types";
+import type { HelperFunction, TemplateContext } from "../types";
 
 /**
  * Motor de plantillas minimalista inspirado en Handlebars.
@@ -247,19 +247,16 @@ export class SimpleTemplateEngine implements TemplateEngine {
       : /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
 
     // Sin escape: {{{ variable }}}
-    template = template.replace(varPattern, (match: string, path: string) => {
+    template = template.replace(varPattern, (_, path: string) => {
       const value = this.resolveValue(path, context);
       return String(value ?? "");
     });
 
     // Con escape: {{ variable }}
-    template = template.replace(
-      escapedVarPattern,
-      (match: string, path: string) => {
-        const value = this.resolveValue(path, context);
-        return this.escapeHtml(String(value ?? ""));
-      },
-    );
+    template = template.replace(escapedVarPattern, (_, path: string) => {
+      const value = this.resolveValue(path, context);
+      return this.escapeHtml(String(value ?? ""));
+    });
 
     return template;
   }

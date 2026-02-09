@@ -1,6 +1,6 @@
 import { stat, readFile } from "node:fs/promises";
 import { normalize } from "node:path";
-import { StaticFileHandler } from "@static/fileStaticHandler";
+import { StaticFileHandler } from "../../src/static/fileStaticHandler";
 
 jest.mock("fs/promises", () => ({
   stat: jest.fn(),

@@ -1,4 +1,4 @@
-import { BaseValidationRule } from "../core/validationRule";
+import { BaseValidationRule } from "../validationRule";
 import type { RuleOptions, ValidationContext, ValidationError } from "../types";
 
 export interface NumberRuleOptions extends RuleOptions {

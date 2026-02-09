@@ -1,4 +1,4 @@
-import type { Middleware, RouteHandler } from "types";
+import type { Middleware, RouteHandler } from "../types";
 import { Router } from "./router";
 import { Layer } from "./layer";
 

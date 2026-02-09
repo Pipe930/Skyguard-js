@@ -3,7 +3,7 @@ import {
   ContentParserManager,
   type ContentParser,
   type MultipartData,
-} from "@parsers/index";
+} from "../../src/parsers/index";
 import { Readable } from "node:stream";
 
 function createMockReq(options: {

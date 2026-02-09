@@ -2,8 +2,8 @@ import {
   HelperArgumentException,
   HelperExecutionException,
   HelperNotFoundException,
-} from "@exceptions/helperExceptions";
-import type { HelperFunction, TemplateContext } from "types";
+} from "../exceptions/helperExceptions";
+import type { HelperFunction, TemplateContext } from "../types";
 
 /**
  * Gestor de helpers para el motor de plantillas.

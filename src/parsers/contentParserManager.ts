@@ -5,7 +5,7 @@ import { MultipartParser } from "./multipartParser";
 import { TextParser } from "./textParser";
 import { UrlEncodedParser } from "./urlEncodedParser";
 import { XmlParser } from "./xmlParser";
-import { ReadBodyException } from "../exceptions";
+import { ReadBodyException } from "../exceptions/contentParserException";
 
 /**
  * Gestor principal de parseo de contenido.

@@ -1,5 +1,5 @@
-import { JsonParser } from "@parsers/jsonParser";
-import { ContentParserException } from "@exceptions/contentParserException";
+import { JsonParser } from "../../src/parsers/jsonParser";
+import { ContentParserException } from "../../src/exceptions/contentParserException";
 
 describe("JsonParserTest", () => {
   let parser: JsonParser;

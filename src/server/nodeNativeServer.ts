@@ -1,6 +1,6 @@
 import { App } from "../app";
 import { createServer } from "node:http";
-import { NodeHttpAdapter } from "@http/nodeNativeHttp";
+import { NodeHttpAdapter } from "../http/nodeNativeHttp";
 
 /**
  * Esta clase representa el iniciador del servidor de NodeJS de manera

@@ -1,6 +1,6 @@
-import type { TemplateContext } from "types";
-import { Response } from "@http/response";
-import { FileDownloadHelper } from "@static/fileDownload";
+import type { TemplateContext } from "../types";
+import { Response } from "../http/response";
+import { FileDownloadHelper } from "../static/fileDownload";
 
 export function json<T>(data: T): Response {
   return Response.json(data);

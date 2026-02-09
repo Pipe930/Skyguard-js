@@ -1,4 +1,4 @@
-import type { RuleOptions, ValidationContext, ValidationError } from "../types";
+import type { RuleOptions, ValidationContext, ValidationError } from "./types";
 
 /**
  * Contrato base para todas las reglas de validación del framework.

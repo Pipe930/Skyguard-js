@@ -1,9 +1,9 @@
-import { ValidationException } from "@exceptions/validationException";
+import { ValidationException } from "../exceptions/validationException";
 import type {
   ValidationContext,
   ValidationError,
   ValidationResult,
-} from "../types";
+} from "./types";
 import type { FieldDefinition } from "./validationSchema";
 
 /**

@@ -1,5 +1,5 @@
-import { FileDownloadException } from "@exceptions/fileDownloadException";
-import { FileDownloadHelper } from "@static/fileDownload";
+import { FileDownloadException } from "../../src/exceptions/fileDownloadException";
+import { FileDownloadHelper } from "../../src/static/fileDownload";
 import { stat, readFile } from "node:fs/promises";
 import { resolve, extname, basename } from "node:path";
 

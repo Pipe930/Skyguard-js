@@ -1,17 +1,17 @@
-import type { RuleOptions } from "../types";
+import type { RuleOptions } from "./types";
 import type { ValidationRule } from "./validationRule";
 import {
   BooleanRule,
   DateRule,
-  DateRuleOptions,
+  type DateRuleOptions,
   EmailRule,
   NumberRule,
-  NumberRuleOptions,
+  type NumberRuleOptions,
   RequiredRule,
   StringRule,
-  StringRuleOptions,
-} from "../rules";
-import { ValidatorFieldException } from "@exceptions/validationException";
+  type StringRuleOptions,
+} from "./rules";
+import { ValidatorFieldException } from "../exceptions/validationException";
 
 /**
  * Definición de un campo en el schema.
