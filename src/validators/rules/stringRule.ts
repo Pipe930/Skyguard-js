@@ -10,7 +10,9 @@ export interface StringRuleOptions extends RuleOptions {
 }
 
 /**
- * Regla que valida strings.
+ * String validation rule.
+ *
+ * Validates that a value is a string.
  */
 export class StringRule extends BaseValidationRule {
   constructor() {

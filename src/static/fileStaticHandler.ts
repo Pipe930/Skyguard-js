@@ -3,6 +3,21 @@ import { readFile, stat } from "node:fs/promises";
 import { mimeTypesObject } from "./mimeTypes";
 import { Response } from "../http/response";
 
+/**
+ * Static file handler for a public directory.
+ *
+ * Resolves and serves files from a configured `publicPath` using a URL prefix
+ * derived from the directory name (e.g. `/public`).
+ *
+ * Includes basic path traversal protection and sets cache-related headers.
+ *
+ * @example
+ * const staticFiles = new StaticFileHandler("./public");
+ *
+ * // In your request pipeline:
+ * const response = await staticFiles.tryServeFile(request.getUrl);
+ * if (response) return response;
+ */
 export class StaticFileHandler {
   private publicPath = "";
   private urlPrefix = "";
@@ -15,29 +30,39 @@ export class StaticFileHandler {
   }
 
   /**
-   * Obtiene el prefijo URL configurado
+   * Returns the configured URL prefix.
    *
-   * @returns El prefijo de URL (ej: "/public")
+   * @returns URL prefix (e.g. `"/public"`)
    */
   public getUrlPrefix(): string {
     return this.urlPrefix;
   }
 
   /**
-   * Verifica si la petición coincide con el prefijo de archivos estáticos
+   * Checks whether the request path matches the static prefix.
    *
-   * @param requestPath - Ruta solicitada
-   * @returns true si la ruta comienza con el prefijo
+   * @param requestPath - Requested path
+   * @returns `true` if the path starts with the prefix
    */
   public matchesPrefix(requestPath: string): boolean {
     return requestPath.startsWith(this.urlPrefix);
   }
 
   /**
-   * Intenta servir un archivo estático de forma asíncrona
+   * Attempts to serve a static file.
    *
-   * @param requestPath - Ruta solicitada (ej: "/public/css/style.css")
-   * @returns Promise<Response> con el archivo o null si no existe
+   * Returns `null` if:
+   * - the request path does not match the prefix
+   * - the resolved path escapes the public directory
+   * - the file does not exist or is not a file
+   * - an I/O error occurs
+   *
+   * @param requestPath - Requested path (e.g. `"/public/css/style.css"`)
+   * @returns A {@link Response} containing the file, or `null` if not found
+   *
+   * @example
+   * const response = await staticFiles.tryServeFile("/public/app.js");
+   * if (response) return response;
    */
   public async tryServeFile(requestPath: string): Promise<Response | null> {
     try {
@@ -49,10 +74,10 @@ export class StaticFileHandler {
         relativePath.replace(/^[/\\]+/, ""),
       );
 
+      // Prevent path traversal (must stay within publicPath)
       if (!filePath.startsWith(this.publicPath + sep)) return null;
 
       const stats = await stat(filePath);
-
       if (!stats.isFile()) return null;
 
       const content = await readFile(filePath);
@@ -75,10 +100,12 @@ export class StaticFileHandler {
   }
 
   /**
-   * Verifica si una ruta podría ser un archivo estático
+   * Checks whether a request path looks like a static file request.
    *
-   * @param requestPath - Ruta solicitada
-   * @returns true si tiene extensión de archivo y coincide con el prefijo
+   * This is a fast heuristic: it requires a file extension and a known mime type.
+   *
+   * @param requestPath - Requested path
+   * @returns `true` if it looks like a static file request
    */
   public isStaticFileRequest(requestPath: string): boolean {
     if (!this.matchesPrefix(requestPath)) return false;

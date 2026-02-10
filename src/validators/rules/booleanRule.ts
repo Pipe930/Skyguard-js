@@ -2,7 +2,9 @@ import type { RuleOptions, ValidationContext, ValidationError } from "../types";
 import { BaseValidationRule } from "../validationRule";
 
 /**
- * Regla que valida booleanos.
+ * Boolean validation rule.
+ *
+ * Validates that a value is a boolean (`true` or `false`).
  */
 export class BooleanRule extends BaseValidationRule {
   constructor() {

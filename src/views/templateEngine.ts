@@ -5,35 +5,39 @@ import { HelpersManager } from "./helpersTemplate";
 import type { HelperFunction, TemplateContext } from "../types";
 
 /**
- * Motor de plantillas minimalista inspirado en Handlebars.
- * Permite renderizar vistas HTML dinámicas a partir de un contexto
- * de datos, soportando:
+ * Minimal template engine inspired by Handlebars.
  *
- * - Interpolación de variables: {{ variable }}
- * - Interpolación sin escape: {{{ variable }}}
- * - Condicionales: {{#if condition}} ... {{else}} ... {{/if}}
- * - Iteraciones: {{#each items}} ... {{/each}}
- * - Partials: {{> header}}
- * - Helpers personalizados: {{ helperName arg1 arg2 }}
+ * Renders HTML templates from a data context and supports:
+ * - Variable interpolation: `{{ variable }}`
+ * - Unescaped interpolation: `{{{ variable }}}`
+ * - Conditionals: `{{#if condition}} ... {{else}} ... {{/if}}`
+ * - Iteration: `{{#each items}} ... {{/each}}`
+ * - Partials: `{{> header}}`
+ * - Custom helpers: `{{ helperName arg1 arg2 }}`
  *
- * Está diseñado para ser un motor simple, sin dependencias externas,
- * orientado a frameworks HTTP ligeros.
+ * Designed as a lightweight, dependency-free engine for small HTTP frameworks.
+ *
+ * @example
+ * const engine = new SimpleTemplateEngine("./views");
+ *
+ * engine.registerHelper("upper", (value) => String(value).toUpperCase());
+ *
+ * const html = await engine.render(
+ *   "<h1>{{ upper title }}</h1>{{#if user}}<p>{{ user.name }}</p>{{/if}}",
+ *   { title: "hello", user: { name: "Felipe" } }
+ * );
  */
 export class SimpleTemplateEngine implements TemplateEngine {
-  /**
-   * Gestor de helpers del motor.
-   */
+  /** Helper registry for this engine. */
   private helpersManager: HelpersManager;
 
-  /**
-   * Directorio base donde se encuentran las vistas y partials.
-   */
+  /** Base directory where views and partials are stored. */
   private viewsDirectory: string;
 
   /**
-   * Crea una instancia del motor de plantillas.
+   * Creates a new template engine instance.
    *
-   * @param viewsDirectory Directorio raíz de las vistas.
+   * @param viewsDirectory - Root directory for views
    */
   constructor(viewsDirectory: string) {
     this.viewsDirectory = viewsDirectory;
@@ -41,18 +45,18 @@ export class SimpleTemplateEngine implements TemplateEngine {
   }
 
   /**
-   * Renderiza una plantilla aplicando un contexto de datos.
+   * Renders a template using the given context.
    *
-   * Pipeline de procesamiento:
-   * 1. Partials
-   * 2. Each (con if/helpers/interpolación internos)
-   * 3. If (globales)
-   * 4. Helpers (globales)
-   * 5. Interpolación (global)
+   * Processing pipeline:
+   * 1) Partials
+   * 2) Each blocks (with nested if/helpers/interpolation)
+   * 3) If blocks (global)
+   * 4) Helpers (global)
+   * 5) Interpolation (global)
    *
-   * @param template Contenido de la plantilla.
-   * @param context Datos para la vista.
-   * @returns HTML renderizado.
+   * @param template - Raw template content
+   * @param context - Template context data
+   * @returns Rendered HTML
    */
   public async render(
     template: string,
@@ -70,34 +74,24 @@ export class SimpleTemplateEngine implements TemplateEngine {
   }
 
   /**
-   * Registra un helper personalizado.
+   * Registers a custom helper.
    *
-   * @param name Nombre del helper.
-   * @param fn Función ejecutable del helper.
+   * @param name - Helper name
+   * @param fn - Helper function
    */
   public registerHelper(name: string, fn: HelperFunction): void {
     this.helpersManager.register(name, fn);
   }
 
   /**
-   * Obtiene el gestor de helpers (útil para testing o extensión).
+   * Exposes the helper manager (useful for testing or extension).
    *
-   * @returns Instancia del HelpersManager.
+   * @returns {@link HelpersManager} instance
    */
   public get getHelpersManager(): HelpersManager {
     return this.helpersManager;
   }
 
-  /**
-   * Procesa partials.
-   *
-   * @param template Template o vista a procesar
-   * @param context Variables locales del template
-   * @returns Devuelve el template renderizado con los helpers cargados
-   *
-   * @example
-   * Sintaxis: {{> partialName}}
-   */
   private async processPartials(
     template: string,
     context: TemplateContext,
@@ -126,15 +120,6 @@ export class SimpleTemplateEngine implements TemplateEngine {
     return result;
   }
 
-  /**
-   * Procesa bloques iterativos.
-   *
-   * @param template Template o vista a procesar
-   * @param context Variables locales del template
-   * @returns Devuelve el template renderizado con los helpers cargados
-   *
-   * Sintaxis: {{#each items}} ... {{/each}}
-   */
   private processEach(template: string, context: TemplateContext): string {
     const eachRegex =
       /\{\{#each\s+([a-zA-Z0-9_.]+)\s*\}\}([\s\S]*?)\{\{\/each\}\}/g;
@@ -143,7 +128,6 @@ export class SimpleTemplateEngine implements TemplateEngine {
       eachRegex,
       (match: string, arrayPath: string, content: string) => {
         const array = this.resolveValue(arrayPath, context);
-
         if (!Array.isArray(array)) return "";
 
         return array
@@ -158,7 +142,7 @@ export class SimpleTemplateEngine implements TemplateEngine {
 
             let itemContent = content;
 
-            // Pipeline dentro de each
+            // Pipeline inside each
             itemContent = this.processIf(itemContent, itemContext, true);
             itemContent = this.processHelpers(itemContent, itemContext);
             itemContent = this.processInterpolation(
@@ -174,13 +158,6 @@ export class SimpleTemplateEngine implements TemplateEngine {
     );
   }
 
-  /**
-   * Procesa condicionales globales.
-   *
-   * @param template Template o vista a procesar
-   * @param context Variables locales del template
-   * @returns Devuelve el template con los condicionales renderizados
-   */
   private processIf(
     template: string,
     context: TemplateContext,
@@ -194,19 +171,11 @@ export class SimpleTemplateEngine implements TemplateEngine {
       ifRegex,
       (condition: string, truthyContent: string, falsyContent: string = "") => {
         const value = this.resolveValue(condition, context);
-        const isTruthy = this.isTruthy(value);
-        return isTruthy ? truthyContent : falsyContent;
+        return this.isTruthy(value) ? truthyContent : falsyContent;
       },
     );
   }
 
-  /**
-   * Procesa helpers globales.
-   *
-   * @param template Template o vista a procesar
-   * @param context Variables locales del template
-   * @returns Devuelve el template con los helpers renderizados
-   */
   private processHelpers(template: string, context: TemplateContext): string {
     const helperRegex = /\{\{\s*([a-zA-Z0-9_]+)\s+([^}]+?)\s*\}\}/g;
 
@@ -225,34 +194,26 @@ export class SimpleTemplateEngine implements TemplateEngine {
     );
   }
 
-  /**
-   * Procesa interpolación de variables.
-   *
-   * @param template Template a procesar
-   * @param context Contexto de datos
-   * @param includeSpecialVars Si debe soportar variables especiales (@index, etc)
-   */
   private processInterpolation(
     template: string,
     context: TemplateContext,
     includeSpecialVars: boolean = false,
   ): string {
-    // Determinar el patrón de captura según el contexto
     const varPattern = includeSpecialVars
-      ? /\{\{\{\s*([a-zA-Z0-9_.@]+)\s*\}\}\}/g // Incluye @
-      : /\{\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}\}/g; // Sin @
+      ? /\{\{\{\s*([a-zA-Z0-9_.@]+)\s*\}\}\}/g
+      : /\{\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}\}/g;
 
     const escapedVarPattern = includeSpecialVars
       ? /\{\{\s*([a-zA-Z0-9_.@]+)\s*\}\}/g
       : /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g;
 
-    // Sin escape: {{{ variable }}}
+    // Unescaped: {{{ variable }}}
     template = template.replace(varPattern, (_, path: string) => {
       const value = this.resolveValue(path, context);
       return String(value ?? "");
     });
 
-    // Con escape: {{ variable }}
+    // Escaped: {{ variable }}
     template = template.replace(escapedVarPattern, (_, path: string) => {
       const value = this.resolveValue(path, context);
       return this.escapeHtml(String(value ?? ""));
@@ -261,13 +222,6 @@ export class SimpleTemplateEngine implements TemplateEngine {
     return template;
   }
 
-  /**
-   * Resuelve un path en el contexto.
-   *
-   * @param path Ruta del template a cargar
-   * @param context Variables locales del template
-   * @returns Devuelve la ruta o el path resuelto
-   */
   private resolveValue(path: string, context: TemplateContext): unknown {
     const parts = path.split(".");
     let value: unknown = context;
@@ -285,9 +239,6 @@ export class SimpleTemplateEngine implements TemplateEngine {
     return value;
   }
 
-  /**
-   * Determina si un valor es truthy.
-   */
   private isTruthy(value: unknown): boolean {
     if (value === false || value === null || value === undefined) return false;
     if (Array.isArray(value) && value.length === 0) return false;
@@ -296,10 +247,10 @@ export class SimpleTemplateEngine implements TemplateEngine {
   }
 
   /**
-   * Escapa caracteres HTML para prevenir XSS.
+   * Escapes HTML characters to mitigate XSS in `{{ ... }}` interpolation.
    *
-   * @param text Texto a renderizar
-   * @returns Devuelve el texto parseado o renderizado
+   * @param text - Raw text to escape
+   * @returns Escaped text
    */
   private escapeHtml(text: string): string {
     const map: Record<string, string> = {

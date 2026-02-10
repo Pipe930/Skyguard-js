@@ -1,9 +1,8 @@
 /**
- * Representa el resultado final del parsing de una petición
- * `multipart/form-data`.
+ * Represents the final result of parsing a `multipart/form-data` request.
  *
- * Es la estructura que consume el resto del framework
- * (controladores, validadores, etc).
+ * This is the structure consumed by the rest of the framework
+ * (controllers, validators, services, etc.).
  */
 export interface MultipartData {
   fields: Record<string, string>;
@@ -11,10 +10,10 @@ export interface MultipartData {
 }
 
 /**
- * Representa un archivo subido mediante `multipart/form-data`.
+ * Represents a file uploaded via `multipart/form-data`.
  *
- * Es una abstracción de alto nivel lista para ser consumida
- * por controladores y servicios de dominio.
+ * High-level abstraction ready to be consumed by controllers
+ * and domain services.
  */
 export interface UploadedFile {
   fieldName: string;
@@ -25,10 +24,12 @@ export interface UploadedFile {
 }
 
 /**
- * Representa una parte cruda parseada del body multipart.
+ * Represents a raw parsed multipart body part.
  *
- * Es una estructura interna usada por el parser
- * antes de mapear los datos al modelo de dominio (`MultipartData`).
+ * Internal structure used by the multipart parser before
+ * mapping data to the domain model ({@link MultipartData}).
+ *
+ * @internal
  */
 export interface ParsedPart {
   name: string;

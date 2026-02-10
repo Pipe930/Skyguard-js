@@ -2,7 +2,9 @@ import { BaseValidationRule } from "../validationRule";
 import type { RuleOptions, ValidationContext, ValidationError } from "../types";
 
 /**
- * Regla que valida emails.
+ * Email validation rule.
+ *
+ * Validates that a value is a valid email address.
  */
 export class EmailRule extends BaseValidationRule {
   private readonly emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

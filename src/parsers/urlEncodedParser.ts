@@ -1,8 +1,9 @@
 import type { ContentParser } from "./contentParser";
 
 /**
- * Parser para contenido URL-encoded.
- * Maneja: application/x-www-form-urlencoded
+ * URL-encoded form content parser.
+ *
+ * Handles `application/x-www-form-urlencoded` content types.
  */
 export class UrlEncodedParser implements ContentParser {
   public canParse(contentType: string): boolean {

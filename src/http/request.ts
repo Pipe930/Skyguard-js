@@ -5,37 +5,37 @@ import { Validator, FieldDefinition } from "../validators/index";
 import { Session } from "../sessions/session";
 
 /**
- * Esta clase representa el contrato de entrada del framework: todo controlador
- * y middleware recibe una instancia de Request ya normalizada.
+ * Represents an incoming client request within the framework.
  *
- * El objeto Request es construido por un HttpAdapter
- * (ej: NodeHttpAdapter) y enriquecido durante el pipeline.
+ * This class provides a normalized abstraction over the incoming
+ * HTTP request, independent of the underlying runtime.
  *
  * @example
  * app.get("/users/{id}", (request) => {
- *   const id = request.getlayerParameters("id");
+ *   const id = request.getParams("id");
  *   return Response.json({ id });
  * });
  */
 export class Request {
-  /** Ruta normalizada de la solicitud (ej: '/api/users/42') */
+  /** Normalized request path (e.g. "/api/users/42") */
   private url: string;
 
-  /** Capa de enrutamiento que resolvió esta solicitud */
+  /** Routing layer that resolved this request */
   private layer: Layer;
 
-  /** Cabeceras HTTP entrantes */
+  /** Incoming HTTP headers */
   private headers: Headers;
 
-  /** Método HTTP normalizado */
+  /** Normalized HTTP method */
   private method: HttpMethods;
 
-  /** Cuerpo de la petición (payload ya procesado) */
+  /** Parsed request body payload */
   private data: Record<string, any> = {};
 
-  /** Parámetros de params string */
+  /** Query string parameters */
   private query: Record<string, string> = {};
 
+  /** Session associated with the request */
   private session: Session;
 
   constructor(url: string) {
@@ -74,12 +74,17 @@ export class Request {
   }
 
   /**
-   * Obtiene parámetros de params string.
+   * Returns query string parameters.
+   *
+   * If no key is provided, all query parameters are returned.
+   *
+   * @param key - Optional query parameter name
+   * @returns A single value, all parameters, or `null` if not found
    *
    * @example
    * // URL: /users?page=2&limit=10
-   * request.getParams();        // { page: "2", limit: "10" }
-   * request.getParams("page"); // "2"
+   * request.getQueryParams();        // { page: "2", limit: "10" }
+   * request.getQueryParams("page"); // "2"
    */
   public getQueryParams(key: string = null): HttpValue {
     if (key === null) return this.query;
@@ -92,14 +97,20 @@ export class Request {
   }
 
   /**
-   * Obtiene parámetros dinámicos de la ruta (path params).
+   * Returns dynamic route parameters (path params).
+   *
+   * These parameters are resolved by the routing layer based on
+   * the matched route pattern.
+   *
+   * @param key - Optional parameter name
+   * @returns A single value, all parameters, or `null` if not found
    *
    * @example
-   * // Ruta: /users/{id}
-   * // URL:  /users/42
+   * // Route: /users/{id}
+   * // URL:   /users/42
    *
-   * request.getlayerParameters();      // { id: "42" }
-   * request.getlayerParameters("id");  // "42"
+   * request.getParams();     // { id: "42" }
+   * request.getParams("id"); // "42"
    */
   public getParams(key: string = null): HttpValue {
     const parameters = this.layer.parseParameters(this.url);
@@ -107,15 +118,6 @@ export class Request {
     return parameters[key] ?? null;
   }
 
-  /**
-   * Obtiene el cuerpo de la petición (body / payload).
-   *
-   * @example
-   * // POST /users
-   * // Body: { "name": "Felipe" }
-   *
-   * request.getData();        // { name: "Felipe" }
-   */
   public getData(): Record<string, unknown> {
     return this.data;
   }
@@ -133,6 +135,13 @@ export class Request {
     this.session = session;
   }
 
+  /**
+   * Validates the request payload against a validation schema.
+   *
+   * Throws if validation fails.
+   *
+   * @param schema - Validation rules mapped by field name
+   */
   public validateData(schema: Map<string, FieldDefinition>) {
     return Validator.validateOrFail(this.data, schema);
   }

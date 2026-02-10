@@ -1,134 +1,108 @@
 /**
- * Contrato para un almacenamiento de sesión síncrono.
+ * Contract for synchronous session storage implementations.
  *
- * Define las operaciones básicas para manejar una sesión
- * durante el ciclo de vida de una request HTTP.
+ * Defines the basic operations required to manage a session
+ * during the lifecycle of an HTTP request.
  *
- * Las implementaciones de esta interfaz son responsables de:
- * - Crear sesiones
- * - Cargar sesiones existentes
- * - Almacenar y recuperar datos
- * - Controlar la expiración y destrucción de la sesión
- *
- * Esta interfaz está pensada para drivers síncronos
- * (por ejemplo, almacenamiento en memoria).
+ * Intended for synchronous drivers (e.g. in-memory storage).
  */
 export interface SessionStorage {
   /**
-   * Carga una sesión existente a partir de su identificador.
+   * Loads an existing session by its identifier.
    *
-   * Si la sesión no existe o es inválida, la implementación
-   * debe lanzar una excepción o ignorar la carga según
-   * su política interna.
+   * If the session does not exist or is invalid, implementations
+   * may throw an exception or ignore the load according to
+   * their internal policy.
    *
-   * @param id Identificador único de la sesión.
+   * @param id - Unique session identifier
    */
   load(id: string): void;
 
   /**
-   * Inicia una nueva sesión.
+   * Starts a new session.
    *
-   * Si la sesión ya fue iniciada previamente, la implementación
-   * debe evitar recrearla.
+   * If the session is already active, implementations
+   * must avoid recreating it.
    */
   start(): void;
 
   /**
-   * Retorna el identificador de la sesión actual.
+   * Returns the identifier of the current session.
    *
-   * @returns El ID de la sesión activa.
+   * @returns Active session ID
    */
   id(): string;
 
   /**
-   * Obtiene un valor almacenado en la sesión.
+   * Retrieves a value from the session.
    *
-   * @param key Clave del valor a obtener.
-   * @param defaultValue Valor a retornar si la clave no existe.
-   *
-   * @returns El valor almacenado o el valor por defecto.
-   *
-   * @example
-   * ```ts
-   * const userId = session.get<number>("user_id");
-   * ```
+   * @param key - Value key
+   * @param defaultValue - Value returned if the key does not exist
+   * @returns Stored value or the default value
    */
   get<T = unknown>(key: string, defaultValue?: T): T;
 
   /**
-   * Almacena un valor en la sesión.
+   * Stores a value in the session.
    *
-   * Si la sesión aún no ha sido iniciada, la implementación
-   * debe iniciarla automáticamente.
+   * If the session has not been started yet, implementations
+   * must start it automatically.
    *
-   * @param key Clave bajo la cual se almacenará el valor.
-   * @param value Valor a almacenar.
-   *
-   * @example
-   * ```ts
-   * session.set("user_id", 1);
-   * ```
+   * @param key - Value key
+   * @param value - Value to store
    */
   set(key: string, value: unknown): void;
 
   /**
-   * Verifica si una clave existe en la sesión.
+   * Checks whether a key exists in the session.
    *
-   * @param key Clave a verificar.
-   *
-   * @returns `true` si la clave existe, `false` en caso contrario.
+   * @param key - Key to check
+   * @returns `true` if the key exists
    */
   has(key: string): boolean;
 
   /**
-   * Elimina un valor de la sesión.
+   * Removes a value from the session.
    *
-   * @param key Clave a eliminar.
+   * @param key - Key to remove
    */
   remove(key: string): void;
 
   /**
-   * Destruye completamente la sesión.
+   * Completely destroys the session.
    *
-   * Elimina todos los datos asociados y
-   * la invalida para futuras requests.
+   * Removes all associated data and invalidates the session
+   * for subsequent requests.
    */
   destroy(): void;
 }
 
 /**
- * Representa los datos internos de una sesión persistida.
+ * Internal representation of persisted session data.
  *
- * Esta estructura es utilizada por los `SessionStorage`
- * para almacenar el estado de la sesión en el servidor.
+ * Used by {@link SessionStorage} implementations to store
+ * session state on the server.
  *
- * No debe ser expuesta directamente al usuario del framework.
+ * @internal
  */
 export interface SessionData {
-  /**
-   * Datos almacenados en la sesión.
-   *
-   * Las claves y valores son definidos por la aplicación.
-   */
+  /** Data stored in the session. */
   data: Record<string, unknown>;
 
-  /**
-   * Timestamp (en milisegundos) que indica
-   * cuándo la sesión expira.
-   */
+  /** Expiration timestamp in milliseconds. */
   expiresAt: number;
 }
 
 /**
- * Contrato para un almacenamiento de sesión asíncrono SessionStorage.
+ * Contract for asynchronous session storage implementations.
  *
- * Define las mismas operaciones que {@link SessionStorage},
- * pero orientadas a drivers asíncronos como:
- * - Filesystem
- * - Base de datos
+ * Defines the same operations as {@link SessionStorage},
+ * but intended for asynchronous drivers such as:
+ * - filesystem
+ * - databases
  * - Redis
  *
- * Todas las operaciones retornan Promises.
+ * All operations return Promises.
  */
 export interface AsyncSessionStorage {
   start(): Promise<void>;

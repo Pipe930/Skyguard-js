@@ -1,72 +1,64 @@
 import type { SessionStorage } from "./sessionStorage";
 
 /**
- * Representa una sesión activa asociada a una request HTTP.
+ * Represents an active session associated with an HTTP request.
  *
- * Esta clase actúa como un *facade* sobre una implementación
- * de {@link SessionStorage}, exponiendo una API simple y fluida
- * para interactuar con los datos de sesión.
+ * Acts as a facade over a {@link SessionStorage} implementation,
+ * exposing a simple and fluent API to interact with session data.
  *
- * Todas esas responsabilidades pertenecen al `SessionStorage`
- * y al middleware de sesión.
+ * Storage concerns (persistence, expiration, loading) are handled
+ * by the `SessionStorage` and the session middleware.
  */
 export class Session {
   /**
-   * Crea una nueva instancia de `Session`.
+   * Creates a new `Session` instance.
    *
-   * Esta clase es instanciada internamente por el middleware
-   * de sesión y no debería ser creada manualmente por
-   * el usuario del framework.
+   * This class is instantiated internally by the session middleware
+   * and should not be created manually by framework users.
    *
-   * @param sessionStorage Implementación concreta de {@link SessionStorage}
-   * responsable del manejo interno de la sesión.
+   * @param sessionStorage - Concrete {@link SessionStorage} implementation
+   * responsible for managing the session lifecycle
    */
   constructor(private sessionStorage: SessionStorage) {
     this.sessionStorage = sessionStorage;
   }
 
   /**
-   * Retorna el identificador único de la sesión actual.
+   * Returns the unique identifier of the current session.
    *
-   * @returns El ID de la sesión.
+   * @returns Session ID
    */
   public id(): string {
     return this.sessionStorage.id();
   }
 
   /**
-   * Obtiene un valor almacenado en la sesión.
+   * Retrieves a value stored in the session.
    *
-   * @param key Clave del valor a obtener.
-   * @param defaultValue Valor a retornar si la clave no existe.
-   *
-   * @returns El valor almacenado o el valor por defecto.
+   * @param key - Value key
+   * @param defaultValue - Value returned if the key does not exist
+   * @returns Stored value or the default value
    *
    * @example
-   * ```ts
    * const userId = session.get<number>("user_id");
-   * ```
    */
   public get<T = unknown>(key: string, defaultValue?: T): T {
     return this.sessionStorage.get(key, defaultValue);
   }
 
   /**
-   * Almacena un valor en la sesión.
+   * Stores a value in the session.
    *
-   * Este método soporta *method chaining*.
+   * Supports method chaining.
    *
-   * @param key Clave bajo la cual se almacenará el valor.
-   * @param value Valor a almacenar.
-   *
-   * @returns La instancia actual de `Session`.
+   * @param key - Value key
+   * @param value - Value to store
+   * @returns The current {@link Session} instance
    *
    * @example
-   * ```ts
    * session
    *   .set("user_id", 1)
    *   .set("role", "admin");
-   * ```
    */
   public set(key: string, value: unknown): this {
     this.sessionStorage.set(key, value);
@@ -74,29 +66,22 @@ export class Session {
   }
 
   /**
-   * Verifica si una clave existe en la sesión.
+   * Checks whether a key exists in the session.
    *
-   * @param key Clave a verificar.
-   *
-   * @returns `true` si la clave existe, `false` en caso contrario.
+   * @param key - Key to check
+   * @returns `true` if the key exists
    */
   public has(key: string): boolean {
     return this.sessionStorage.has(key);
   }
 
   /**
-   * Elimina un valor de la sesión.
+   * Removes a value from the session.
    *
-   * Este método soporta *method chaining*.
+   * Supports method chaining.
    *
-   * @param key Clave a eliminar.
-   *
-   * @returns La instancia actual de `Session`.
-   *
-   * @example
-   * ```ts
-   * session.remove("flash_message");
-   * ```
+   * @param key - Key to remove
+   * @returns The current {@link Session} instance
    */
   public remove(key: string): this {
     this.sessionStorage.remove(key);
@@ -104,19 +89,12 @@ export class Session {
   }
 
   /**
-   * Destruye completamente la sesión actual.
+   * Completely destroys the current session.
    *
-   * Elimina todos los datos asociados y
-   * la invalida para futuras requests.
+   * Removes all associated data and invalidates the session
+   * for subsequent requests.
    *
-   * Este método soporta *method chaining*.
-   *
-   * @returns La instancia actual de `Session`.
-   *
-   * @example
-   * ```ts
-   * session.destroy();
-   * ```
+   * @returns The current {@link Session} instance
    */
   public destroy(): this {
     this.sessionStorage.destroy();

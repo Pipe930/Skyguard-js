@@ -3,11 +3,11 @@ import { Layer } from "../routing/layer";
 import { IncomingHttpHeaders } from "node:http";
 
 /**
- * Función controladora de una ruta.
+ * Route controller function.
  *
- * Representa el *endpoint final* dentro del pipeline de ejecución:
- * recibe una {@link Request} ya normalizada y debe retornar
- * obligatoriamente una {@link Response}.
+ * Represents the final endpoint in the execution pipeline.
+ * Receives a normalized {@link Request} and must return
+ * a {@link Response}.
  *
  * @example
  * const handler: RouteHandler = (req) => {
@@ -17,12 +17,12 @@ import { IncomingHttpHeaders } from "node:http";
 export type RouteHandler = (request: Request) => Promise<Response> | Response;
 
 /**
- * Estructura de almacenamiento de todas las rutas del framework.
+ * Internal routing table structure.
  *
- * Mapa indexado por método HTTP donde cada clave contiene
- * una lista ordenada de clases {@link Layer}.
+ * Map indexed by HTTP method where each key contains
+ * an ordered list of {@link Layer} instances.
  *
- * La estructura resultante es:
+ * Resulting shape:
  *
  * {
  *   GET:   [Layer, Layer, ...],
@@ -31,73 +31,71 @@ export type RouteHandler = (request: Request) => Promise<Response> | Response;
  *   ...
  * }
  *
- * Se define como {@link Partial} porque no todos los métodos
- * deben estar presentes necesariamente.
- *
- * Este tipo actúa como el *routing table* interno del framework.
+ * Defined as {@link Partial} because not all HTTP methods
+ * must be present.
  */
 export type HashMapRouters = Partial<Record<HttpMethods, Layer[]>>;
 
 /**
- * Representación tipada de los headers HTTP entrantes.
+ * Typed representation of incoming HTTP headers.
  *
- * Alias directo de {@link IncomingHttpHeaders} de Node.js,
- * utilizado para desacoplar el dominio del framework
- * de la implementación concreta del runtime.
+ * Direct alias of Node.js `IncomingHttpHeaders`,
+ * used to decouple the framework domain from
+ * the underlying runtime implementation.
  */
 export type Headers = IncomingHttpHeaders;
 
 /**
- * Tipo genérico para valores HTTP serializables.
+ * Generic type for HTTP-serializable values.
  *
- * Representa cualquier valor válido que pueda ser:
- * - Serializado como JSON.
- * - Enviado como texto plano.
- * - O explícitamente nulo.
+ * Represents any value that can be:
+ * - Serialized as JSON
+ * - Sent as plain text
+ * - Explicitly null
  *
- * Usado principalmente en:
- * - Bodies de respuesta.
- * - Payloads dinámicos.
+ * Commonly used for:
+ * - Response bodies
+ * - Dynamic payloads
  */
 export type HttpValue = Record<string, unknown> | string | null;
 
 /**
- * Función helper para motores de plantillas.
+ * Helper function type for template engines.
  *
- * Representa una función utilitaria invocable desde
- * una vista (template) para transformar datos.
+ * Represents a utility function callable from
+ * within a template to transform data.
  *
  * @example
  * engine.registerHelper("upper", (value) =>
  *   String(value).toUpperCase()
  * );
  *
- * Uso en template:
- * {{ upper name }}
+ * // Template usage:
+ * // {{ upper name }}
  */
 export type HelperFunction = (...args: unknown[]) => string;
 
 /**
- * Contexto de datos pasado a una vista.
+ * Data context passed to a view.
  *
- * Mapa clave-valor que representa el *ViewModel*
- * consumido por el motor de plantillas.
+ * Key-value map representing the ViewModel
+ * consumed by the template engine.
  *
- * Actúa como una abstracción genérica del modelo
- * en el patrón MVC.
+ * Acts as a generic abstraction of the model
+ * in the MVC pattern.
  */
 export type TemplateContext = Record<string, unknown>;
 
 /**
- * Tipo genérico para constructores de clases.
+ * Generic constructor type.
  *
- * Representa cualquier clase instanciable
- * mediante el operador `new`.
+ * Represents any instantiable class
+ * using the `new` operator.
  *
- * Usado principalmente en:
- * - Contenedores de dependencias.
- * - Factories.
- * - IoC / Service Locator.
+ * Commonly used in:
+ * - Dependency containers
+ * - Factories
+ * - IoC / Service Locator patterns
  *
  * @example
  * function resolve<T>(ctor: Constructor<T>): T {
@@ -107,24 +105,23 @@ export type TemplateContext = Record<string, unknown>;
 export type Constructor<T = unknown> = new (...args: unknown[]) => T;
 
 /**
- * Representa un middleware del framework.
+ * Framework middleware function.
  *
- * Un middleware es una función que intercepta el ciclo de vida
- * de una request HTTP antes y después de que llegue al handler final.
+ * A middleware intercepts the HTTP request lifecycle
+ * before and after it reaches the final route handler.
  *
- * El middleware puede ser síncrono o asíncrono.
+ * Can be synchronous or asynchronous.
  *
- * @param request Instancia de {@link Request} que representa la request HTTP actual.
- * @param next Función que ejecuta el siguiente middleware o el handler de la ruta.
- *
- * @returns Una {@link Response} o una Promise que resuelve en {@link Response}.
+ * @param request - Current {@link Request} instance
+ * @param next - Function that executes the next middleware
+ * or the route handler
+ * @returns A {@link Response} or a Promise resolving to {@link Response}
  *
  * @example
  * const loggerMiddleware: Middleware = async (request, next) => {
  *   console.log(request.getMethod, request.getUrl);
  *
  *   const response = await next(request);
- *
  *   return response;
  * };
  *

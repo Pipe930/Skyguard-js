@@ -8,7 +8,9 @@ export interface DateRuleOptions extends RuleOptions {
 }
 
 /**
- * Regla que valida fechas.
+ * Date validation rule.
+ *
+ * Validates that a value represents a valid date.
  */
 export class DateRule extends BaseValidationRule {
   constructor() {

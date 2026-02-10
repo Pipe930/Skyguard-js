@@ -1,37 +1,42 @@
 import type { Constructor } from "../types";
 
 /**
- * Contenedor de Inyección de Dependencias.
+ * Dependency Injection container.
  *
- * Gestiona instancias singleton de clases, asegurando que solo
- * exista una instancia de cada clase registrada en toda la aplicación.
+ * Stores and resolves application-wide singletons by constructor reference.
  *
  * @example
- * // Registrar y obtener un singleton
+ * class App {}
+ *
+ * // Create (or return) the singleton instance
  * const app = Container.singleton(App);
  *
- * // Resolver una instancia existente
- * const resolvedApp = Container.resolve(App);
+ * // Resolve an already-registered singleton
+ * const resolved = Container.resolve(App);
  */
 export class Container {
   /**
-   * Almacena las instancias singleton indexadas por el constructor de la clase.
+   * Singleton instances indexed by class constructor.
+   *
+   * @internal
    */
   private static instances = new Map<Constructor, any>();
 
   /**
-   * Obtiene o crea una instancia singleton de la clase especificada.
+   * Get or create a singleton instance for the given class.
    *
-   * Si la instancia ya existe, la devuelve.
-   * Si no existe, crea una nueva instancia, la almacena y la devuelve.
+   * If no instance exists yet, the container will instantiate the class with
+   * `new classConstructor()` (no constructor arguments) and cache it.
    *
-   * @template T - Tipo de la clase a instanciar
-   * @param classConstructor - Constructor de la clase
-   * @returns Devuelve una instancia singleton de la clase
+   * @typeParam T - Instance type produced by the constructor
+   * @param classConstructor - Class constructor used as the registration key
+   * @returns The singleton instance for the given class
    *
    * @example
    * class Database {
-   *   connect() { console.log('Connected'); }
+   *   connect() {
+   *     console.log("Connected");
+   *   }
    * }
    *
    * const db1 = Container.singleton(Database);
@@ -48,17 +53,18 @@ export class Container {
   }
 
   /**
-   * Resuelve una instancia singleton previamente registrada.
+   * Resolve a previously created singleton instance.
    *
-   * @template T - Tipo de la clase a resolver
-   * @param classConstructor - Constructor de la clase
-   * @returns Devuelve una instancia si existe o null si no está registrada
+   * This method does not create instances. If the class was never registered
+   * via {@link Container.singleton}, it returns `null`.
+   *
+   * @typeParam T - Instance type produced by the constructor
+   * @param classConstructor - Class constructor used as the registration key
+   * @returns The singleton instance, or `null` if it is not registered
    *
    * @example
    * const db = Container.resolve(Database);
-   * if (db) {
-   *   db.connect();
-   * }
+   * if (db) db.connect();
    */
   public static resolve<T>(classConstructor: Constructor<T>): T | null {
     return (this.instances.get(classConstructor) as T) ?? null;

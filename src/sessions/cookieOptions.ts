@@ -1,17 +1,13 @@
 /**
- * Opciones de configuración para cookies de sesión.
+ * Session cookie configuration options.
  *
- * Esta interfaz define los atributos que controlan
- * el comportamiento y la seguridad de la cookie enviada
- * al cliente.
- *
- * Todas las opciones son opcionales. Si no se proveen,
- * el framework aplicará valores por defecto seguros.
+ * Defines attributes that control the behavior and security
+ * of the session cookie sent to the client.
  *
  * @example
  * const options: CookieOptions = {
  *   cookieName: "session_id",
- *   maxAge: 60 * 60 * 24, // 1 día
+ *   maxAge: 60 * 60 * 24, // 1 day
  *   httpOnly: true,
  *   secure: true,
  *   sameSite: "Lax",
@@ -20,64 +16,60 @@
  */
 export interface CookieOptions {
   /**
-   * Nombre de la cookie.
+   * Cookie name.
    *
-   * Se utiliza para identificar la cookie de sesión
-   * en el cliente.
+   * Used to identify the session cookie on the client.
    *
    * @default "session_id"
    */
   cookieName?: string;
 
   /**
-   * Tiempo de vida de la cookie en segundos.
+   * Cookie lifetime in seconds.
    *
-   * Indica cuánto tiempo el navegador debe conservar
-   * la cookie antes de eliminarla automáticamente.
+   * Determines how long the browser should keep the cookie
+   * before automatically removing it.
    *
-   * @default 86400 (1 día)
+   * @default 86400 (1 day)
    */
   maxAge?: number;
 
   /**
-   * Indica si la cookie debe ser inaccesible desde JavaScript.
+   * Indicates whether the cookie is inaccessible from JavaScript.
    *
-   * Cuando está habilitado, la cookie no puede ser leída
-   * mediante `document.cookie`, lo que ayuda a mitigar
-   * ataques XSS.
+   * When enabled, the cookie cannot be read via `document.cookie`,
+   * helping mitigate XSS attacks.
    *
    * @default true
    */
   httpOnly?: boolean;
 
   /**
-   * Indica si la cookie solo debe enviarse sobre HTTPS.
+   * Indicates whether the cookie should only be sent over HTTPS.
    *
-   * Debe habilitarse en producción cuando se usa HTTPS
-   * para prevenir la exposición de la cookie en conexiones
-   * no seguras.
+   * Should be enabled in production when using HTTPS to prevent
+   * cookie exposure over insecure connections.
    *
    * @default false
    */
   secure?: boolean;
 
   /**
-   * Controla cuándo el navegador envía la cookie
-   * en requests cross-site.
+   * Controls when the browser sends the cookie in cross-site requests.
    *
-   * - "Strict": solo se envía en requests same-site.
-   * - "Lax": se envía en navegación de primer nivel (default recomendado).
-   * - "None": se envía siempre (requiere `secure: true`).
+   * - `"Strict"`: sent only in same-site requests
+   * - `"Lax"`: sent in top-level navigation (recommended default)
+   * - `"None"`: always sent (requires `secure: true`)
    *
    * @default "Lax"
    */
   sameSite?: "Strict" | "Lax" | "None";
 
   /**
-   * Ruta para la cual la cookie es válida.
+   * Path for which the cookie is valid.
    *
-   * La cookie solo será enviada por el navegador
-   * en requests cuya URL coincida con esta ruta.
+   * The cookie is only sent for requests whose URL
+   * matches this path.
    *
    * @default "/"
    */

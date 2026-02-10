@@ -2,8 +2,9 @@ import { ContentParserException } from "../exceptions/contentParserException";
 import type { ContentParser } from "./contentParser";
 
 /**
- * Parser para contenido JSON.
- * Maneja: application/json, application/*+json
+ * JSON content parser.
+ *
+ * Handles `application/json` and `application/*+json` content types.
  */
 export class JsonParser implements ContentParser {
   public canParse(contentType: string): boolean {

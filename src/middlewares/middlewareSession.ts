@@ -6,20 +6,19 @@ import {
 import type { Middleware } from "../types";
 
 /**
- * Tipo que representa un constructor de `SessionStorage`.
+ * Constructor type for `SessionStorage` implementations.
  *
- * Permite inyectar dinámicamente distintas implementaciones
- * de almacenamiento de sesiones (memory, file, redis, etc).
+ * Allows injecting different session storage strategies
+ * (memory, file, redis, etc.).
  */
 type SessionStorageConstructor<T extends SessionStorage = SessionStorage> =
   new (...args: any[]) => T;
 
 /**
- * Parsea el header `Cookie` y lo convierte en un objeto clave/valor.
+ * Parses the `Cookie` header into a key/value object.
  *
- * @param cookieHeader Valor del header `Cookie`.
- *
- * @returns Objeto con las cookies parseadas.
+ * @param cookieHeader - Raw `Cookie` header value
+ * @returns Parsed cookies
  *
  * @example
  * parseCookies("foo=bar; session_id=abc123");
@@ -36,12 +35,11 @@ function parseCookies(cookieHeader: string | null): Record<string, string> {
 }
 
 /**
- * Construye el valor del header `Set-Cookie` para la sesión.
+ * Builds the `Set-Cookie` header value for the session.
  *
- * @param sessionId Identificador de la sesión.
- * @param config Configuración completa de la cookie.
- *
- * @returns String listo para ser usado en `Set-Cookie`.
+ * @param sessionId - Session identifier
+ * @param config - Fully resolved cookie configuration
+ * @returns Value ready to be used in `Set-Cookie`
  *
  * @example
  * buildSessionCookie("abc123", config);
@@ -65,29 +63,19 @@ function buildSessionCookie(
 }
 
 /**
- * Middleware encargado de gestionar el ciclo de vida de la sesión.
+ * Session lifecycle middleware implementation.
  *
- * Responsabilidades:
- * - Leer la cookie de sesión desde el request
- * - Inicializar el storage correspondiente
- * - Cargar o crear la sesión
- * - Inyectar la sesión en el request
- * - Persistir la sesión en la response mediante cookies
- *
- * Este middleware es agnóstico al tipo de storage utilizado.
- *
- * @param StorageClass Clase que implementa `SessionStorage`.
- * @param options Opciones de configuración de la cookie de sesión.
- *
- * @returns Middleware de sesión.
+ * @param StorageClass - `SessionStorage` implementation
+ * @param options - Session cookie configuration
+ * @returns Session middleware
  *
  * @example
- * app.use(
+ * app.middlewares([
  *   sessionMiddleware(MemorySessionStorage, {
  *     cookieName: "sid",
  *     maxAge: 86400,
- *   })
- * );
+ *   }),
+ * ]);
  */
 export function sessionMiddleware(
   StorageClass: SessionStorageConstructor,
@@ -107,17 +95,17 @@ export function sessionMiddleware(
     const cookies = parseCookies(request.getHeaders["cookie"] || "");
     const sessionId = cookies[config.cookieName];
 
-    const newStorage = new StorageClass(options.maxAge || timeMaxAge);
+    const storage = new StorageClass(options.maxAge || timeMaxAge);
 
-    if (sessionId) newStorage.load(sessionId);
+    if (sessionId) storage.load(sessionId);
 
-    const session = new Session(newStorage);
+    const session = new Session(storage);
     request.setSession(session);
 
     const response = await next(request);
 
-    if (newStorage.id() !== null) {
-      const cookieValue = buildSessionCookie(newStorage.id(), config);
+    if (storage.id() !== null) {
+      const cookieValue = buildSessionCookie(storage.id(), config);
       response.setHeader("Set-Cookie", cookieValue);
     }
 

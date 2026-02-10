@@ -9,7 +9,9 @@ export interface NumberRuleOptions extends RuleOptions {
 }
 
 /**
- * Regla que valida números.
+ * Numeric validation rule.
+ *
+ * Validates that a value is a number.
  */
 export class NumberRule extends BaseValidationRule {
   constructor() {

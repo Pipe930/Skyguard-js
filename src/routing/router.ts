@@ -5,35 +5,34 @@ import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
 
 /**
- * Clase que representa el sistema central de enrutamiento del framework
+ * Central routing system of the framework.
+ *
+ * Registers routes by HTTP method, resolves the matching {@link Layer},
+ * and executes the route handler with middleware support (onion model).
  *
  * @example
  * const router = new Router();
- * router.get('/users/{id}', (req) => new Response({ userId: req.params.id }))
- *       .setMiddlewares([AuthMiddleware]);
+ *
+ * router.setPrefix("/api");
+ * router.middlewares([LoggerMiddleware]);
+ *
+ * router.get("/users/{id}", (req) => {
+ *   const id = req.getParams("id");
+ *   return Response.json({ id });
+ * }, [AuthMiddleware]);
  */
 export class Router {
-  /**
-   * Mapa de rutas organizadas por método HTTP
-   * Estructura: { 'GET': [Layer, Layer], 'POST': [Layer], ... }
-   */
+  /** Routes organized by HTTP method */
   private routes: HashMapRouters = Object.create(null) as HashMapRouters;
 
-  /**
-   * Middlewares globales que se ejecutan en todas las rutas
-   */
+  /** Global middlewares executed for every route */
   private globalMiddlewares: Middleware[] = [];
 
-  /**
-   * Prefijo global para todas las rutas
-   */
+  /** Global prefix applied to all routes */
   private globalPrefix = "";
 
   /**
-   * Inicializa el router creando arrays vacíos para cada método HTTP
-   *
-   * Prepara la estructura: { GET: [], POST: [], PUT: [], PATCH: [], DELETE: [] }
-   * Esto permite agregar rutas sin verificar si el array existe
+   * Creates a new router and initializes the internal route map.
    */
   constructor() {
     for (const method of Object.values(HttpMethods)) {
@@ -42,80 +41,67 @@ export class Router {
   }
 
   /**
-   * Busca el Layer o ruta registrada que coincide con la URL y método de la petición
+   * Finds the registered {@link Layer} that matches the request method and URL.
    *
-   * @param request - Objeto de petición HTTP entrante
-   * @returns Devuelve una clase Layer que coincide con la ruta
-   * @throws HttpNotFoundException - Si ninguna ruta coincide
+   * @param request - Incoming framework request
+   * @returns The matching {@link Layer}
+   * @throws {HttpNotFoundException} If no route matches
    *
    * @example
-   * // Asumiendo router.get('/users/{id}', handler)
-   * const request = new Request('GET', '/users/42');
-   * const layer = router.resolveLayer(request); // Retorna el Layer de /users/{id}
+   * // assuming: router.get("/users/{id}", handler)
+   * const layer = router.resolveLayer(request);
    */
   public resolveLayer(request: Request): Layer {
     const routes = this.routes[request.getMethod];
 
     for (const route of routes) {
-      if (route.matches(request.getUrl)) {
-        return route;
-      }
+      if (route.matches(request.getUrl)) return route;
     }
 
     throw new HttpNotFoundException();
   }
 
   /**
-   * Resuelve y ejecuta completamente una petición HTTP
+   * Resolves and executes a request.
    *
-   * Flujo completo:
-   * 1. Encuentra el Layer correspondiente (resolveLayer)
-   * 2. Inyecta el Layer en la Request para acceso a parámetros
-   * 3. Si hay middlewares, los ejecuta en cadena
-   * 4. Finalmente ejecuta el handler/action principal
+   * Flow:
+   * 1) Resolves the matching layer
+   * 2) Attaches the layer to the request (enables path params)
+   * 3) Runs global + route middlewares (if any)
+   * 4) Executes the final route handler
    *
-   * @param request - Petición HTTP a procesar
-   * @returns Devuelve un response del handler o middleware
+   * @param request - Request to process
+   * @returns The handler/middleware response (sync or async)
    *
    * @example
-   * const request = new Request('POST', '/users');
-   * const response = router.resolve(request);
+   * const response = await router.resolve(request);
    */
   public resolve(request: Request): Promise<Response> | Response {
     const layer = this.resolveLayer(request);
     request.setLayer(layer);
-    const action = layer.getAction;
 
+    const action = layer.getAction;
     const allMiddlewares = [...this.globalMiddlewares, ...layer.getMiddlewares];
 
-    if (allMiddlewares.length > 0)
+    if (allMiddlewares.length > 0) {
       return this.runMiddlewares(request, allMiddlewares, action);
+    }
 
     return action(request);
   }
 
   /**
-   * Ejecuta la cadena de middlewares de forma recursiva
+   * Runs a middleware chain using the onion model.
    *
-   * Patrón de ejecución:
-   * - Cada middleware recibe el request y una función "next"
-   * - "next" ejecuta el siguiente middleware en la cadena
-   * - Cuando no quedan middlewares, ejecuta el handler final (target)
+   * Each middleware receives `(request, next)` and can run code
+   * before/after calling `next()`.
    *
-   * NOTA: Implementa el patrón "onion model" (modelo cebolla) donde cada
-   * middleware puede ejecutar código antes y después de llamar a next()
+   * @param request - Incoming request
+   * @param middlewares - Remaining middlewares to execute
+   * @param target - Final route handler
+   * @returns The response returned by a middleware or the final handler
    *
-   * @param request - Petición HTTP
-   * @param middlewares - Array de middlewares restantes por ejecutar
-   * @param target - Handler final a ejecutar después de todos los middlewares
-   * @returns Devuelve un response del handler o de algún middleware que corte la cadena
-   *
-   * @example
-   * Cadena: [AuthMiddleware, LoggerMiddleware] → handler
-   * Ejecución:
-   * 1. AuthMiddleware.handle(req, next)
-   * 2.   LoggerMiddleware.handle(req, next)
-   * 3.     handler(req)
+   * @internal
    */
   private runMiddlewares(
     request: Request,
@@ -130,12 +116,15 @@ export class Router {
   }
 
   /**
-   * Método interno para registrar una ruta en el router
+   * Registers a route and returns the created {@link Layer}.
    *
-   * @param method - Método HTTP (GET, POST, etc.)
-   * @param path - Patrón de la URL (puede incluir parámetros: '/users/{id}')
-   * @param action - Handler que procesa la petición
-   * @returns Devuelve la instancia de la clase Lyaer creado (permite encadenar .setMiddlewares())
+   * @param method - HTTP method
+   * @param path - Route pattern (may include `{param}` segments)
+   * @param action - Route handler
+   * @param middlewares - Optional middlewares applied only to this route
+   * @returns The created {@link Layer}
+   *
+   * @internal
    */
   private registerRoute(
     method: HttpMethods,
@@ -145,20 +134,22 @@ export class Router {
   ): Layer {
     const fullPath = this.buildFullPath(path, this.globalPrefix);
     const layer = new Layer(fullPath, action);
+
     if (middlewares.length > 0) layer.setMiddlewares(middlewares);
+
     this.routes[method].push(layer);
     return layer;
   }
 
   /**
-   * Establece un prefijo global para todas las rutas
+   * Sets a global prefix applied to all routes.
    *
-   * @param prefix - Prefijo a aplicar (ej: "api", "/v1", "test")
-   * @returns this para encadenamiento
+   * @param prefix - Prefix to apply (e.g. "api", "/v1")
+   * @returns The router instance (for chaining)
    *
    * @example
    * router.setPrefix("api");
-   * router.get("/users", handler); // Resultado: /api/users
+   * router.get("/users", handler); // -> /api/users
    */
   public setPrefix(prefix: string): this {
     this.globalPrefix = prefix;
@@ -166,10 +157,11 @@ export class Router {
   }
 
   /**
-   * Construye la ruta completa con el prefijo global
+   * Builds a normalized path by applying a prefix.
    *
-   * @param path - Ruta original
-   * @returns Ruta con prefijo aplicado y normalizada
+   * @param path - Route path
+   * @param prefix - Prefix to apply
+   * @returns Normalized full path
    */
   public buildFullPath(path: string, prefix: string): string {
     if (!prefix) return path;
@@ -178,32 +170,25 @@ export class Router {
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     let fullPath = `${cleanPrefix}${cleanPath}`.replace(/\/+/g, "/");
 
-    if (fullPath.length > 1 && fullPath.endsWith("/"))
+    if (fullPath.length > 1 && fullPath.endsWith("/")) {
       fullPath = fullPath.slice(0, -1);
+    }
 
     return fullPath;
   }
 
   /**
-   * Crea un grupo de rutas bajo un prefijo común.
+   * Creates a route group under a shared prefix.
    *
-   * Este método permite organizar rutas relacionadas
-   * y aplicar middlewares compartidos sin duplicación.
+   * Use this to organize related routes and apply shared middlewares
+   * without duplication.
    *
-   * Internamente crea una instancia de `RouterGroup`
-   * que se encarga de componer las rutas y delegar
-   * su registro final al Router actual.
-   *
-   * Las rutas quedan completamente registradas
-   * al finalizar la ejecución del callback.
-   *
-   * @param prefix Prefijo base para todas las rutas del grupo
-   * @param callback Función que recibe el RouterGroup para definir rutas
+   * @param prefix - Base prefix for the group
+   * @param callback - Function used to register group routes
    *
    * @example
    * router.group("/api", (api) => {
    *   api.use(AuthMiddleware);
-   *
    *   api.get("/users", listUsers);
    *   api.post("/users", createUser);
    * });
@@ -212,15 +197,16 @@ export class Router {
     const fullPrefix = this.globalPrefix
       ? `${this.globalPrefix}/${prefix}`.replace(/\/+/g, "/")
       : prefix;
+
     const group = new RouterGroup(fullPrefix, this);
     callback(group);
   }
 
   /**
-   * Registra middlewares globales que se ejecutarán en todas las rutas
+   * Registers global middlewares executed for every route.
    *
-   * @param middlewares - Array de constructores de middleware
-   * @returns this para encadenamiento
+   * @param middlewares - Middleware list
+   * @returns The router instance (for chaining)
    *
    * @example
    * router.middlewares([LoggerMiddleware, CorsMiddleware]);
@@ -230,13 +216,7 @@ export class Router {
     return this;
   }
 
-  /**
-   * Registra una ruta GET
-   *
-   * @example
-   * router.get('/users', listUsers);
-   * router.get('/users/{id}', getUser).setMiddlewares([AuthMiddleware]);
-   */
+  /** Registers a GET route. */
   public get(
     path: string,
     action: RouteHandler,
@@ -245,12 +225,7 @@ export class Router {
     return this.registerRoute(HttpMethods.get, path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta POST
-   *
-   * @example
-   * router.post('/users', createUser);
-   */
+  /** Registers a POST route. */
   public post(
     path: string,
     action: RouteHandler,
@@ -259,12 +234,7 @@ export class Router {
     return this.registerRoute(HttpMethods.post, path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta PATCH
-   *
-   * @example
-   * router.patch('/users/{id}', updateUserPartial);
-   */
+  /** Registers a PATCH route. */
   public patch(
     path: string,
     action: RouteHandler,
@@ -273,12 +243,7 @@ export class Router {
     return this.registerRoute(HttpMethods.patch, path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta PUT
-   *
-   * @example
-   * router.put('/users/{id}', updateUserFull);
-   */
+  /** Registers a PUT route. */
   public put(
     path: string,
     action: RouteHandler,
@@ -287,12 +252,7 @@ export class Router {
     return this.registerRoute(HttpMethods.put, path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta DELETE
-   *
-   * @example
-   * router.delete('/users/{id}', deleteUser);
-   */
+  /** Registers a DELETE route. */
   public delete(
     path: string,
     action: RouteHandler,

@@ -3,29 +3,37 @@ import { createServer } from "node:http";
 import { NodeHttpAdapter } from "../http/nodeNativeHttp";
 
 /**
- * Esta clase representa el iniciador del servidor de NodeJS de manera
- * nativa.
+ * Native Node.js HTTP server bootstrap.
  *
- * En términos de arquitectura, esta clase pertenece a la capa de *delivery* o
- * *infrastructure layer*, y no contiene ninguna lógica de negocio.
+ * Responsible for starting the HTTP server and delegating
+ * incoming requests to the framework core.
  */
 export class NodeServer {
   /**
-   * @param app - Instancia del núcleo del framework que gestiona
-   * el ciclo de vida de cada request.
+   * @param app - Framework core instance responsible for
+   * handling the request lifecycle
    */
   constructor(private readonly app: App) {}
 
   /**
-   * Inicia el servidor HTTP y comienza a escuchar conexiones entrantes.
+   * Starts the HTTP server and begins listening for incoming connections.
    *
-   * @param port - Puerto TCP en el que el servidor escuchará.
+   * For each request, a {@link NodeHttpAdapter} is created and passed
+   * to the framework core.
+   *
+   * @param port - TCP port to listen on
+   *
+   * @example
+   * const app = new App();
+   * const server = new NodeServer(app);
+   * server.listen(3000);
    */
   public listen(port: number): void {
     createServer((req, res) => {
       const adapter = new NodeHttpAdapter(req, res);
       void this.app.handle(adapter);
     }).listen(port);
+
     console.log(`Server running on http://localhost:${port}`);
   }
 }

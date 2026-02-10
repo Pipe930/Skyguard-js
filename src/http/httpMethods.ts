@@ -1,7 +1,7 @@
 /**
- * Enumeración que representa los métodos HTTP soportados por el framework.
+ * Enumeration of HTTP methods supported by the framework.
  *
- * Los valores siguen la especificación estándar HTTP.
+ * Values follow the standard HTTP specification.
  */
 export enum HttpMethods {
   get = "GET",

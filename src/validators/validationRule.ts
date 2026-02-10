@@ -1,47 +1,27 @@
 import type { RuleOptions, ValidationContext, ValidationError } from "./types";
 
 /**
- * Contrato base para todas las reglas de validación del framework.
+ * Base contract for all framework validation rules.
  *
- * Cada implementación representa una **estrategia de validación**
- * independiente (Strategy Pattern).
+ * Each implementation represents an independent validation strategy
+ * (Strategy Pattern).
  *
- * Una regla:
- * - valida un valor dentro de un contexto
- * - NO conoce el schema completo
- * - NO decide si la validación continúa o no
- *
- * Su única responsabilidad es evaluar el valor
- * y devolver un error cuando la validación falla.
+ * A rule must only evaluate the value and return an error when validation fails.
  */
 export interface ValidationRule {
   /**
-   * Nombre único de la regla.
-   *
-   * Se utiliza para:
-   * - identificar la regla en los errores
-   * - depuración
-   * - serialización de resultados
-   *
-   * Ejemplos: "required", "string", "email", "min"
+   * Unique rule name.
    */
   readonly name: string;
 
   /**
-   * Ejecuta la validación de la regla.
+   * Executes the rule validation.
    *
-   * ## Contrato
-   * - Si la validación es exitosa → retorna `null`
-   * - Si la validación falla → retorna un `ValidationError`
+   * Rules must not throw exceptions.
    *
-   * La regla NO debe lanzar excepciones.
-   *
-   * @param context Contexto de validación actual
-   * Contiene información del campo, valor y datos completos.
-   *
-   * @param options Opciones específicas de la regla
-   *
-   * @returns Un error de validación o `null` si el valor es válido
+   * @param context - Current validation context (field, value, full data)
+   * @param options - Rule-specific options
+   * @returns A {@link ValidationError} or `null` if the value is valid
    */
   validate(
     context: ValidationContext,
@@ -50,30 +30,18 @@ export interface ValidationRule {
 }
 
 /**
- * Clase base abstracta para implementar reglas de validación.
- *
- * Proporciona:
- * - una implementación estándar del nombre de la regla
- * - un helper para construir errores consistentes
- *
- * Las reglas concretas deben:
- * - extender esta clase
- * - implementar únicamente la lógica de validación
+ * Abstract base class for implementing validation rules.
  */
 export abstract class BaseValidationRule implements ValidationRule {
   /**
-   * Crea una nueva regla de validación.
+   * Creates a new validation rule.
    *
-   * @param name Nombre único de la regla
+   * @param name - Unique rule name
    */
   constructor(public readonly name: string) {}
 
   /**
-   * Ejecuta la validación de la regla.
-   *
-   * Debe cumplir estrictamente el contrato:
-   * - retornar `null` si es válida
-   * - retornar `ValidationError` si falla
+   * Executes the rule validation.
    */
   abstract validate(
     context: ValidationContext,
@@ -81,16 +49,15 @@ export abstract class BaseValidationRule implements ValidationRule {
   ): ValidationError | null;
 
   /**
-   * Crea un objeto `ValidationError` estandarizado.
+   * Creates a standardized {@link ValidationError} object.
    *
-   * Este método debe ser usado por las reglas concretas
-   * para garantizar errores consistentes en todo el framework.
+   * Concrete rules should use this helper to ensure consistent
+   * error shapes across the framework.
    *
-   * @param field Nombre del campo que falló
-   * @param message Mensaje descriptivo del error
-   * @param value Valor que no pasó la validación
-   *
-   * @returns ValidationError
+   * @param field - Field name that failed validation
+   * @param message - Human-readable error message
+   * @param value - Invalid value (optional)
+   * @returns A {@link ValidationError} instance
    */
   protected createError(
     field: string,

@@ -2,38 +2,32 @@ import { ContentParserException } from "../exceptions/contentParserException";
 import type { ContentParser } from "./contentParser";
 
 /**
- * Parser de contenido XML.
+ * XML content parser.
  *
- * Este parser implementa un **mecanismo liviano y seguro** para interpretar
- * contenido XML, pensado principalmente para **cuerpos de solicitudes HTTP**
- * (request bodies).
+ * Lightweight and safe XML parsing intended for HTTP request bodies.
+ * It is designed for simple, well-formed XML and does not aim to replace
+ * a full-featured XML parser.
  *
- * ## Alcance y limitaciones
- * - Diseñado para XML **simple y bien formado**
- * - **NO soporta**:
- *   - Atributos XML
- *   - Namespaces
- *   - CDATA
- *   - Validación por DTD o Schema
- *   - Contenido mixto (texto + nodos hijos)
+ * Limitations:
+ * - No attributes
+ * - No namespaces
+ * - No CDATA
+ * - No DTD/Schema validation
+ * - No mixed content (text + child nodes)
  *
- * ## Características
- * - Soporta `application/xml` y `text/xml`
- * - Valida que los tags estén correctamente balanceados
- * - Convierte tags repetidos en arrays
- * - Realiza conversión básica de tipos (number, boolean, null)
- * - Decodifica entidades HTML/XML comunes
- *
- * ## Uso recomendado
- * Este parser está pensado para ser utilizado por un `ContentParserManager`
- * dentro del framework y **no pretende reemplazar** un parser XML completo.
+ * Features:
+ * - Supports `application/xml` and `text/xml`
+ * - Validates balanced tags
+ * - Converts repeated tags into arrays
+ * - Basic primitive casting (number, boolean, null)
+ * - Decodes common XML/HTML entities
  */
 export class XmlParser implements ContentParser {
   /**
-   * Determina si el parser puede manejar el tipo de contenido indicado.
+   * Checks whether the given content type is XML.
    *
-   * @param contentType - Valor del header `Content-Type`
-   * @returns `true` si el contenido es XML
+   * @param contentType - Raw `Content-Type` header value
+   * @returns `true` if the content type is XML
    */
   public canParse(contentType: string): boolean {
     return (
@@ -43,48 +37,35 @@ export class XmlParser implements ContentParser {
   }
 
   /**
-   * Parsea una entrada XML y la convierte en un objeto JavaScript.
+   * Parses XML input and converts it into a JavaScript object.
    *
-   * @param input - Contenido XML crudo
-   * @returns Objeto con la estructura parseada
+   * @param input - Raw XML content
+   * @returns Parsed object representation of the XML
    *
-   * @throws ContentParserException
-   * - Si el XML está vacío
-   * - Si la estructura es inválida
-   * - Si los tags están mal cerrados o desbalanceados
+   * @throws {ContentParserException}
+   * Thrown when the XML is empty, malformed, or has unbalanced tags.
    */
   public parse(input: string | Buffer): Record<string, unknown> {
     const text = Buffer.isBuffer(input) ? input.toString("utf-8") : input;
 
-    if (!text || text.trim().length === 0)
+    if (!text || text.trim().length === 0) {
       throw new ContentParserException("XML input is empty");
+    }
 
     const cleanXml = text
       .replace(/<\?xml[^?]*\?>/g, "")
       .replace(/<!--[\s\S]*?-->/g, "")
       .trim();
 
-    if (!cleanXml.startsWith("<") || !cleanXml.endsWith(">"))
+    if (!cleanXml.startsWith("<") || !cleanXml.endsWith(">")) {
       throw new ContentParserException("Invalid XML structure");
+    }
 
     this.validateBalancedTags(cleanXml);
 
     return this.parseXmlContent(cleanXml);
   }
 
-  /**
-   * Valida que los tags XML estén correctamente balanceados.
-   *
-   * Utiliza una pila (stack) para asegurar que:
-   * - Cada tag de apertura tenga su cierre correspondiente
-   * - Los tags se cierren en el orden correcto
-   *
-   * @param xml - XML limpio y normalizado
-   *
-   * @throws ContentParserException
-   * - Si se encuentra un cierre inesperado
-   * - Si queda algún tag sin cerrar
-   */
   private validateBalancedTags(xml: string): void {
     const stack: string[] = [];
     const tagRegex = /<\/?(\w+)[^>]*>/g;
@@ -95,59 +76,43 @@ export class XmlParser implements ContentParser {
       const tagName = match[1];
 
       if (fullTag.startsWith("</")) {
-        if (stack.length === 0 || stack.pop() !== tagName)
+        if (stack.length === 0 || stack.pop() !== tagName) {
           throw new ContentParserException(
-            `Tag de cierre inesperado o mal emparejado: </${tagName}>`,
+            `Unexpected or mismatched closing tag: </${tagName}>`,
           );
+        }
       } else {
         stack.push(tagName);
       }
     }
 
-    if (stack.length > 0)
+    if (stack.length > 0) {
       throw new ContentParserException(
-        `Tag sin cerrar: <${stack[stack.length - 1]}>`,
+        `Unclosed tag: <${stack[stack.length - 1]}>`,
       );
+    }
   }
 
-  /**
-   * Parsea el elemento raíz del XML.
-   *
-   * Si el tag raíz es considerado genérico
-   * (`root`, `data`, `xml`, `request`, `response`),
-   * se elimina el wrapper y se devuelve solo su contenido.
-   *
-   * @param xml - XML completo
-   * @returns Objeto parseado
-   */
   private parseXmlContent(xml: string): Record<string, unknown> {
     const rootMatch = xml.match(/^<(\w+)[^>]*>([\s\S]*)<\/\1>$/);
 
-    if (!rootMatch)
-      throw new ContentParserException("Elemento raíz XML inválido");
+    if (!rootMatch) {
+      throw new ContentParserException("Invalid XML root element");
+    }
 
     const [, rootTag, content] = rootMatch;
     const parsed = this.parseContent(content);
 
     const genericRoots = ["root", "data", "xml", "response", "request"];
-    if (genericRoots.includes(rootTag.toLowerCase()))
+    if (genericRoots.includes(rootTag.toLowerCase())) {
       return typeof parsed === "object" && !Array.isArray(parsed)
         ? (parsed as Record<string, unknown>)
         : { [rootTag]: parsed };
+    }
 
     return { [rootTag]: parsed };
   }
 
-  /**
-   * Parsea recursivamente el contenido de un nodo XML.
-   *
-   * - Convierte nodos hijos en objetos
-   * - Convierte tags repetidos en arrays
-   * - Convierte texto plano en valores primitivos
-   *
-   * @param content - Contenido interno del nodo
-   * @returns Valor parseado
-   */
   private parseContent(content: string): unknown {
     const trimmed = content.trim();
 
@@ -175,15 +140,6 @@ export class XmlParser implements ContentParser {
     return result;
   }
 
-  /**
-   * Agrega un valor al resultado final.
-   *
-   * Si la clave ya existe, los valores se agrupan en un array.
-   *
-   * @param result - Objeto destino
-   * @param key - Nombre del tag
-   * @param value - Valor parseado
-   */
   private addValueToResult(
     result: Record<string, unknown>,
     key: string,
@@ -200,12 +156,6 @@ export class XmlParser implements ContentParser {
     }
   }
 
-  /**
-   * Convierte un valor de texto a su tipo primitivo correspondiente.
-   *
-   * @param value - Valor en texto
-   * @returns Valor convertido
-   */
   private parseValue(value: string): unknown {
     const trimmed = value.trim();
 
@@ -217,19 +167,6 @@ export class XmlParser implements ContentParser {
     return this.decodeHtmlEntities(trimmed);
   }
 
-  /**
-   * Decodifica entidades HTML/XML comunes.
-   *
-   * Entidades soportadas:
-   * - `&lt;` → `<`
-   * - `&gt;` → `>`
-   * - `&amp;` → `&`
-   * - `&quot;` → `"`
-   * - `&apos;` → `'`
-   *
-   * @param text - Texto codificado
-   * @returns Texto decodificado
-   */
   private decodeHtmlEntities(text: string): string {
     const entities: Record<string, string> = {
       "&lt;": "<",

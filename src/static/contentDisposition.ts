@@ -1,71 +1,64 @@
 import { ContentDispositionException } from "../exceptions/contentDispositionException";
 
-/**
- * Opciones para la generación de Content-Disposition
- */
+/** Options for generating `Content-Disposition` values. */
 export interface ContentDispositionOptions {
   /**
-   * Tipo de disposición
-   * @default 'attachment'
+   * Disposition type.
+   * @default "attachment"
    */
   type?: "attachment" | "inline";
 
   /**
-   * Fallback ASCII personalizado
+   * Custom ASCII fallback filename.
+   *
+   * Used for legacy user agents that do not support `filename*`.
    */
   fallback?: string;
 }
 
 /**
- * Genera headers Content-Disposition seguros para descargas de archivos
+ * Generates safe `Content-Disposition` values for file downloads.
  *
- * Implementa RFC 6266 y RFC 8187 para máxima compatibilidad entre navegadores
- * Previene inyección de headers y maneja correctamente caracteres especiales
+ * Implements RFC 6266 and RFC 8187 for broad browser compatibility.
+ * Prevents header injection and handles non-ASCII filenames correctly.
+ *
+ * @example
+ * const cd = new ContentDisposition();
+ *
+ * cd.attachment("report.pdf");
+ * // => 'attachment; filename="report.pdf"'
+ *
+ * cd.attachment("reporte año 2024.pdf");
+ * // => 'attachment; filename="reporte ano 2024.pdf"; filename*=UTF-8\'\'reporte%20a%C3%B1o%202024.pdf'
+ *
+ * cd.inline("image.jpg");
+ * // => 'inline; filename="image.jpg"'
  */
 export class ContentDisposition {
   /**
-   * Genera un header Content-Disposition para descarga de archivo
+   * Builds a `Content-Disposition` value for file downloads.
    *
-   * @param filename - Nombre del archivo
-   * @returns String del header Content-Disposition
-   *
-   * @example
-   * ContentDisposition.attachment('report.pdf');
-   * // => 'attachment; filename="report.pdf"'
-   *
-   * @example
-   * ContentDisposition.attachment('reporte año 2024.pdf');
-   * // => 'attachment; filename="reporte ano 2024.pdf"; filename*=UTF-8\'\'reporte%20a%C3%B1o%202024.pdf'
-   *
-   * @example
-   * ContentDisposition.inline('image.jpg');
-   * // => 'inline; filename="image.jpg"'
+   * @param filename - File name
+   * @returns `Content-Disposition` value
    */
   public attachment(filename: string): string {
     return this.create("attachment", filename);
   }
 
   /**
-   * Genera un header Content-Disposition para mostrar inline
+   * Builds a `Content-Disposition` value for inline rendering.
    *
-   * @param filename - Nombre del archivo
-   * @returns String del header Content-Disposition
+   * @param filename - File name
+   * @returns `Content-Disposition` value
    */
   public inline(filename: string): string {
     return this.create("inline", filename);
   }
 
-  /**
-   * Crea el header Content-Disposition
-   *
-   * @param type - Tipo de disposición ('attachment' o 'inline')
-   * @param filename - Nombre del archivo
-   * @param options - Opciones adicionales
-   * @returns Header completo
-   */
   private create(type: "attachment" | "inline", filename: string): string {
-    if (!filename || typeof filename !== "string")
+    if (!filename || typeof filename !== "string") {
       throw new ContentDispositionException();
+    }
 
     const sanitized = this.sanitizeFilename(filename);
     const needsEncoding = this.needsEncoding(sanitized);
@@ -83,14 +76,6 @@ export class ContentDisposition {
     return disposition;
   }
 
-  /**
-   * Sanitiza el nombre del archivo removiendo caracteres peligrosos
-   *
-   * Previene inyección de headers y path traversal
-   *
-   * @param filename - Nombre original del archivo
-   * @returns Nombre sanitizado
-   */
   private sanitizeFilename(filename: string): string {
     return filename
       .replace(/[\x00-\x1F\x7F-\x9F]/g, "")
@@ -100,24 +85,10 @@ export class ContentDisposition {
       .trim();
   }
 
-  /**
-   * Verifica si el nombre del archivo necesita encoding UTF-8
-   *
-   * @param filename - Nombre del archivo
-   * @returns true si contiene caracteres no-ASCII
-   */
   private needsEncoding(filename: string): boolean {
     return /[^\x20-\x7E]/.test(filename);
   }
 
-  /**
-   * Crea un fallback ASCII para navegadores antiguos
-   *
-   * Convierte caracteres especiales a sus equivalentes ASCII
-   *
-   * @param filename - Nombre original
-   * @returns Versión ASCII del nombre
-   */
   private createAsciiFallback(filename: string): string {
     const charMap: Record<string, string> = {
       á: "a",
@@ -149,29 +120,15 @@ export class ContentDisposition {
     }
 
     result = result.replace(/[^\x20-\x7E]/g, "");
-
     return result;
   }
 
-  /**
-   * Escapa comillas dobles en el filename
-   *
-   * @param filename - Nombre del archivo
-   * @returns Nombre con comillas escapadas
-   */
   private escapeQuotes(filename: string): string {
     return filename.replace(/"/g, '\\"');
   }
 
-  /**
-   * Codifica el filename según RFC 8187 (percent-encoding UTF-8)
-   *
-   * @param filename - Nombre del archivo
-   * @returns Nombre codificado para filename*
-   */
   private encodeRFC8187(filename: string): string {
     const attrChar = /[a-zA-Z0-9!#$&+.^_`|~-]/;
-
     let encoded = "";
 
     for (let i = 0; i < filename.length; i++) {
@@ -191,19 +148,19 @@ export class ContentDisposition {
   }
 
   /**
-   * Parse un header Content-Disposition existente
+   * Parses an existing `Content-Disposition` header value.
    *
-   * @param header - Header Content-Disposition
-   * @returns Objeto con type y filename parseados
+   * Supports both `filename=` and `filename*=` (RFC 8187).
+   *
+   * @param header - Raw `Content-Disposition` header value
+   * @returns Parsed disposition type and filename (if present)
    *
    * @example
-   * ContentDisposition.parse('attachment; filename="report.pdf"');
-   * // => { type: 'attachment', filename: 'report.pdf' }
+   * const cd = new ContentDisposition();
+   * cd.parse('attachment; filename="report.pdf"');
+   * // => { type: "attachment", filename: "report.pdf" }
    */
-  public parse(header: string): {
-    type: string;
-    filename: string | null;
-  } {
+  public parse(header: string): { type: string; filename: string | null } {
     const parts = header.split(";").map((p) => p.trim());
     const type = parts[0];
 
@@ -211,6 +168,7 @@ export class ContentDisposition {
 
     for (let i = 1; i < parts.length; i++) {
       const part = parts[i];
+
       if (part.startsWith("filename*=")) {
         const value = part.substring(10);
         const match = value.match(/^UTF-8''(.+)$/i);
@@ -222,8 +180,9 @@ export class ContentDisposition {
 
       if (part.startsWith("filename=") && !filename) {
         let value = part.substring(9);
-        if (value.startsWith('"') && value.endsWith('"'))
+        if (value.startsWith('"') && value.endsWith('"')) {
           value = value.slice(1, -1);
+        }
 
         filename = value.replace(/\\"/g, '"');
       }

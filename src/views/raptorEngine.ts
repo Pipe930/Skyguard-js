@@ -6,17 +6,15 @@ import { FileNotExistsException } from "../exceptions/fileExistsException";
 import type { HelperFunction, TemplateContext } from "../types";
 
 /**
- * Motor de vistas principal del framework.
+ * Framework view engine.
  *
- * RaptorEngine es una capa de orquestación sobre `SimpleTemplateEngine`
- * que implementa el concepto de:
+ * `RaptorEngine` orchestrates {@link SimpleTemplateEngine} to provide:
+ * - layouts (base templates)
+ * - views
+ * - content injection
+ * - custom helpers
  *
- * - Layouts (plantillas base)
- * - Vistas (views)
- * - Inyección de contenido
- * - Helpers personalizados
- *
- * Permite estructurar las vistas siguiendo una arquitectura MVC clásica:
+ * Directory layout:
  *
  * /views
  *   /layouts
@@ -26,49 +24,53 @@ import type { HelperFunction, TemplateContext } from "../types";
  *   home.html
  *   profile.html
  *
- * Soporta:
- * - Interpolación: {{ variable }}
- * - Condicionales: {{#if condition}} ... {{/if}}
- * - Loops: {{#each items}} ... {{/each}}
- * - Partials: {{> partial }}
- * - Helpers personalizados
- * - Escape automático de HTML
+ * Rendering features are delegated to {@link SimpleTemplateEngine}:
+ * - interpolation: `{{ variable }}`
+ * - conditionals: `{{#if condition}} ... {{/if}}`
+ * - loops: `{{#each items}} ... {{/each}}`
+ * - partials: `{{> partial }}`
+ * - custom helpers
+ * - automatic HTML escaping
  *
- * RaptorEngine NO interpreta directamente el HTML, delega
- * el procesamiento sintáctico a `SimpleTemplateEngine`.
- * Su responsabilidad es la composición de layouts + vistas.
+ * `RaptorEngine` focuses on composing layouts + views.
+ *
+ * @example
+ * const view = new RaptorEngine("./views");
+ * view.setDefaultLayout("main");
+ *
+ * const html = await view.render("home", { user: { name: "Felipe" } });
  */
 export class RaptorEngine implements View {
   private viewsDirectory: string;
+
   /**
-   * Layout por defecto utilizado cuando no se especifica uno.
-   * Corresponde a /views/layouts/{defaultLayout}.html
+   * Default layout used when none is provided.
+   *
+   * Resolves to: `/views/layouts/{defaultLayout}.html`
    */
   private defaultLayout: string = "main";
 
   /**
-   * Marcador dentro del layout donde se inyecta
-   * el contenido de la vista.
+   * Marker inside the layout where the view output is injected.
    *
-   * Por defecto: "@content"
+   * @default "@content"
    */
   private contentAnnotation: string = "@content";
+
   /**
-   * Motor interno encargado del procesamiento
-   * de la sintaxis de plantillas.
+   * Internal engine that processes template syntax.
    */
   private templateEngine: SimpleTemplateEngine;
 
   /**
-   * Cache en memoria de archivos HTML.
-   * Evita leer del disco en cada request.
+   * In-memory cache for HTML files to avoid disk reads per request.
    */
   private cacheTemplates = new Map<string, string>();
 
   /**
-   * Crea una instancia del motor de vistas.
+   * Creates a new view engine instance.
    *
-   * @param viewsDirectory Directorio raíz de las vistas.
+   * @param viewsDirectory - Root directory for views
    *
    * @example
    * const view = new RaptorEngine("./views");
@@ -79,26 +81,24 @@ export class RaptorEngine implements View {
   }
 
   /**
-   * Renderiza una vista completa utilizando un layout.
+   * Renders a view using a layout.
    *
-   * Flujo:
-   * 1. Se carga el layout.
-   * 2. Se carga la vista.
-   * 3. Se inyecta la vista en el layout usando contentAnnotation.
-   * 4. Se retorna el HTML final.
+   * Flow:
+   * 1) Load the layout
+   * 2) Load and render the view
+   * 3) Inject the view HTML into the layout using {@link RaptorEngine.contentAnnotation}
+   * 4) Return the final HTML
    *
-   * @param view Nombre de la vista (sin extensión).
-   * @param params Contexto de datos.
-   * @param layout Layout opcional (si no se pasa, se usa el default).
-   *
-   * @returns Devuelve el HTML final renderizado.
+   * @param view - View name (without extension)
+   * @param params - Template context data
+   * @param layout - Optional layout name (defaults to {@link RaptorEngine.defaultLayout})
+   * @returns Rendered HTML
    *
    * @example
-   * view.render("home", { user: { name: "Felipe" } });
-   *
-   * Estructura:
-   * /views/home.html
-   * /views/layouts/main.html
+   * await view.render("home", { user: { name: "Felipe" } });
+   * // Reads:
+   * // - /views/home.html
+   * // - /views/layouts/main.html
    */
   public async render(
     view: string,
@@ -111,17 +111,6 @@ export class RaptorEngine implements View {
     return layoutContent.replace(this.contentAnnotation, viewContent);
   }
 
-  /**
-   * Renderiza una vista individual.
-   *
-   * @param view Nombre de la vista (sin .html)
-   * @param params Datos dinamicos que se inyectan en la vista HTML
-   * @returns Devuele el archivo de la vista HTML encontrado
-   *
-   * @example
-   * renderView("profile")
-   * -> /views/profile.html
-   */
   private async renderView(
     view: string,
     params: TemplateContext = {},
@@ -130,29 +119,19 @@ export class RaptorEngine implements View {
     return this.renderFile(viewPath, params);
   }
 
-  /**
-   * Renderiza un layout.
-   *
-   * @param layout Nombre del layout.
-   * @returns Devuele el archivo de la vista HTML encontrado
-   *
-   * @example
-   * renderLayout("main")
-   * -> /views/layouts/main.html
-   */
-
   private async renderLayout(layout: string): Promise<string> {
     const layoutPath = join(this.viewsDirectory, "layouts", `${layout}.html`);
     return this.renderFile(layoutPath);
   }
 
   /**
-   * Busca y valida los archivos HTML si se encuentran en las rutas designadas
+   * Loads and renders an HTML file (with caching).
    *
-   * @param filePath ruta del archivo HTML
-   * @param params Datos dinamicos que se inyectan en la vista HTML
-   * @returns Devuelve el arvhivo HTML encontrado renderizado
-   * @throws FileExistsException si el archivo no existe.
+   * @param filePath - Absolute or resolved HTML file path
+   * @param params - Template context data
+   * @returns Rendered HTML for the file
+   *
+   * @throws {FileNotExistsException} If the file cannot be read
    */
   private async renderFile(
     filePath: string,
@@ -165,33 +144,43 @@ export class RaptorEngine implements View {
       }
 
       const fileContent = await readFile(filePath, "utf-8");
-
       this.cacheTemplates.set(filePath, fileContent);
+
       return this.templateEngine.render(fileContent, params);
     } catch {
       throw new FileNotExistsException(filePath);
     }
   }
 
+  /**
+   * Sets the default layout name.
+   *
+   * @param layout - Layout name (without extension)
+   */
   public setDefaultLayout(layout: string): void {
     this.defaultLayout = layout;
   }
 
+  /**
+   * Sets the layout content marker used for view injection.
+   *
+   * @param annotation - Marker string used inside layouts
+   */
   public setContentAnnotation(annotation: string): void {
     this.contentAnnotation = annotation;
   }
 
   /**
-   * Registra un helper personalizado en el motor interno.
+   * Registers a custom helper in the underlying template engine.
    *
-   * @param name nombre del helper
-   * @param fn funcion callback del helper
+   * @param name - Helper name
+   * @param fn - Helper implementation
    *
    * @example
    * view.registerHelper("upper", (str: string) => str.toUpperCase());
    *
-   * En plantilla:
-   * {{ upper user.name }}
+   * // Template usage:
+   * // {{ upper user.name }}
    */
   public registerHelper(name: string, fn: HelperFunction): void {
     this.templateEngine.registerHelper(name, fn);

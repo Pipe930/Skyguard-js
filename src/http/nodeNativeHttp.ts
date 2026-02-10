@@ -6,22 +6,19 @@ import { Request } from "./request";
 import { ContentParserManager } from "../parsers/contentParserManager";
 
 /**
- * Esta clase actúa como un *bridge* entre la API nativa de Node.js
- * (`IncomingMessage` / `ServerResponse`) y las abstracciones internas
- * del framework (`Request` / `Response`).
+ * Node.js HTTP adapter.
  *
- * Esta clase **no contiene lógica de negocio**, routing ni middlewares.
- * Forma parte exclusivamente de la capa de infraestructura.
+ * Acts as a bridge between the native Node.js HTTP API and the
+ * internal framework abstractions.
+ *
  * @implements {HttpAdapter}
  */
 export class NodeHttpAdapter implements HttpAdapter {
   private contentParser: ContentParserManager;
 
   /**
-   * Crea una nueva instancia del adaptador HTTP para Node.js.
-   *
-   * @param req - Objeto de solicitud nativo de Node.js.
-   * @param res - Objeto de respuesta nativo de Node.js.
+   * @param req - Native Node.js incoming request
+   * @param res - Native Node.js server response
    */
   constructor(
     private readonly req: IncomingMessage,
@@ -31,10 +28,10 @@ export class NodeHttpAdapter implements HttpAdapter {
   }
 
   /**
-   * Construye y retorna un objeto {@link Request} del framework
-   * a partir de los datos contenidos en `IncomingMessage`.
+   * Builds and returns a {@link Request} instance from
+   * the incoming Node.js request.
    *
-   * @returns Instancia de {@link Request} completamente hidratada.
+   * @returns A fully constructed {@link Request} instance
    */
   public async getRequest(): Promise<Request> {
     const url = new URL(this.req.url || "", `http://${this.req.headers.host}`);
@@ -51,10 +48,13 @@ export class NodeHttpAdapter implements HttpAdapter {
   }
 
   /**
-   * Envía la respuesta al cliente mapeando un objeto {@link Response}
-   * del framework hacia el objeto {@link ServerResponse} nativo de Node.js.
+   * Sends a framework {@link Response} to the client by mapping it
+   * to the native Node.js {@link ServerResponse}.
    *
-   * @param response - Objeto de respuesta del framework.
+   * This method represents the final step of the request lifecycle
+   * in a Node.js runtime.
+   *
+   * @param response - Framework response to be sent to the client
    */
   public sendResponse(response: Response): void {
     response.prepare();
@@ -65,7 +65,9 @@ export class NodeHttpAdapter implements HttpAdapter {
       this.res.setHeader(header, value as string);
     }
 
-    if (!response.getContent) this.res.removeHeader("Content-Type");
+    if (!response.getContent) {
+      this.res.removeHeader("Content-Type");
+    }
 
     this.res.end(response.getContent);
   }

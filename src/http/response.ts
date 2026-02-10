@@ -3,8 +3,10 @@ import { App } from "../app";
 import type { Headers, TemplateContext } from "../types";
 
 /**
- * Esta clase representa el contrato de salida del framework: todo controlador,
- * middleware o manejador de errores debe retornar una instancia de Response.
+ * Represents an outgoing response sent to the client.
+ *
+ * Provides a fluent API to define status codes, headers, and body content,
+ * independent of the underlying HTTP runtime.
  *
  * @example
  * return new Response()
@@ -17,18 +19,18 @@ import type { Headers, TemplateContext } from "../types";
  */
 export class Response {
   /**
-   * Código de estado HTTP de la respuesta.
+   * HTTP status code.
    * @default 200
    */
   private status = 200;
 
   /**
-   * Colección de cabeceras HTTP de la respuesta.
+   * Collection of response headers.
    */
   private headers: Headers = Object.create(null) as Headers;
 
   /**
-   * Contenido del cuerpo de la respuesta.
+   * Response body content.
    */
   private content: string | Buffer | null = null;
 
@@ -64,10 +66,10 @@ export class Response {
   }
 
   /**
-   * Atajo semántico para definir Content-Type.
+   * Semantic shortcut to define the `Content-Type` header.
    *
-   * @param value Valor que le daras a la cabecera Content-Type
-   * @returns Retorna una instancia de la clase {@link Response}
+   * @param value - Value for the `Content-Type` header
+   * @returns The current {@link Response} instance
    *
    * @example
    * return new Response()
@@ -89,15 +91,18 @@ export class Response {
   }
 
   /**
-   * Prepara la respuesta antes de ser enviada al cliente.
+   * Prepares the response before being sent to the client.
    *
-   * Este método es invocado por el adaptador HTTP
-   * (por ejemplo NodeHttpAdapter) justo antes de escribir
-   * la respuesta en el socket.
+   * This method is called by the HTTP adapter (e.g. NodeHttpAdapter)
+   * right before writing to the underlying socket.
+   *
+   * It automatically sets:
+   * - `Content-Type` if missing
+   * - `Content-Length` if missing
    *
    * @example
    * response.prepare();
-   * adapter.send(response);
+   * adapter.sendResponse(response);
    */
   public prepare(): void {
     if (!this.headers["content-type"] && this.content) {
@@ -118,10 +123,10 @@ export class Response {
   }
 
   /**
-   * Crea una respuesta JSON.
+   * Creates a JSON response.
    *
-   * @param data Contenido en formato string o texto
-   * @returns Retorna una instancia de la clase {@link Response}
+   * @param data - Data to be serialized as JSON
+   * @returns A {@link Response} instance
    *
    * @example
    * app.get("/users", () => {
@@ -135,10 +140,10 @@ export class Response {
   }
 
   /**
-   * Crea una respuesta de texto plano.
+   * Creates a plain text response.
    *
-   * @param data Contenido en formato string o texto
-   * @returns Retorna una instancia de la clase {@link Response}
+   * @param data - Text content
+   * @returns A {@link Response} instance
    *
    * @example
    * app.get("/", () => {
@@ -150,9 +155,10 @@ export class Response {
   }
 
   /**
-   * Crea una respuesta de redirección HTTP.
-   * @param url Url donde quieres redirijir el flujo
-   * @returns Retorna una instancia de la clase {@link Response}
+   * Creates an HTTP redirect response.
+   *
+   * @param url - Target URL to redirect to
+   * @returns A {@link Response} instance
    *
    * @example
    * app.get("/old-route", () => {
@@ -164,26 +170,18 @@ export class Response {
   }
 
   /**
-   * Genera una respuesta HTTP de tipo text/html.
+   * Renders an HTML view and returns it as an HTTP response.
    *
-   * Este método actúa como un *facade* entre el motor de vistas
-   * y el sistema de respuestas HTTP del framework.
+   * Acts as a facade between the view engine and the HTTP response system.
    *
-   * Permite a los controladores retornar vistas de forma declarativa.
+   * @param view - Logical view name (without extension or base path)
+   * @param params - Template variables
+   * @param layout - Optional layout name. If `null`, the default layout is used
+   * @returns A ready-to-send {@link Response} instance
    *
    * @example
-   * return Response.view("users/profile", { user });
-   *
-   * @example
-   * return Response.view("auth/login", {}, "auth");
-   *
-   * @param view - Nombre lógico de la vista a renderizar
-   * (sin extensión ni ruta base).
-   * @param params - Variables que se inyectan
-   * en la plantilla.
-   * @param layout - Layout a utilizar. Si es `null`,
-   * se usa el layout por defecto configurado en el motor de vistas.
-   * @returns Respuesta HTTP lista para ser enviada al cliente.
+   * return Response.render("users/profile", { user });
+   * return Response.render("auth/login", {}, "auth");
    */
   public static async render(
     view: string,

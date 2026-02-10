@@ -1,5 +1,5 @@
 {
-  "name": "raptor-js",
+  "name": "skyguard-js",
   "version": "1.0.0",
   "description": "simple Typescript framework project inspired by express",
   "main": "public/main.ts",
@@ -15,12 +15,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Pipe930/raptor-framework"
+    "url": "https://github.com/Pipe930/Skyguard-js"
   },
   "bugs": {
-    "url": "https://github.com/Pipe930/raptor-framework/issues"
+    "url": "https://github.com/Pipe930/Skyguard-js/issues"
   },
-  "homepage": "https://github.com/Pipe930/raptor-framework#readme",
+  "homepage": "https://github.com/Pipe930/Skyguard-js#readme",
   "packageManager": "pnpm@10.28.2",
   "engines": {
     "node": ">=24.13.0"

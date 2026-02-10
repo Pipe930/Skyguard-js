@@ -2,35 +2,27 @@ import { Request } from "./request";
 import { Response } from "./response";
 
 /**
- * Contrato de alto nivel que define el *puerto de entrada* del framework
- * hacia el mundo exterior (HTTP, sockets, runtimes, etc).
+ * High-level contract that defines the framework entry port
+ * to the outside world (HTTP, sockets, runtimes, etc.).
  *
- * Interfaz que permite desacoplar completamente el núcleo del framework
- * de cualquier implementación concreta de servidor (Node.js, Bun, Deno, Cloudflare, etc).
- *
- * No debe contener lógica de negocio, routing, middlewares ni validaciones.
- * Su rol es puramente de infraestructura.
+ * This interface allows the framework core to be fully decoupled
+ * from any concrete server implementation (Node.js, Bun, Deno, Cloudflare, etc.).
  */
 export interface HttpAdapter {
   /**
-   * Construye y retorna una instancia de {@link Request} del framework
-   * a partir de la información de la conexión actual.
+   * Builds and returns a {@link Request} instance from
+   * the current connection context.
    *
-   * @returns Una promesa que resuelve en un objeto {@link Request}
-   * listo para ser procesado por el kernel.
+   * @returns A promise that resolves to a {@link Request} object
    */
   getRequest(): Promise<Request>;
 
   /**
-   * Envía al cliente una {@link Response} generada por el framework,
-   * mapeando su estado, cabeceras y contenido al protocolo subyacente
-   * del entorno de ejecución.
+   * Sends a {@link Response} to the client, mapping its status,
+   * headers, and body to the underlying runtime protocol.
    *
-   * Este método representa el *punto final* del ciclo de vida
-   * de una petición HTTP dentro del framework.
-   *
-   * @param response - Objeto {@link Response} que contiene
-   * la información de salida definida por la aplicación.
+   * @param response - {@link Response} object containing
+   * the outgoing data defined by the application
    */
   sendResponse(response: Response): void;
 }

@@ -14,7 +14,7 @@ import {
 import { ValidatorFieldException } from "../exceptions/validationException";
 
 /**
- * Definición de un campo en el schema.
+ * Field definition used by the validation engine.
  */
 export interface FieldDefinition {
   rules: Array<{ rule: ValidationRule; options?: RuleOptions }>;
@@ -22,27 +22,26 @@ export interface FieldDefinition {
 }
 
 /**
- * Schema para definir esquemas de validación declarativos y encadenables.
+ * Declarative and chainable validation schema builder.
  *
- * ❗ Esta clase NO ejecuta la validación.
- * Su responsabilidad es **construir una definición de schema**
- * que luego será interpretada por un validador.
+ * This class does not execute validation.
+ * Its responsibility is to build a schema definition that will later
+ * be interpreted by the validation engine.
  *
- * ## Patrón de diseño
+ * Design:
  * - Builder Pattern
- * - API fluida (Fluent Interface)
+ * - Fluent Interface
  *
- * ## Flujo de uso
- * 1. Se crea una instancia mediante `create()`
- * 2. Se selecciona un campo con `field(name)`
- * 3. Se agregan reglas encadenadas al campo actual
- * 4. Se finaliza con `build()`
+ * Usage flow:
+ * 1) Create an instance via {@link ValidationSchema.create}
+ * 2) Select a field with {@link ValidationSchema.field}
+ * 3) Chain validation rules for the selected field
+ * 4) Finish with {@link ValidationSchema.build}
  *
- * ## Ejemplo
- * ```ts
+ * @example
  * const schema = ValidationSchema.create()
  *   .field("email")
- *     .required("El email es obligatorio")
+ *     .required("Email is required")
  *     .string()
  *     .email()
  *   .field("age")
@@ -51,45 +50,45 @@ export interface FieldDefinition {
  *     .optional()
  *     .string({ max: 500 })
  *   .build();
- * ```
  */
 export class ValidationSchema {
   /**
-   * Definición interna de los campos del schema.
-   * Cada campo contiene sus reglas y metadatos.
+   * Internal schema field definitions.
    */
   private fields = new Map<string, FieldDefinition>();
 
   /**
-   * Nombre del campo actualmente seleccionado.
-   * Todas las reglas se aplican a este campo
-   * hasta que se llame nuevamente a `field()`.
+   * Currently selected field name.
+   *
+   * All chained rules apply to this field until {@link ValidationSchema.field}
+   * is called again.
    */
   private currentField: string | null = null;
 
   /**
-   * Constructor privado.
-   * Obliga a crear instancias mediante `create()`
-   * para mantener una API controlada.
+   * Private constructor.
+   *
+   * Forces creation through {@link ValidationSchema.create}
+   * to keep a controlled API.
    */
   private constructor() {}
 
   /**
-   * Crea una nueva instancia de ValidationSchema.
+   * Creates a new {@link ValidationSchema} instance.
    *
-   * @returns ValidationSchema
+   * @returns A new {@link ValidationSchema}
    */
   public static create(): ValidationSchema {
     return new ValidationSchema();
   }
 
   /**
-   * Selecciona (o crea) un campo dentro del schema.
+   * Selects (or creates) a field within the schema.
    *
-   * Todas las reglas encadenadas posteriormente
-   * se aplicarán a este campo.
+   * All subsequently chained rules will be applied to this field.
    *
-   * @param name Nombre del campo
+   * @param name - Field name
+   * @returns The schema instance (for chaining)
    */
   public field(name: string): this {
     this.currentField = name;
@@ -105,12 +104,13 @@ export class ValidationSchema {
   }
 
   /**
-   * Marca el campo actual como obligatorio.
+   * Marks the current field as required.
    *
-   * - El campo debe existir en los datos
-   * - El valor no puede ser null ni undefined
+   * - The field must exist in the input
+   * - The value must not be `null` or `undefined`
    *
-   * @param message Mensaje de error personalizado
+   * @param message - Optional custom error message
+   * @returns The schema instance (for chaining)
    */
   public required(message?: string): this {
     this.setOptional(false);
@@ -119,9 +119,10 @@ export class ValidationSchema {
   }
 
   /**
-   * Valida que el valor del campo sea un string.
+   * Validates that the current field value is a string.
    *
-   * @param options Opciones de validación para strings
+   * @param options - String validation options
+   * @returns The schema instance (for chaining)
    */
   public string(options?: StringRuleOptions): this {
     this.addRule(new StringRule(), options);
@@ -129,9 +130,10 @@ export class ValidationSchema {
   }
 
   /**
-   * Valida que el valor del campo sea un número.
+   * Validates that the current field value is a number.
    *
-   * @param options Opciones de validación numérica
+   * @param options - Numeric validation options
+   * @returns The schema instance (for chaining)
    */
   public number(options?: NumberRuleOptions): this {
     this.addRule(new NumberRule(), options);
@@ -139,9 +141,10 @@ export class ValidationSchema {
   }
 
   /**
-   * Valida que el valor del campo sea un booleano.
+   * Validates that the current field value is a boolean.
    *
-   * @param message Mensaje de error personalizado
+   * @param message - Optional custom error message
+   * @returns The schema instance (for chaining)
    */
   public boolean(message?: string): this {
     this.addRule(new BooleanRule(), { message });
@@ -149,9 +152,10 @@ export class ValidationSchema {
   }
 
   /**
-   * Valida que el valor del campo tenga formato de email.
+   * Validates that the current field value is a valid email.
    *
-   * @param message Mensaje de error personalizado
+   * @param message - Optional custom error message
+   * @returns The schema instance (for chaining)
    */
   public email(message?: string): this {
     this.addRule(new EmailRule(), { message });
@@ -159,9 +163,10 @@ export class ValidationSchema {
   }
 
   /**
-   * Valida que el valor del campo sea una fecha válida.
+   * Validates that the current field value is a valid date.
    *
-   * @param options Opciones de validación de fechas
+   * @param options - Date validation options
+   * @returns The schema instance (for chaining)
    */
   public date(options?: DateRuleOptions): this {
     this.addRule(new DateRule(), options);
@@ -169,13 +174,11 @@ export class ValidationSchema {
   }
 
   /**
-   * Marca el campo actual como opcional.
+   * Marks the current field as optional.
    *
-   * ## Comportamiento
-   * - Si el campo NO existe en los datos → se ignora completamente
-   * - Si el campo existe → se validan todas sus reglas
+   * This allows defining optional fields with constraints.
    *
-   * Esto permite definir campos opcionales con restricciones.
+   * @returns The schema instance (for chaining)
    *
    * @example
    * schema.field("bio")
@@ -188,14 +191,14 @@ export class ValidationSchema {
   }
 
   /**
-   * Agrega una regla de validación personalizada
-   * al campo actual.
+   * Adds a custom validation rule to the current field.
    *
-   * Útil para lógica de negocio específica
-   * que no pertenece a las reglas estándar.
+   * Useful for business-specific logic that should not live
+   * in the standard rules set.
    *
-   * @param rule Regla personalizada
-   * @param options Opciones de la regla
+   * @param rule - Custom rule instance
+   * @param options - Rule options
+   * @returns The schema instance (for chaining)
    */
   public custom(rule: ValidationRule, options?: RuleOptions): this {
     this.addRule(rule, options);
@@ -203,20 +206,14 @@ export class ValidationSchema {
   }
 
   /**
-   * Finaliza la construcción del schema.
+   * Finalizes the schema build process.
    *
-   * @returns Definición interna del schema
-   * que será consumida por el motor de validación.
+   * @returns The internal schema definition consumed by the validation engine
    */
   public build(): Map<string, FieldDefinition> {
     return this.fields;
   }
 
-  /**
-   * Define si el campo actual es opcional u obligatorio.
-   *
-   * @throws Error si no hay un campo seleccionado
-   */
   private setOptional(optional: boolean): void {
     if (!this.currentField) throw new ValidatorFieldException();
 
@@ -224,11 +221,6 @@ export class ValidationSchema {
     if (field) field.optional = optional;
   }
 
-  /**
-   * Agrega una regla al campo actualmente seleccionado.
-   *
-   * @throws Error si no hay un campo seleccionado
-   */
   private addRule(rule: ValidationRule, options?: RuleOptions): void {
     if (!this.currentField) throw new ValidatorFieldException();
 

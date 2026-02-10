@@ -5,20 +5,25 @@ import { Layer } from "./layer";
 type Methods = "get" | "post" | "put" | "patch" | "delete";
 
 /**
- * RouterGroup permite agrupar rutas bajo un prefijo común y middlewares compartidos.
+ * Route group helper.
  *
- * Esta clase **no resuelve requests** ni mantiene estado de ejecución.
- * Su única responsabilidad es **componer rutas** (path + middlewares)
- * y delegar el registro final al `Router` padre.
+ * Allows registering routes under a shared prefix and shared middlewares.
+ * Similar to `express.Router()` or Laravel `Route::group()`, but routes are
+ * fully resolved at registration time.
  *
- * El comportamiento es similar a `express.Router()` o `Route::group()` de Laravel,
- * pero las rutas quedan completamente resueltas al momento de ser registradas.
+ * @example
+ * router.group("/api", (api) => {
+ *   api.middlewares([AuthMiddleware]);
+ *
+ *   api.get("/users", listUsers);
+ *   api.post("/users", createUser, [AdminMiddleware]);
+ * });
  */
 export class RouterGroup {
   /**
-   * Prefijo base que se aplicará a todas las rutas del grupo.
+   * Base prefix applied to all group routes.
    *
-   * Ejemplo:
+   * @example
    * prefix = "/api"
    * path   = "/users"
    * result = "/api/users"
@@ -26,25 +31,20 @@ export class RouterGroup {
   private prefix = "";
 
   /**
-   * Middlewares que se aplican a **todas las rutas** del grupo.
-   *
-   * Se almacenan como clases (constructores),
-   * las instancias se crean posteriormente dentro de `Layer`.
+   * Middlewares applied to every route in this group.
    */
   private middlewaresGroup: Middleware[] = [];
 
   /**
-   * Router principal encargado de registrar y resolver las rutas.
-   *
-   * RouterGroup delega en esta instancia la creación real de los `Layer`.
+   * Parent router where routes are actually registered.
    */
   private parentRouter: Router;
 
   /**
-   * Crea un nuevo grupo de rutas.
+   * Creates a new route group.
    *
-   * @param prefix Prefijo base para todas las rutas del grupo
-   * @param parentRouter Router principal donde se registrarán las rutas
+   * @param prefix - Base prefix for all group routes
+   * @param parentRouter - Router instance used to register routes
    */
   constructor(prefix: string, parentRouter: Router) {
     this.prefix = prefix;
@@ -52,10 +52,10 @@ export class RouterGroup {
   }
 
   /**
-   * Registra middlewares que se ejecutarán en todas las rutas de este grupo
+   * Registers middlewares that run for all routes in this group.
    *
-   * @param middlewares - Array de constructores de middleware
-   * @returns this para encadenamiento
+   * @param middlewares - Middleware list
+   * @returns The group instance (for chaining)
    *
    * @example
    * group.middlewares([AuthMiddleware, AdminMiddleware]);
@@ -66,17 +66,18 @@ export class RouterGroup {
   }
 
   /**
-   * Registra una ruta en el Router padre,
-   * combinando el prefijo del grupo, el path de la ruta
-   * y todos los middlewares correspondientes.
+   * Registers a route in the parent router, combining:
+   * - group prefix
+   * - route path
+   * - group middlewares + route middlewares
    *
-   * @param method Método HTTP a registrar
-   * @param path Path relativo dentro del grupo
-   * @param action Handler final de la ruta
-   * @param middlewares Middlewares específicos de la ruta
-   * @returns Layer creado en el Router padre
+   * @param method - Parent router method name (`get`, `post`, ...)
+   * @param path - Route path relative to the group prefix
+   * @param action - Final route handler
+   * @param middlewares - Route-specific middlewares
+   * @returns The created {@link Layer}
    *
-   * @private
+   * @internal
    */
   private addRoute(
     method: keyof Pick<Router, Methods>,
@@ -93,14 +94,7 @@ export class RouterGroup {
     return layer;
   }
 
-  /**
-   * Registra una ruta GET dentro del grupo.
-   *
-   * @param path Path relativo
-   * @param action Handler de la ruta
-   * @param middlewares Middlewares específicos de la ruta
-   * @returns Layer registrado
-   */
+  /** Registers a GET route within the group. */
   public get(
     path: string,
     action: RouteHandler,
@@ -109,9 +103,7 @@ export class RouterGroup {
     return this.addRoute("get", path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta POST dentro del grupo.
-   */
+  /** Registers a POST route within the group. */
   public post(
     path: string,
     action: RouteHandler,
@@ -120,9 +112,7 @@ export class RouterGroup {
     return this.addRoute("post", path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta PUT dentro del grupo.
-   */
+  /** Registers a PUT route within the group. */
   public put(
     path: string,
     action: RouteHandler,
@@ -131,9 +121,7 @@ export class RouterGroup {
     return this.addRoute("put", path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta PATCH dentro del grupo.
-   */
+  /** Registers a PATCH route within the group. */
   public patch(
     path: string,
     action: RouteHandler,
@@ -142,9 +130,7 @@ export class RouterGroup {
     return this.addRoute("patch", path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta DELETE dentro del grupo.
-   */
+  /** Registers a DELETE route within the group. */
   public delete(
     path: string,
     action: RouteHandler,

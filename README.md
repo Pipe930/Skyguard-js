@@ -1,30 +1,37 @@
-# Framework Web en TypeScript
+# 🛡️✈️ Skyguard.js — TypeScript Web Framework
 
-Framework web ligero y experimental, inspirado en **Express**, escrito completamente en **TypeScript**. El objetivo del proyecto es aprender, experimentar y construir una base sólida para un framework backend más completo en el futuro.
+Raptor.js is a **lightweight and experimental web framework**, inspired by **Express**, written entirely in **TypeScript**.
 
-Actualmente, el enfoque principal está en el **manejo de rutas**, **estructura interna** y **tipado**, dejando funcionalidades avanzadas para etapas posteriores del desarrollo.
+The main goal of this project is to **learn, experiment, and build a solid foundation** for a more complete backend framework in the future.
 
----
-
-## 🎯 Objetivos actuales
-
-* Proveer una base simple para registrar y manejar rutas HTTP.
-* Mantener una arquitectura clara y extensible.
-* Aprovechar TypeScript para mejorar la seguridad y legibilidad del código.
-* Servir como proyecto de aprendizaje y evolución progresiva.
+At its current stage, the framework focuses on **routing**, **internal architecture**, **type safety**, and **core HTTP abstractions**, leaving advanced features for later iterations.
 
 ---
 
-## ✨ Características actuales
+## 🎯 Current Goals
 
-* TypeScript first
-* Registro de rutas por método HTTP
-* Separación básica entre aplicación y router
-* Diseño simple y fácil de extender
+* Provide a simple and expressive API to register and handle HTTP routes
+* Maintain a clean, extensible, and framework-agnostic architecture
+* Leverage TypeScript for strong typing and better developer experience
+* Serve as a learning project with progressive evolution
 
 ---
 
-## 📦 Instalación
+## ✨ Current Features
+
+* TypeScript-first design
+* HTTP routing by method (GET, POST, PUT, PATCH, DELETE)
+* Route groups with prefixes
+* Global, group, and route-level middlewares
+* Request / Response abstractions
+* Declarative data validation
+* Simple template engine with layouts and helpers
+* Static file serving
+* Session handling (via middleware)
+
+---
+
+## 📦 Installation
 
 ```bash
 npm install raptor-js
@@ -32,16 +39,16 @@ npm install raptor-js
 
 ---
 
-## 🏁 Uso básico
+## 🏁 Basic Usage
 
 ```ts
 import { createApp } from "raptor-js";
-import { text } from "raptor-js/helpers";
+import { Response } from "raptor-js/http";
 
 const app = createApp();
 
-app.get("/test", () => {
-  return text("Hello, World!");
+app.get("/health", () => {
+  return Response.json({ status: "ok" });
 });
 
 app.listen(3000);
@@ -49,39 +56,40 @@ app.listen(3000);
 
 ---
 
-## 🛣️ Rutas
+## 🛣️ Routing
 
-Las rutas se registran utilizando los metodos HTTP de la instancia app.
-
-```ts
-app.get("/test/{param}", (request: Request) => {
-  return json(request.getParams());
-});
-
-app.post("/test", (request: Request) => {
-  const data = request.getData();
-  return json(data);
-});
-```
-Internamente, el framework mantiene una estructura de datos para mapear métodos HTTP a sus rutas correspondientes.
-
-## 🚀 Rutas Agrupadas
-
-Para agrupar rutas, puedes utilizar el método `group` de la instancia app, el cual recibe como primer parametro un string con el prefijo de las rutas y como segundo parametro una función donde se registran las rutas del grupo.
+Routes are registered using HTTP methods on the `app` instance.
 
 ```ts
-app.group("/api", (group) => {
-  group.get("/users", () => {
-    return json({ message: "Users" });
-  });
-  group.get("/products", () => {
-    return json({ message: "Products" });
-  });
+app.get("/posts/{id}", (request: Request) => {
+  return Response.json(request.getParams());
+});
+
+app.post("/posts", (request: Request) => {
+  return Response.json(request.getData());
 });
 ```
+
+Internally, the framework maps HTTP methods to route layers using an optimized routing table.
+
+---
+
+## 🧩 Route Groups
+
+Route groups allow you to organize endpoints under a shared prefix.
+
+```ts
+app.group("/api", (api) => {
+  api.get("/users", () => Response.json({ message: "Users" }));
+  api.get("/products", () => Response.json({ message: "Products" }));
+});
+```
+
+---
 
 ## 🛠️ Middlewares
-Para registrar middlewares, tienes que crear una función que reciba como parametros un objeto `Request` y una función `next`, la cual se encarga de ejecutar el siguiente middleware o la ruta correspondiente. Luego, puedes registrar esa función como middleware global, para un grupo de rutas o para una ruta específica.
+
+Middlewares can be registered **globally**, **per group**, or **per route**.
 
 ```ts
 import { Request, Response } from "raptor-js/http";
@@ -91,125 +99,139 @@ const authMiddleware = async (
   request: Request,
   next: RouteHandler,
 ): Promise<Response> => {
-  if (request.getHeaders["authorization"] !== "test") {
-    return json({
-      message: "NotAuthenticated",
-    }).setStatus(401);
+  if (request.getHeaders["authorization"] !== "secret") {
+    return Response.json({ message: "Unauthorized" }).setStatus(401);
   }
-  return await next(request);
+
+  return next(request);
 };
 
-// Registrar middleware globalmente
+// Global middleware
 app.middlewares([authMiddleware]);
 
-app.group("/api", (group) => {
-  group.middlewares([authMiddleware]); // Registrar middleware para un grupo de rutas
-
-  group.get("/users", () => {
-    return json({ message: "Users" });
-  });
-  group.get("/products", () => {
-    return json({ message: "Products" });
-  });
+// Group middleware
+app.group("/admin", (admin) => {
+  admin.middlewares([authMiddleware]);
+  admin.get("/dashboard", () => Response.json({ ok: true }));
 });
 
-// Registrar middleware en una ruta específica
-app.get("/testMiddleware", (request: Request) =>
-  json({ message: "hola" }), [authMiddleware])
+// Route-level middleware
+app.get(
+  "/secure",
+  () => Response.json({ secure: true }),
+  [authMiddleware],
+);
 ```
 
-## 📦 Validacion de datos
-Para validar los datos de una petición, tenemos una clase que se llama `ValidationSchema`, la cual se utiliza para definir un esquema de validación para los datos de una petición, y luego se puede utilizar ese esquema para validar los datos de la petición.
+---
+
+## 📦 Data Validation
+
+Raptor.js provides a **declarative validation system** using schemas.
 
 ```ts
 import { ValidationSchema } from "raptor-js/validation";
 
-const userSchema = ValidationSchema.create()
+export const userSchema = ValidationSchema.create()
   .field("name")
-  .string({ maxLength: 60 })
+    .required("Name is required")
+    .string({ maxLength: 60 })
   .field("email")
-  .required()
-  .email()
-  .field("birthdate")
-  .date({ max: new Date() })
+    .required()
+    .email()
   .field("age")
-  .number({ min: 18, max: 65 })
+    .number({ min: 18, max: 99 })
   .field("active")
-  .required()
-  .boolean()
-  .field("bio")
-  .optional()
-  .string()
+    .boolean()
   .build();
 
 app.post("/users", (request: Request) => {
-  const validationResult = request.validateData(userSchema);
-  return json(validationResult);
+  const validatedData = request.validateData(userSchema);
+
+  return Response.json({
+    success: true,
+    data: validatedData,
+  });
 });
 ```
 
-## 📄 Motor de Plantillas o Vistas
-Para poder utilizar el motor de plantillas del framework, debes utilizar el helper `render`, el cual recibe como primer parametro el nombre de la vista (archivo .html) y como segundo parametro un objeto con las variables que quieres pasar a la vista.
+Validation is:
+
+* Fail-fast per field
+* Fully typed
+* Reusable
+* Decoupled from transport layer
+
+---
+
+## 📄 Views & Template Engine
+
+To render HTML views, use the `render` helper.
 
 ```ts
+import { render } from "raptor-js/helpers";
+
 app.get("/home", () => {
   return render(
-    "home", // nombre de la vista (archivo .html)
+    "home",
     {
-      title: "Productos",
+      title: "Products",
       products: [
-        { name: "Laptop", price: 999.99, inStock: true },
-        { name: "Mouse", price: 29.99, inStock: false },
+        { name: "Laptop", price: 999.99 },
+        { name: "Mouse", price: 29.99 },
       ],
-      user: {
-        name: "Juan Pérez",
-        role: "admin",
-      },
-    }, // variables para la vista
-    "main", // nombre del layout (opcional) 
+      user: { name: "John", role: "admin" },
+    },
+    "main",
   );
 });
 ```
 
-Por ahora el motor se encuentra en una etapa muy temprana de desarrollo, por lo que solo soporta funcionalidades básicas como:
-* Renderizado de variables
-* Estructuras de control (if, for)
+### Supported features
+
+* Variable interpolation (`{{ variable }}`)
+* Conditionals (`{{#if}}`)
+* Loops (`{{#each}}`)
 * Layouts
-* Helpers simples (uppercase, lowercase, date)
-* Helpers personalizados
+* Partials
+* Built-in helpers (`upper`, `lower`, `date`)
+* Custom helpers
 
 ---
 
-## 🧱 Estado del proyecto
+## 🧱 Project Status
 
-⚠️ **Proyecto en desarrollo temprano**
+⚠️ **Early-stage project**
 
-* EL framework aún no está completo.
-* No se encuentra en una versión 100% estable.
-* Muchas funcionalidades aún no están implementadas.
-* No se recomienda su uso en producción, por el momento.
-
----
-
-## 🔮 Roadmap (tentativo)
-
-* Middlewares (✅)
-* Motor de plantillas simple (✅)
-* Contexto de request/response (✅)
-* Validación de datos (✅)
-* Manejo de errores
-* ORM y bases de datos
-* Autenticación y autorización
-* Sessiones y cookies
+* Not production-ready
+* API may change
+* Features are still evolving
+* Intended primarily for learning and experimentation
 
 ---
 
-## 🧠 Motivación
+## 🔮 Roadmap (Tentative)
 
-Este proyecto nace como una forma de entender mejor cómo funcionan frameworks como Express, Fastify o Koa, implementando sus conceptos desde cero y adaptándolos a un enfoque moderno con TypeScript.
+* Middleware system (✅)
+* Template engine (✅)
+* Request / Response abstraction (✅)
+* Data validation (✅)
+* Error handling improvements
+* Database & ORM integration
+* Authentication & authorization
+* Sessions & cookies (in progress)
+* Plugin system
 
 ---
 
-## 📄 Licencia
+## 🧠 Motivation
+
+This project was created to deeply understand how frameworks like **Express**, **Fastify**, and **Koa** work internally, by reimplementing their core ideas with a **modern TypeScript-first approach**.
+
+---
+
+## 📄 License
 
 MIT License
+
+---

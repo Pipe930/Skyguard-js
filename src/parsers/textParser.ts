@@ -1,8 +1,10 @@
 import type { ContentParser } from "./contentParser";
 
 /**
- * Parser para contenido de texto plano.
- * Maneja: text/plain, text/html, text/*, application/xml, etc.
+ * Plain text content parser.
+ *
+ * Handles `text/plain`, `text/html`, `text/*`, `application/xml`, and similar
+ * text-based content types.
  */
 export class TextParser implements ContentParser {
   public canParse(contentType: string): boolean {

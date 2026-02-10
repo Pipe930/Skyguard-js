@@ -3,62 +3,52 @@ import type { ContentParser } from "./contentParser";
 import type { MultipartData, ParsedPart } from "./parserInterface";
 
 /**
- * Parser para contenido multipart/form-data.
+ * `multipart/form-data` content parser.
  *
- * Implementa la interfaz {@link ContentParser} para integrarse
- * al sistema de parsing del framework.
+ * Parses multipart payloads into fields and files.
  */
 export class MultipartParser implements ContentParser {
   /**
-   * Determina si este parser puede manejar el tipo de contenido indicado.
+   * Checks whether the given content type is `multipart/form-data`.
    *
-   * @param contentType - Valor del header Content-Type.
-   * @returns Devuelve un booleano validando si es multipart/form-data
+   * @param contentType - Raw `Content-Type` header value
+   * @returns `true` if the content type is multipart
    */
   public canParse(contentType: string): boolean {
     return contentType.includes("multipart/form-data");
   }
 
   /**
-   * Parsea un cuerpo multipart/form-data y lo transforma
-   * en una estructura tipada.
+   * Parses a `multipart/form-data` body into a typed structure.
    *
-   * @param body - Cuerpo crudo de la request.
-   * @param contentType - Header Content-Type completo.
-   * @returns Devuelve un objeto con los campos y archivos parseados.
-   * @throws  Si no se encuentra el boundary.
+   * @param body - Raw request body
+   * @param contentType - Full `Content-Type` header value
+   * @returns Parsed multipart data (fields and files)
+   * @throws {ContentParserException} If the multipart boundary is missing
+   *
+   * @example
+   * // Typically called through ContentParserManager based on Content-Type:
+   * const parsed = parser.parse(body, "multipart/form-data; boundary=---123");
+   * // parsed.fields / parsed.files
    */
   public parse(body: Buffer | string, contentType: string): MultipartData {
     const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
     const boundary = this.extractBoundary(contentType);
 
-    if (!boundary)
+    if (!boundary) {
       throw new ContentParserException(
         "Missing boundary in multipart/form-data",
       );
+    }
 
     return this.parseMultipart(buffer, boundary);
   }
 
-  /**
-   * Extrae el boundary desde el header Content-Type.
-   *
-   * @param contentType - Header Content-Type.
-   * @returns Devuelve un Boundary encontrado o null si no existe.
-   */
   private extractBoundary(contentType: string): string | null {
     const match = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
     return match ? match[1] || match[2] : null;
   }
 
-  /**
-   * Procesa el buffer multipart completo separando
-   * cada parte del formulario.
-   *
-   * @param buffer - Cuerpo completo de la request.
-   * @param boundary - Delimitador multipart.
-   * @returns Devuelve el resultado en un objeto mostrando los campos y los archivos.
-   */
   private parseMultipart(buffer: Buffer, boundary: string): MultipartData {
     const result: MultipartData = {
       fields: {},
@@ -90,13 +80,6 @@ export class MultipartParser implements ContentParser {
     return result;
   }
 
-  /**
-   * Divide un buffer usando un delimitador.
-   *
-   * @param buffer - Buffer original.
-   * @param delimiter - Separador (boundary).
-   * @returns Devuelve una lista de partes resultantes.
-   */
   private splitBuffer(buffer: Buffer, delimiter: Buffer): Buffer[] {
     const parts: Buffer[] = [];
     let start = 0;
@@ -112,12 +95,6 @@ export class MultipartParser implements ContentParser {
     return parts;
   }
 
-  /**
-   * Parsea una parte individual del multipart.
-   *
-   * @param part - Segmento individual del multipart.
-   * @returns Devuelve el contenido parseada o null si es inválida.
-   */
   private parsePart(part: Buffer): ParsedPart | null {
     const headerEndIndex = part.indexOf("\r\n\r\n");
     if (headerEndIndex === -1) return null;
@@ -142,12 +119,6 @@ export class MultipartParser implements ContentParser {
     };
   }
 
-  /**
-   * Parsea un bloque de headers HTTP en formato texto.
-   *
-   * @param headerText - Texto de headers.
-   * @returns Devuelve los headers normalizados.
-   */
   private parseHeaders(headerText: string): Record<string, string> {
     const headers: Record<string, string> = {};
     const lines = headerText.split("\r\n");

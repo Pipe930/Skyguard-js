@@ -14,69 +14,48 @@ import type { Middleware, RouteHandler } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
 
 /**
- * La clase App actúa como el *kernel de ejecución* y *orquestador del ciclo de vida*
- * de cada petición HTTP. Es responsable de:
+ * The `App` class acts as the **execution kernel** and **lifecycle orchestrator**
+ * of the framework.
  *
- * - Inicializar y exponer el sistema de enrutamiento.
- * - Recibir peticiones normalizadas a través de adaptadores HTTP.
- * - Resolver la ruta correspondiente.
- * - Ejecutar el controlador asociado.
- * - Enviar la respuesta final al cliente.
+ * It is responsible for:
+ * - Bootstrapping and exposing the routing system
+ * - Receiving normalized HTTP requests through adapters
+ * - Resolving the matching route
+ * - Executing the associated controller
+ * - Dispatching the final response to the client
  *
- * Esta clase implementa el patrón Singleton para garantizar una única
- * instancia de aplicación durante todo el ciclo de vida del proceso.
+ * This class implements the **Singleton pattern** to guarantee
+ * a single application instance during the process lifecycle.
  *
- * La arquitectura desacopla completamente el núcleo del framework
- * de la plataforma de ejecución (Node, Bun, Deno, etc.) mediante
- * el uso de {@link HttpAdapter} y {@link Server}.
+ * The architecture fully decouples the core framework
+ * from the runtime platform (Node, Bun, Deno, etc.)
+ * through {@link HttpAdapter} and {@link Server}.
  */
 export class App {
-  /**
-   * Sistema de enrutamiento principal.
-   * Responsable de registrar y resolver las rutas definidas por el usuario.
-   */
+  /** Main routing system */
   private router: Router;
 
-  /**
-   * Servidor subyacente responsable de aceptar conexiones
-   * desde la plataforma de ejecución (Node, etc).
-   */
+  /** Underlying HTTP server implementation */
   private server: NodeServer;
 
   /**
-   * Motor de vistas responsable del renderizado de plantillas.
+   * View engine used to render templates.
    *
-   * Permite separar la lógica de presentación del dominio
-   * de aplicación mediante motores como {@link RaptorEngine}.
-   *
-   * Es utilizado típicamente dentro de los controladores
-   * para generar respuestas HTML.
+   * Typically consumed inside controllers to generate HTML responses.
    */
   public view: View;
 
-  /**
-   * Manejador de archivos estáticos
-   */
+  /** Static file handler (optional) */
   private staticFileHandler: StaticFileHandler | null = null;
 
   /**
-   * Inicializa y configura la aplicación.
+   * Bootstraps and configures the application.
    *
-   * Este método actúa como el *Composition Root* del framework:
-   * es el único lugar donde se instancian y se conectan
-   * las implementaciones concretas de la infraestructura.
+   * Acts as the **Composition Root** of the framework:
+   * this is the only place where concrete infrastructure
+   * implementations are instantiated and wired together.
    *
-   * Responsabilidades:
-   * - Crear la instancia singleton de la aplicación.
-   * - Registrar el sistema de enrutamiento.
-   * - Configurar el servidor HTTP subyacente.
-   * - Inicializar el motor de vistas.
-   *
-   * A partir de este punto, el resto del sistema debe
-   * depender únicamente de abstracciones (interfaces),
-   * nunca de implementaciones concretas.
-   *
-   * @returns {App} Retorna la instancia de la clase
+   * @returns The singleton `App` instance
    */
   public static bootstrap(): App {
     const app = singleton(App);
@@ -89,19 +68,18 @@ export class App {
   }
 
   /**
+   * Main execution pipeline.
    *
-   * Este método representa el *pipeline principal de ejecución*:
+   * Execution flow:
+   * 1. Retrieves the normalized request from the adapter
+   * 2. Attempts to serve a static file (if enabled)
+   * 3. Resolves the matching route
+   * 4. Executes the controller
+   * 5. Sends the response back to the client
    *
-   * 1. Obtiene la petición normalizada desde el adaptador.
-   * 2. Resuelve la ruta correspondiente.
-   * 3. Asocia la ruta a la solicitud.
-   * 4. Ejecuta el controlador.
-   * 5. Despacha la respuesta al cliente.
+   * This method is platform-agnostic.
    *
-   * No depende de ninguna plataforma concreta (Node, HTTP nativo, etc).
-   *
-   * @param {HttpAdapter} adapter - Adaptador responsable de mapear
-   * la capa de red al dominio del framework.
+   * @param adapter - HTTP adapter bridging the runtime with the framework
    */
   public async handle(adapter: HttpAdapter): Promise<void> {
     try {
@@ -119,156 +97,125 @@ export class App {
       }
 
       const response = await this.router.resolve(request);
-
       adapter.sendResponse(response);
-    } catch (err) {
-      this.handleError(err, adapter);
+    } catch (error) {
+      this.handleError(error, adapter);
     }
   }
 
   /**
-   * Configura el directorio para servir archivos estáticos
+   * Enables static file serving.
    *
-   * @param publicPath - Ruta absoluta o relativa al directorio público
-   * @returns this para encadenamiento
+   * @param publicPath - Absolute or relative public directory path
    *
    * @example
-   * app.static(join(__dirname, "public"));
-   * // Archivos en /public/css/style.css accesibles en /css/style.css
+   * app.staticFiles("public");
+   * // /public/css/style.css → /css/style.css
    */
-  public staticFiles(publicPath: string) {
+  public staticFiles(publicPath: string): void {
     this.staticFileHandler = new StaticFileHandler(publicPath);
   }
 
   /**
-   * Inicia el servidor HTTP en el puerto indicado utilizando
-   * la implementación de {@link Server} configurada.
-   *
-   * Este método expone una DX similar a Express:
+   * Starts the HTTP server on the given port.
    *
    * @example
    * app.listen(3000);
    *
-   * @param {number} port - Puerto TCP donde escuchar.
+   * @param port - TCP port to listen on
    */
   public listen(port: number): void {
     this.server.listen(port);
   }
 
   /**
-   * Establece un prefijo global para todas las rutas de la aplicación
+   * Sets a global prefix for all routes.
    *
-   * @param prefix - Prefijo a aplicar (ej: "api", "/v1", "test")
-   * @returns this para encadenamiento
+   * @param prefix - Route prefix (e.g. "api", "/v1")
    *
    * @example
    * app.setPrefix("api");
-   * app.get("/users", handler); // Resultado: /api/users
+   * app.get("/users", handler); // → /api/users
    */
-  public setPrefix(prefix: string) {
+  public setPrefix(prefix: string): void {
     this.router.setPrefix(prefix);
   }
 
-  /**
-   * Registra una ruta GET
-   *
-   * @example
-   * app.get('/users', listUsers);
-   * app.get('/users/{id}', getUser).setMiddlewares([AuthMiddleware]);
-   */
-  public get(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+  /** Registers a GET route */
+  public get(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): void {
     this.router.get(path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta POST
-   *
-   * @example
-   * app.post('/users', createUser);
-   */
-  public post(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+  /** Registers a POST route */
+  public post(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): void {
     this.router.post(path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta PUT
-   *
-   * @example
-   * app.put('/users/{id}', updateUserFull);
-   */
-  public put(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+  /** Registers a PUT route */
+  public put(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): void {
     this.router.put(path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta PATCH
-   *
-   * @example
-   * app.patch('/users/{id}', updateUserPartial);
-   */
-  public patch(path: string, action: RouteHandler, middlewares?: Middleware[]) {
+  /** Registers a PATCH route */
+  public patch(
+    path: string,
+    action: RouteHandler,
+    middlewares?: Middleware[],
+  ): void {
     this.router.patch(path, action, middlewares);
   }
 
-  /**
-   * Registra una ruta DELETE
-   *
-   * @example
-   * app.delete('/users/{id}', deleteUser);
-   */
+  /** Registers a DELETE route */
   public delete(
     path: string,
     action: RouteHandler,
     middlewares?: Middleware[],
-  ) {
+  ): void {
     this.router.delete(path, action, middlewares);
   }
 
   /**
-   * Registra middlewares globales que se ejecutarán en todas las rutas
+   * Registers global middlewares.
    *
-   * @example
-   * app.middlewares([LoggerMiddleware, CorsMiddleware]);
+   * These are executed for every route.
    */
-  public middlewares(middlewares: Middleware[]) {
+  public middlewares(middlewares: Middleware[]): void {
     this.router.middlewares(middlewares);
   }
 
   /**
-   * Crea un grupo de rutas con un prefijo común
+   * Creates a route group with a shared prefix.
    *
    * @example
-   * app.group('/api', (api) => {
-   *   api.get('/users', listUsers);
-   *   api.post('/users', createUser);
-   * });
-   *
-   * @example
-   * // Con middlewares
-   * app.group('/admin', (admin) => {
-   *   admin.use(AuthMiddleware);
-   *   admin.get('/dashboard', dashboardHandler);
+   * app.group("/api", (api) => {
+   *   api.get("/users", listUsers);
+   *   api.post("/users", createUser);
    * });
    */
   public group(prefix: string, callback: (group: RouterGroup) => void): void {
-    return this.router.group(prefix, callback);
+    this.router.group(prefix, callback);
   }
 
   /**
-   * Se encarga de traducir excepciones del dominio
-   * a respuestas HTTP válidas.
+   * Translates domain-level exceptions into HTTP responses.
    *
-   * En el futuro este método puede evolucionar para:
-   * - Middlewares de error.
-   * - Páginas de error custom.
-   * - Logging estructurado.
-   *
-   * @param {unknown} error - Error capturado durante la ejecución.
-   * @param {HttpAdapter} adapter - Adaptador de salida.
+   * This method centralizes error handling and response mapping.
    */
   private handleError(error: unknown, adapter: HttpAdapter): void {
     if (error instanceof HttpNotFoundException) {
-      adapter.sendResponse(Response.text("Not found").setStatus(404));
+      adapter.sendResponse(Response.text("Not Found").setStatus(404));
       return;
     }
 
@@ -301,6 +248,6 @@ export class App {
   }
 }
 
-export const createApp = () => {
+export const createApp = (): App => {
   return App.bootstrap();
 };

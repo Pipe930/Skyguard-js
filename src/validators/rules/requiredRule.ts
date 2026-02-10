@@ -2,7 +2,9 @@ import type { RuleOptions, ValidationContext, ValidationError } from "../types";
 import { BaseValidationRule } from "../validationRule";
 
 /**
- * Regla que valida si un campo es requerido.
+ * Required field validation rule.
+ *
+ * Validates that a value is present and not empty.
  */
 export class RequiredRule extends BaseValidationRule {
   constructor() {

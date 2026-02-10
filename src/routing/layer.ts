@@ -1,60 +1,49 @@
 import type { Middleware, RouteHandler } from "../types";
 
 /**
- * Clase que representa una ruta individual en el sistema de enrutamiento
+ * Represents a single route layer in the routing system.
+ *
+ * A layer compiles a route template (e.g. `/users/{id}`) into a regex,
+ * can match incoming URLs, and can extract path parameters.
  *
  * @example
- * const layer = new Layer('/users/{id}', userController);
- * layer.matches('/users/42'); // true
- * layer.parseParameters('/users/42'); // { id: '42' }
+ * const layer = new Layer("/users/{id}", userController);
+ * layer.matches("/users/42"); // true
+ * layer.parseParameters("/users/42"); // { id: "42" }
  */
 export class Layer {
-  /**
-   * Plantilla original de la URL con sintaxis de parámetros
-   * @example '/users/{id}' o '/posts/{postId}/comments/{commentId}'
-   */
+  /** Original route template using `{param}` syntax. */
   private url: string;
 
-  /**
-   * Expresión regular compilada desde la URL para hacer matching
-   * @example '/users/{id}' se convierte en /^\/users\/([a-zA-Z0-9]+)\/?$/
-   */
+  /** Compiled regex used to match incoming URLs. */
   private regex: RegExp;
 
-  /**
-   * Nombres de los parámetros extraídos de la URL en orden de aparición
-   * @example Para '/users/{id}' → ['id']
-   * @example Para '/posts/{postId}/comments/{commentId}' → ['postId', 'commentId']
-   */
+  /** Parameter names extracted from the template in appearance order. */
   private parameters: string[];
 
-  /**
-   * Handler/controlador que se ejecuta cuando la ruta hace match
-   */
+  /** Handler executed when this layer matches. */
   private action: RouteHandler;
 
-  /**
-   * Middlewares que se ejecutan antes del handler principal
-   */
+  /** Middlewares executed before the route handler. */
   private middlewares: Middleware[] = [];
 
   /**
-   * Construye una nueva capa de ruta
+   * Creates a new route layer.
    *
-   * Proceso interno:
-   * 1. Busca parámetros en formato {param} en la URL
-   * 2. Los reemplaza por grupos de captura regex: ([a-zA-Z0-9]+)
-   * 3. Compila el patrón final con ^ y $ para match exacto
+   * Internally it:
+   * 1) Finds `{param}` segments in the template
+   * 2) Replaces them with regex capture groups
+   * 3) Compiles a final pattern for exact matching (optional trailing slash)
    *
-   * @param url - Plantilla de la ruta (usa {nombreParam} para parámetros dinámicos)
-   * @param action - Función handler que procesa las peticiones a esta ruta
+   * @param url - Route template (use `{paramName}` for dynamic segments)
+   * @param action - Handler function for this route
    */
   constructor(url: string, action: RouteHandler) {
     const paramRegex = /\{([a-zA-Z]+)\}/g;
     const regexSource = url.replace(paramRegex, "([a-zA-Z0-9]+)");
 
     this.url = url;
-    this.regex = new RegExp(`^${regexSource}/?$`); // El /? permite trailing slash opcional
+    this.regex = new RegExp(`^${regexSource}/?$`);
     this.parameters = [...url.matchAll(paramRegex)].map((m) => m[1]);
     this.action = action;
   }
@@ -72,13 +61,13 @@ export class Layer {
   }
 
   /**
-   * Asigna middlewares a esta ruta
+   * Assigns middlewares to this route.
    *
-   * @param middlewares - Array de clases de middleware (no instancias)
-   * @returns Devuelve un this. Para permitir method chaining
+   * @param middlewares - Middleware list executed before the handler
+   * @returns The current {@link Layer} instance (for chaining)
    *
    * @example
-   * layer.setMiddlewares([AuthMiddleware, LoggerMiddleware])
+   * layer.setMiddlewares([AuthMiddleware, LoggerMiddleware]);
    */
   public setMiddlewares(middlewares: Middleware[]): this {
     this.middlewares = middlewares;
@@ -86,48 +75,45 @@ export class Layer {
   }
 
   /**
-   * Verifica si una URL entrante coincide con el patrón de la ruta actual
+   * Checks whether an incoming URL matches this route pattern.
    *
-   * @param url - URL de la petición HTTP
-   * @returns Devuelve un buleano verificando si existe o no
+   * @param url - Incoming request URL (path only)
+   * @returns `true` if the URL matches this layer
    *
    * @example
-   * const layer = new Layer('/users/{id}', handler);
-   * layer.matches('/users/42');     // true
-   * layer.matches('/users/42/');    // true (trailing slash opcional)
-   * layer.matches('/users/abc');    // true
-   * layer.matches('/posts/1');      // false
+   * const layer = new Layer("/users/{id}", handler);
+   * layer.matches("/users/42");   // true
+   * layer.matches("/users/42/");  // true (optional trailing slash)
+   * layer.matches("/posts/1");    // false
    */
   public matches(url: string): boolean {
     return this.regex.test(url);
   }
 
   /**
-   * Indica si esta ruta tiene parámetros dinámicos
+   * Indicates whether this route defines dynamic path parameters.
    *
-   * @returns Devuelve un buleano
+   * @returns `true` if the route template includes `{param}` segments
    */
   public hasParameters(): boolean {
     return this.parameters.length > 0;
   }
 
   /**
-   * Extrae los valores de los parámetros dinámicos desde una URL real
+   * Extracts path parameters from a concrete URL.
    *
-   * IMPORTANTE: Solo llamar después de verificar matches() === true
+   * Call this only after {@link Layer.matches} returns `true`.
    *
-   * @param url - URL real de la petición
-   * @returns Devuelve un objeto con los parámetros extraídos
-   *
-   * @example
-   * const layer = new Layer('/users/{id}', handler);
-   * layer.parseParameters('/users/42');
-   * // Retorna: { id: '42' }
+   * @param url - Incoming request URL (path only)
+   * @returns Extracted parameters mapped by name
    *
    * @example
-   * const layer = new Layer('/posts/{postId}/comments/{commentId}', handler);
-   * layer.parseParameters('/posts/10/comments/5');
-   * // Retorna: { postId: '10', commentId: '5' }
+   * const layer = new Layer("/users/{id}", handler);
+   * layer.parseParameters("/users/42"); // { id: "42" }
+   *
+   * const layer = new Layer("/posts/{postId}/comments/{commentId}", handler);
+   * layer.parseParameters("/posts/10/comments/5");
+   * // { postId: "10", commentId: "5" }
    */
   public parseParameters(url: string): Record<string, string> {
     const match = this.regex.exec(url);

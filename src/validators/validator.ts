@@ -7,43 +7,42 @@ import type {
 import type { FieldDefinition } from "./validationSchema";
 
 /**
- * Motor de validación del framework.
+ * Framework validation engine.
  *
- * Se encarga de **ejecutar** las reglas definidas en un schema
- * contra un conjunto de datos de entrada.
- *
- * ❗ Esta clase NO define reglas ni schemas.
- * Su única responsabilidad es:
- * - iterar sobre los campos del schema
- * - ejecutar sus reglas en orden
- * - recolectar errores de validación
- *
- * El schema es normalmente construido mediante `ValidationSchema`.
+ * Executes the rules defined in a schema against an input data object.
+ * Schemas are typically built using {@link ValidationSchema}.
  */
 export class Validator {
   /**
-   * Ejecuta la validación de datos contra un schema.
+   * Validates input data against a schema.
    *
-   * ## Comportamiento
-   * - Solo se validan los campos definidos en el schema
-   * - Los campos opcionales se ignoran si no existen en los datos
-   * - Las reglas se ejecutan en el orden en que fueron definidas
-   * - La validación es **fail-fast por campo**
-   *   (se detiene en la primera regla fallida de cada campo)
+   * Behavior:
+   * - Only fields defined in the schema are validated
+   * - Optional fields are skipped if missing from the input
+   * - Rules run in the order they were defined
+   * - Fail-fast per field (stops at the first failing rule for that field)
    *
-   * ## Flujo interno
-   * 1. Se itera cada campo del schema
-   * 2. Se construye un `ValidationContext`
-   * 3. Se ejecutan las reglas del campo
-   * 4. Se recolectan los errores producidos
+   * @param data - Input data to validate
+   * @param schema - Validation schema definition
+   * @returns Validation result:
+   * - `valid`: whether the data passed validation
+   * - `errors`: list of validation errors
+   * - `data`: original data when validation succeeds
    *
-   * @param data Datos de entrada a validar
-   * @param schema Definición del schema de validación
+   * @example
+   * const schema = ValidationSchema.create()
+   *   .field("email").required().string().email()
+   *   .field("age").optional().number({ min: 18 })
+   *   .build();
    *
-   * @returns Resultado de la validación:
-   * - `valid`: indica si los datos son válidos
-   * - `errors`: lista de errores encontrados
-   * - `data`: datos originales si la validación fue exitosa
+   * const result = Validator.validate(
+   *   { email: "a@b.com", age: 20 },
+   *   schema
+   * );
+   *
+   * if (!result.valid) {
+   *   console.log(result.errors);
+   * }
    */
   public static validate(
     data: Record<string, unknown>,
@@ -80,19 +79,20 @@ export class Validator {
   }
 
   /**
-   * Ejecuta la validación y lanza una excepción
-   * si se detecta cualquier error.
+   * Validates input data and throws if any rule fails.
    *
-   * Útil para flujos donde la validación fallida
-   * debe interrumpir la ejecución inmediatamente
-   * (por ejemplo, controladores HTTP).
+   * @param data - Input data to validate
+   * @param schema - Validation schema definition
+   * @returns The original data when validation succeeds
+   * @throws {ValidationException} When validation fails
    *
-   * @param data Datos de entrada a validar
-   * @param schema Definición del schema de validación
+   * @example
+   * const schema = ValidationSchema.create()
+   *   .field("email").required().string().email()
+   *   .build();
    *
-   * @throws ValidationException cuando la validación falla
-   *
-   * @returns Los datos originales si la validación es exitosa
+   * const data = Validator.validateOrFail({ email: "a@b.com" }, schema);
+   * // `data` is the original input when valid
    */
   public static validateOrFail(
     data: Record<string, unknown>,

@@ -8,9 +8,10 @@ import { XmlParser } from "./xmlParser";
 import { ReadBodyException } from "../exceptions/contentParserException";
 
 /**
- * Gestor principal de parseo de contenido.
- * Coordina los diferentes parsers y selecciona el apropiado
- * según el Content-Type de la solicitud.
+ * Main request body parsing manager.
+ *
+ * Coordinates multiple {@link ContentParser} implementations and
+ * selects the appropriate one based on the request `Content-Type`.
  */
 export class ContentParserManager {
   private parsers: ContentParser[] = [];
@@ -24,19 +25,31 @@ export class ContentParserManager {
   }
 
   /**
-   * Registra un parser personalizado.
+   * Registers a custom content parser.
    *
-   * @param parser
+   * Parsers registered later take priority over existing ones.
+   *
+   * @param parser - Content parser implementation
+   *
+   * @example
+   * contentParserManager.registerParser(new CustomParser());
    */
   public registerParser(parser: ContentParser): void {
-    this.parsers.unshift(parser); // Insertar al inicio para prioridad
+    // Insert at the beginning to give higher priority
+    this.parsers.unshift(parser);
   }
 
   /**
-   * Parsea el contenido usando el parser apropiado.
+   * Parses the request body using the appropriate parser.
    *
-   * @param body Cuerpo o contenido de la peticion
-   * @param contentType Cabecera Content-Type de la petición
+   * The parser is selected based on the `Content-Type` header.
+   * If no parser matches, the raw body is returned.
+   *
+   * @param req - Native incoming HTTP request
+   * @returns Parsed body content or raw body
+   *
+   * @example
+   * const data = await contentParserManager.parse(req);
    */
   public async parse(req: IncomingMessage): Promise<unknown> {
     const body = await this.readBody(req);
@@ -52,9 +65,10 @@ export class ContentParserManager {
   }
 
   /**
-   * Lee el body completo de la solicitud.
+   * Reads the raw request body.
    *
-   * @returns Devuelve un buffer en promesa
+   * @param req - Native incoming HTTP request
+   * @returns A promise that resolves to the full body buffer
    */
   private readBody(req: IncomingMessage): Promise<Buffer> {
     return new Promise((resolve, reject) => {
@@ -75,11 +89,10 @@ export class ContentParserManager {
   }
 
   /**
-   * Funcion que busca en base al Content-Type el parser, que se
-   * utilizara para parsear el cuerpo de la petición.
+   * Finds a parser capable of handling the given content type.
    *
-   * @param contentType Cabecera Content-Type de la petición
-   * @returns Devuelve el parser encontrado en la lista
+   * @param contentType - Request `Content-Type` header
+   * @returns Matching parser or `null` if none is found
    */
   private findParser(contentType: string): ContentParser | null {
     return this.parsers.find((parser) => parser.canParse(contentType)) || null;

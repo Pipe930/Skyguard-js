@@ -5,6 +5,13 @@ import { ContentDisposition } from "./contentDisposition";
 import { Response } from "../http/response";
 import { FileDownloadException } from "../exceptions/fileDownloadException";
 
+/**
+ * Helper utility for serving file downloads.
+ *
+ * Builds a {@link Response} configured with safe headers
+ * (`Content-Disposition`, `Content-Type`, `Content-Length`)
+ * to send files to the client.
+ */
 export class FileDownloadHelper {
   private contentDisposition: ContentDisposition;
 
@@ -13,12 +20,34 @@ export class FileDownloadHelper {
   }
 
   /**
-   * Crea una respuesta para descargar un archivo
+   * Creates a file download response.
    *
-   * @param filePath - Ruta del archivo a descargar
-   * @param filename - Nombre personalizado para el archivo (opcional)
-   * @param headers - Headers adicionales (opcional)
-   * @returns Promise<Response> configurada para descarga
+   * Resolves the file path, validates that it is a file,
+   * reads its contents, and returns a {@link Response}
+   * ready to be sent to the client.
+   *
+   * @param filePath - Path to the file on disk
+   * @param filename - Optional custom filename for the download
+   * @param headers - Optional additional response headers
+   * @returns A {@link Response} configured for file download
+   *
+   * @throws {FileDownloadException}
+   * Thrown if the file does not exist, is not a file,
+   * or cannot be read.
+   *
+   * @example
+   * const helper = new FileDownloadHelper();
+   *
+   * app.get("/download", async () => {
+   *   return helper.download("./files/report.pdf");
+   * });
+   *
+   * // Custom filename and headers
+   * return helper.download(
+   *   "./files/data.csv",
+   *   "export.csv",
+   *   { "Cache-Control": "no-store" }
+   * );
    */
   public async download(
     filePath: string,
@@ -29,11 +58,13 @@ export class FileDownloadHelper {
       const fullPath = resolve(filePath);
       const stats = await stat(fullPath);
 
-      if (!stats.isFile())
+      if (!stats.isFile()) {
         throw new FileDownloadException(`Path is not a file: ${fullPath}`);
+      }
 
       const content = await readFile(fullPath);
       const downloadName = filename || basename(fullPath);
+
       const downloadHeaders: Record<string, string> = {
         "Content-Disposition": this.contentDisposition.attachment(downloadName),
         "Content-Length": content.length.toString(),
@@ -42,8 +73,10 @@ export class FileDownloadHelper {
 
       if (headers) {
         for (const [key, value] of Object.entries(headers)) {
-          if (key.toLowerCase() !== "content-disposition")
+          // Prevent overriding Content-Disposition
+          if (key.toLowerCase() !== "content-disposition") {
             downloadHeaders[key] = value;
+          }
         }
       }
 

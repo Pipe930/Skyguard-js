@@ -3,67 +3,59 @@ import type { SessionData, SessionStorage } from "./sessionStorage";
 import { randomBytes } from "node:crypto";
 
 /**
- * Implementación de {@link SessionStorage} basada en memoria.
+ * In-memory {@link SessionStorage} implementation.
  *
- * Este storage mantiene todas las sesiones en un `Map` estático
- * compartido a nivel de proceso Node.js.
+ * Stores all sessions in a static `Map` shared at the Node.js process level.
  *
- * ⚠️ IMPORTANTE:
- * - Las sesiones **se pierden al reiniciar el proceso**
- * - No es seguro para entornos con múltiples instancias
- * - Recomendado solo para desarrollo, testing o prototipos
+ * ⚠️ Important:
+ * - Sessions are lost when the process restarts
+ * - Not safe for multi-instance or clustered environments
+ * - Recommended only for development, testing, or prototyping
  *
- * El ciclo de vida de la sesión es:
- * 1. `start()` → crea una nueva sesión
- * 2. `load(id)` → carga una sesión existente
- * 3. Acceso y mutación de datos
- * 4. `destroy()` → elimina la sesión
+ * Session lifecycle:
+ * 1) `start()` → creates a new session
+ * 2) `load(id)` → loads an existing session
+ * 3) Read/write session data
+ * 4) `destroy()` → removes the session
  */
 export class MemorySessionStorage implements SessionStorage {
   /**
-   * Almacenamiento global de sesiones en memoria.
+   * Global in-memory session storage.
    *
-   * La clave es el sessionId y el valor contiene los datos
-   * y la fecha de expiración.
+   * Key: session ID
+   * Value: session data and expiration timestamp
    */
   private static storageSessions = new Map<string, SessionData>();
 
-  /** ID de la sesión actualmente cargada */
+  /** Currently loaded session ID */
   private sessionId: string | null = null;
 
-  /** Datos asociados a la sesión */
+  /** Session data */
   private data: Record<string, unknown> = {};
 
-  /** Validación estricta del formato del sessionId */
+  /** Strict validation for session ID format */
   private regexSessionId = /^[a-f0-9]{64}$/;
 
   /**
-   * Crea una nueva instancia de `MemorySessionStorage`.
+   * Creates a new `MemorySessionStorage` instance.
    *
-   * @param expiredSession Tiempo de expiración en milisegundos.
+   * @param expiredSession - Session lifetime in milliseconds
    */
   constructor(private readonly expiredSession: number) {}
 
   /**
-   * Carga una sesión existente a partir de su ID.
+   * Loads an existing session by its ID.
    *
-   * - Valida el formato del ID
-   * - Verifica existencia
-   * - Verifica expiración
-   * - Renueva la expiración si es válida
-   *
-   * @param id Identificador de la sesión.
-   *
-   * @throws SessionException Si el ID es inválido, no existe
-   * o la sesión está expirada.
+   * @param id - Session identifier
+   * @throws {SessionException}
+   * Thrown if the ID is invalid, does not exist, or the session is expired
    */
   public load(id: string): void {
     if (!this.regexSessionId.test(id))
-      throw new SessionException("Invalid Session");
+      throw new SessionException("Invalid session");
 
     const sessionData = MemorySessionStorage.storageSessions.get(id);
-
-    if (!sessionData) throw new SessionException("Invalid Session");
+    if (!sessionData) throw new SessionException("Invalid session");
 
     if (sessionData.expiresAt > Date.now()) {
       this.sessionId = id;
@@ -73,20 +65,16 @@ export class MemorySessionStorage implements SessionStorage {
   }
 
   /**
-   * Calcula la nueva fecha de expiración de la sesión.
+   * Computes the next session expiration timestamp.
    *
-   * @returns Timestamp de expiración.
+   * @returns Expiration timestamp
    */
   private createExpiredSession(): number {
     return Date.now() + this.expiredSession;
   }
 
   /**
-   * Inicia una nueva sesión si no existe una activa.
-   *
-   * - Genera un nuevo sessionId
-   * - Inicializa el almacenamiento
-   * - Registra la sesión en memoria
+   * Starts a new session if none is active.
    */
   public start(): void {
     if (this.sessionId) return;
@@ -101,33 +89,32 @@ export class MemorySessionStorage implements SessionStorage {
   }
 
   /**
-   * Retorna el ID de la sesión actual.
+   * Returns the current session ID.
    *
-   * @returns Session ID o `null` si no hay sesión iniciada.
+   * @returns Session ID or `null` if no session is active
    */
   public id(): string | null {
     return this.sessionId;
   }
 
   /**
-   * Obtiene un valor almacenado en la sesión.
+   * Retrieves a value from the session.
    *
-   * @param key Clave del valor.
-   * @param defaultValue Valor por defecto.
-   *
-   * @returns El valor almacenado o el valor por defecto.
+   * @param key - Value key
+   * @param defaultValue - Optional default value
+   * @returns Stored value or the default value
    */
   public get<T>(key: string, defaultValue?: T): T | undefined {
     return (this.data[key] as T) ?? defaultValue;
   }
 
   /**
-   * Almacena un valor en la sesión.
+   * Stores a value in the session.
    *
-   * Si la sesión no existe, se inicia automáticamente.
+   * Automatically starts a session if none exists.
    *
-   * @param key Clave del valor.
-   * @param value Valor a almacenar.
+   * @param key - Value key
+   * @param value - Value to store
    */
   public set<T>(key: string, value: T): void {
     if (!this.sessionId) this.start();
@@ -135,22 +122,21 @@ export class MemorySessionStorage implements SessionStorage {
   }
 
   /**
-   * Verifica si una clave existe en la sesión.
+   * Checks whether a key exists in the session.
    *
-   * @param key Clave a verificar.
-   *
-   * @returns `true` si existe, `false` en caso contrario.
+   * @param key - Key to check
+   * @returns `true` if the key exists
    */
   public has(key: string): boolean {
     return key in this.data;
   }
 
   /**
-   * Elimina una clave de la sesión.
+   * Removes a key from the session.
    *
-   * Si no hay sesión activa, no hace nada.
+   * Does nothing if no session is active.
    *
-   * @param key Clave a eliminar.
+   * @param key - Key to remove
    */
   public remove(key: string): void {
     if (!this.sessionId) return;
@@ -158,38 +144,37 @@ export class MemorySessionStorage implements SessionStorage {
   }
 
   /**
-   * Destruye completamente la sesión actual.
-   *
-   * - Elimina la sesión del almacenamiento global
-   * - Limpia el estado interno
+   * Completely destroys the current session.
    */
   public destroy(): void {
-    if (this.sessionId)
+    if (this.sessionId) {
       MemorySessionStorage.storageSessions.delete(this.sessionId);
+    }
 
     this.sessionId = null;
     this.data = {};
   }
 
   /**
-   * Elimina todas las sesiones expiradas del almacenamiento.
+   * Removes all expired sessions from memory.
    *
-   * Este método debe ser ejecutado periódicamente
-   * (por ejemplo, mediante un cron o intervalo).
+   * This method should be executed periodically
+   * (e.g. via a cron job or interval).
    */
   public static cleanExpiredSessions(): void {
     const now = Date.now();
 
     for (const [id, session] of MemorySessionStorage.storageSessions) {
-      if (session.expiresAt < now)
+      if (session.expiresAt < now) {
         MemorySessionStorage.storageSessions.delete(id);
+      }
     }
   }
 
   /**
-   * Genera un identificador de sesión criptográficamente seguro.
+   * Generates a cryptographically secure session identifier.
    *
-   * @returns Session ID en formato hexadecimal (64 caracteres).
+   * @returns Hex-encoded session ID (64 characters)
    */
   private generateId(): string {
     return randomBytes(32).toString("hex");
