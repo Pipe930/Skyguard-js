@@ -1,6 +1,8 @@
 import { Container } from "../container/container";
 import { App } from "../app";
 import type { Headers, TemplateContext } from "../types";
+import { statusCodes } from "./statusCodes";
+import { InvalidHttpStatusException } from "../exceptions";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -39,6 +41,8 @@ export class Response {
   }
 
   public setStatus(newStatus: number): this {
+    const status = statusCodes[newStatus] ?? null;
+    if (!status) throw new InvalidHttpStatusException(newStatus);
     this.status = newStatus;
     return this;
   }

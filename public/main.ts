@@ -4,8 +4,9 @@ import { RouteHandler } from "../src/types";
 import { json, redirect, text, render, download } from "../src/helpers";
 import { ValidationSchema } from "../src/validators";
 import { join } from "node:path";
-import { sessionMiddleware } from "../src/middlewares/middlewareSession";
+import { sessions } from "../src/middlewares/session";
 import { MemorySessionStorage } from "../src/sessions";
+import { cors } from "../src/middlewares/cors";
 
 const PORT = 3000;
 
@@ -45,7 +46,7 @@ app.get("/test", () => {
 
 app.post("/test", (request: Request) => {
   const dataValid = request.validateData(userSchema);
-  return json(dataValid);
+  return json(dataValid).setStatus(201);
 });
 
 app.post("/xml", (request: Request) => {
@@ -108,7 +109,13 @@ app.get("/download/report", async () => {
   );
 });
 
-app.middlewares([sessionMiddleware(MemorySessionStorage)]);
+app.middlewares([
+  sessions(MemorySessionStorage),
+  cors({
+    origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
+    methods: ["PUT"],
+  }),
+]);
 
 app.post("/login", (request: Request) => {
   const { username, password } = request.getData();

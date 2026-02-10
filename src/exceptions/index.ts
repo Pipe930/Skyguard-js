@@ -16,3 +16,4 @@ export {
 export { ContentDispositionException } from "./contentDispositionException";
 export { FileDownloadException } from "./fileDownloadException";
 export { SessionException } from "./sessionException";
+export { InvalidHttpStatusException } from "./invalidHttpStatusException";

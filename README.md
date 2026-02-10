@@ -1,6 +1,6 @@
 # 🛡️✈️ Skyguard.js — TypeScript Web Framework
 
-Raptor.js is a **lightweight and experimental web framework**, inspired by **Express**, written entirely in **TypeScript**.
+Skyguard.js is a **lightweight and experimental web framework**, inspired by **Express**, written entirely in **TypeScript**.
 
 The main goal of this project is to **learn, experiment, and build a solid foundation** for a more complete backend framework in the future.
 
@@ -34,7 +34,7 @@ At its current stage, the framework focuses on **routing**, **internal architect
 ## 📦 Installation
 
 ```bash
-npm install raptor-js
+npm install skyguard-js
 ```
 
 ---
@@ -42,8 +42,8 @@ npm install raptor-js
 ## 🏁 Basic Usage
 
 ```ts
-import { createApp } from "raptor-js";
-import { Response } from "raptor-js/http";
+import { createApp } from "skyguard-js";
+import { Response } from "skyguard-js/http";
 
 const app = createApp();
 
@@ -92,8 +92,8 @@ app.group("/api", (api) => {
 Middlewares can be registered **globally**, **per group**, or **per route**.
 
 ```ts
-import { Request, Response } from "raptor-js/http";
-import { RouteHandler } from "raptor-js/types";
+import { Request, Response } from "skyguard-js/http";
+import { RouteHandler } from "skyguard-js/types";
 
 const authMiddleware = async (
   request: Request,
@@ -127,10 +127,10 @@ app.get(
 
 ## 📦 Data Validation
 
-Raptor.js provides a **declarative validation system** using schemas.
+Skyguard.js provides a **declarative validation system** using schemas.
 
 ```ts
-import { ValidationSchema } from "raptor-js/validation";
+import { ValidationSchema } from "skyguard-js/validation";
 
 export const userSchema = ValidationSchema.create()
   .field("name")
@@ -169,7 +169,7 @@ Validation is:
 To render HTML views, use the `render` helper.
 
 ```ts
-import { render } from "raptor-js/helpers";
+import { render } from "skyguard-js/helpers";
 
 app.get("/home", () => {
   return render(

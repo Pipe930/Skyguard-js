@@ -116,7 +116,7 @@ describe("XmlParserTest", () => {
 
     expect(() => parser.parse(xml)).toThrow(ContentParserException);
     expect(() => parser.parse(xml)).toThrow(
-      "Tag de cierre inesperado o mal emparejado: </age>",
+      "Unexpected or mismatched closing tag: </age>",
     );
   });
 
@@ -124,7 +124,7 @@ describe("XmlParserTest", () => {
     const xml = `<user><name>Juan</name>`;
 
     expect(() => parser.parse(xml)).toThrow(ContentParserException);
-    expect(() => parser.parse(xml)).toThrow("Tag sin cerrar: <user>");
+    expect(() => parser.parse(xml)).toThrow("Unclosed tag: <user>");
   });
 
   it("should correctly parse xml from buffer input", () => {

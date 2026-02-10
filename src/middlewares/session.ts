@@ -77,18 +77,18 @@ function buildSessionCookie(
  *   }),
  * ]);
  */
-export function sessionMiddleware(
+export const sessions = (
   StorageClass: SessionStorageConstructor,
   options: CookieOptions = {},
-): Middleware {
+): Middleware => {
   const timeMaxAge = 86400;
   const config: Required<CookieOptions> = {
-    cookieName: options.cookieName || "session_id",
-    maxAge: options.maxAge || timeMaxAge,
+    cookieName: options.cookieName ?? "session_id",
+    maxAge: options.maxAge ?? timeMaxAge,
     httpOnly: options.httpOnly ?? true,
     secure: options.secure ?? false,
-    sameSite: options.sameSite || "Lax",
-    path: options.path || "/",
+    sameSite: options.sameSite ?? "Lax",
+    path: options.path ?? "/",
   };
 
   return async (request, next) => {
@@ -111,4 +111,4 @@ export function sessionMiddleware(
 
     return response;
   };
-}
+};

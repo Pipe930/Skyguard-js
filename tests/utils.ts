@@ -1,4 +1,4 @@
-import { NodeHttpAdapter, Request, HttpMethods } from "@http/index";
+import { NodeHttpAdapter, Request, HttpMethods } from "../src/http/index";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 
