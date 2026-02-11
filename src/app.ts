@@ -1,13 +1,13 @@
-import { Router, RouterGroup } from "./routing/index";
-import { type HttpAdapter, HttpMethods, Response } from "./http/index";
+import { Router, RouterGroup } from "./routing";
+import { type HttpAdapter, HttpMethods, Response } from "./http";
 import {
   ContentParserException,
   HttpNotFoundException,
   SessionException,
   ValidationException,
-} from "./exceptions/index";
+} from "./exceptions";
 import { NodeServer } from "./server/nodeNativeServer";
-import { type View, RaptorEngine } from "./views/index";
+import { type View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers/app";
 import type { Middleware, RouteHandler } from "./types";
@@ -59,7 +59,6 @@ export class App {
    */
   public static bootstrap(): App {
     const app = singleton(App);
-
     app.router = new Router();
     app.server = new NodeServer(app);
     app.view = new RaptorEngine(join(__dirname, "..", "views"));

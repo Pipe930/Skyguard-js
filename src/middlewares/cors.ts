@@ -44,7 +44,7 @@ interface CorsOptions {
    *
    * Affects: `Access-Control-Allow-Methods`.
    */
-  methods?: string[];
+  methods?: HttpMethods[];
 
   /**
    * Request headers the browser is allowed to send in cross-origin requests.
@@ -139,12 +139,12 @@ export const cors = (options: CorsOptions = {}): Middleware => {
   const config = {
     origin: options.origin ?? "*",
     methods: options.methods ?? [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-      "PATCH",
-      "OPTIONS",
+      HttpMethods.get,
+      HttpMethods.post,
+      HttpMethods.put,
+      HttpMethods.patch,
+      HttpMethods.delete,
+      HttpMethods.options,
     ],
     allowedHeaders: options.allowedHeaders ?? ["Content-Type", "Authorization"],
     exposedHeaders: options.exposedHeaders ?? [],

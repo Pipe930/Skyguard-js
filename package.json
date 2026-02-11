@@ -1,7 +1,7 @@
 {
   "name": "skyguard-js",
   "version": "1.0.0",
-  "description": "simple Typescript framework project inspired by express",
+  "description": "A lightweight, dependency-free TypeScript backend framework",
   "main": "public/main.ts",
   "keywords": [
     "typescript",
@@ -11,7 +11,9 @@
     "express",
     "nestjs",
     "framework",
-    "library"
+    "library",
+    "backend",
+    "web"
   ],
   "repository": {
     "type": "git",
@@ -21,7 +23,6 @@
     "url": "https://github.com/Pipe930/Skyguard-js/issues"
   },
   "homepage": "https://github.com/Pipe930/Skyguard-js#readme",
-  "packageManager": "pnpm@10.28.2",
   "engines": {
     "node": ">=24.13.0"
   },
@@ -35,8 +36,11 @@
     "build": "tsc --project tsconfig.json",
     "watch": "tsc -w"
   },
-  "author": "Pipe930",
-  "license": "ISC",
+  "author": {
+    "name": "Pipe930",
+    "url": "https://github.com/Pipe930"
+  },
+  "license": "MIT",
   "devDependencies": {
     "@eslint/js": "9.39.2",
     "@jest/globals": "30.2.0",

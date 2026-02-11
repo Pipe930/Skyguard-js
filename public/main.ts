@@ -4,8 +4,6 @@ import { RouteHandler } from "../src/types";
 import { json, redirect, text, render, download } from "../src/helpers";
 import { ValidationSchema } from "../src/validators";
 import { join } from "node:path";
-import { sessions } from "../src/middlewares/session";
-import { MemorySessionStorage } from "../src/sessions";
 import { cors } from "../src/middlewares/cors";
 
 const PORT = 3000;
@@ -13,6 +11,12 @@ const PORT = 3000;
 const app = createApp();
 
 app.staticFiles(join(__dirname, "..", "static"));
+
+app.middlewares([
+  cors({
+    origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
+  }),
+]);
 
 const userSchema = ValidationSchema.create()
   .field("name")
@@ -108,14 +112,6 @@ app.get("/download/report", async () => {
     "reporte-2024.pdf",
   );
 });
-
-app.middlewares([
-  sessions(MemorySessionStorage),
-  cors({
-    origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
-    methods: ["PUT"],
-  }),
-]);
 
 app.post("/login", (request: Request) => {
   const { username, password } = request.getData();

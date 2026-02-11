@@ -1,8 +1,4 @@
-import {
-  type SessionStorage,
-  type CookieOptions,
-  Session,
-} from "../sessions/index";
+import { type SessionStorage, type CookieOptions, Session } from "../sessions";
 import type { Middleware } from "../types";
 
 /**
