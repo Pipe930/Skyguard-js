@@ -1,6 +1,6 @@
 import type { Middleware, RouteHandler } from "../types";
+import { buildFullPath } from "./buildFullPath";
 import { Router } from "./router";
-import { Layer } from "./layer";
 
 type Methods = "get" | "post" | "put" | "patch" | "delete";
 
@@ -84,14 +84,12 @@ export class RouterGroup {
     path: string,
     action: RouteHandler,
     middlewares: Middleware[] = [],
-  ): Layer {
-    const fullPath = this.parentRouter.buildFullPath(path, this.prefix);
+  ): void {
+    const fullPath = buildFullPath(path, this.prefix);
     const totalMiddlewares = [...this.middlewaresGroup, ...middlewares];
     const layer = this.parentRouter[method](fullPath, action);
 
     if (totalMiddlewares.length > 0) layer.setMiddlewares(totalMiddlewares);
-
-    return layer;
   }
 
   /** Registers a GET route within the group. */
@@ -99,8 +97,8 @@ export class RouterGroup {
     path: string,
     action: RouteHandler,
     middlewares?: Middleware[],
-  ): Layer {
-    return this.addRoute("get", path, action, middlewares);
+  ): void {
+    this.addRoute("get", path, action, middlewares);
   }
 
   /** Registers a POST route within the group. */
@@ -108,8 +106,8 @@ export class RouterGroup {
     path: string,
     action: RouteHandler,
     middlewares?: Middleware[],
-  ): Layer {
-    return this.addRoute("post", path, action, middlewares);
+  ): void {
+    this.addRoute("post", path, action, middlewares);
   }
 
   /** Registers a PUT route within the group. */
@@ -117,8 +115,8 @@ export class RouterGroup {
     path: string,
     action: RouteHandler,
     middlewares?: Middleware[],
-  ): Layer {
-    return this.addRoute("put", path, action, middlewares);
+  ): void {
+    this.addRoute("put", path, action, middlewares);
   }
 
   /** Registers a PATCH route within the group. */
@@ -126,8 +124,8 @@ export class RouterGroup {
     path: string,
     action: RouteHandler,
     middlewares?: Middleware[],
-  ): Layer {
-    return this.addRoute("patch", path, action, middlewares);
+  ): void {
+    this.addRoute("patch", path, action, middlewares);
   }
 
   /** Registers a DELETE route within the group. */
@@ -135,7 +133,7 @@ export class RouterGroup {
     path: string,
     action: RouteHandler,
     middlewares?: Middleware[],
-  ): Layer {
-    return this.addRoute("delete", path, action, middlewares);
+  ): void {
+    this.addRoute("delete", path, action, middlewares);
   }
 }

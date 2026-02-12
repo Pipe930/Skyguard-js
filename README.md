@@ -42,8 +42,7 @@ npm install skyguard-js
 ## 🏁 Basic Usage
 
 ```ts
-import { createApp } from "skyguard-js";
-import { Response } from "skyguard-js/http";
+import { createApp, Response } from "skyguard-js";
 
 const app = createApp();
 
@@ -51,7 +50,9 @@ app.get("/health", () => {
   return Response.json({ status: "ok" });
 });
 
-app.listen(3000);
+app.run(3000, () => {
+  console.log(`Server running in port: http://localhost:${3000}`)
+});
 ```
 
 ---
@@ -92,8 +93,7 @@ app.group("/api", (api) => {
 Middlewares can be registered **globally**, **per group**, or **per route**.
 
 ```ts
-import { Request, Response } from "skyguard-js/http";
-import { RouteHandler } from "skyguard-js/types";
+import { Request, Response, RouteHandler } from "skyguard-js";
 
 const authMiddleware = async (
   request: Request,

@@ -1,17 +1,22 @@
 import { Router, RouterGroup } from "./routing";
-import { type HttpAdapter, HttpMethods, Response } from "./http";
+import {
+  type HttpAdapter,
+  HttpMethods,
+  NodeHttpAdapter,
+  Response,
+} from "./http";
 import {
   ContentParserException,
   HttpNotFoundException,
   SessionException,
   ValidationException,
 } from "./exceptions";
-import { NodeServer } from "./server/nodeNativeServer";
 import { type View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers/app";
 import type { Middleware, RouteHandler } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
+import { createServer } from "node:http";
 
 /**
  * The `App` class acts as the **execution kernel** and **lifecycle orchestrator**
@@ -35,9 +40,6 @@ export class App {
   /** Main routing system */
   private router: Router;
 
-  /** Underlying HTTP server implementation */
-  private server: NodeServer;
-
   /**
    * View engine used to render templates.
    *
@@ -60,7 +62,6 @@ export class App {
   public static bootstrap(): App {
     const app = singleton(App);
     app.router = new Router();
-    app.server = new NodeServer(app);
     app.view = new RaptorEngine(join(__dirname, "..", "views"));
 
     return app;
@@ -80,7 +81,7 @@ export class App {
    *
    * @param adapter - HTTP adapter bridging the runtime with the framework
    */
-  public async handle(adapter: HttpAdapter): Promise<void> {
+  private async handle(adapter: HttpAdapter): Promise<void> {
     try {
       const request = await adapter.getRequest();
 
@@ -123,8 +124,13 @@ export class App {
    *
    * @param port - TCP port to listen on
    */
-  public listen(port: number): void {
-    this.server.listen(port);
+  public run(port: number, callback: VoidFunction): void {
+    createServer((req, res) => {
+      const adapter = new NodeHttpAdapter(req, res);
+      void this.handle(adapter);
+    }).listen(port, () => {
+      callback();
+    });
   }
 
   /**

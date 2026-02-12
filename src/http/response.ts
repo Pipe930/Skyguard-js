@@ -1,8 +1,7 @@
-import { Container } from "../container/container";
-import { App } from "../app";
 import type { Headers, TemplateContext } from "../types";
 import { statusCodes } from "./statusCodes";
 import { InvalidHttpStatusException } from "../exceptions";
+import { app } from "../helpers/app";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -192,11 +191,7 @@ export class Response {
     params: TemplateContext,
     layout: string = null,
   ): Promise<Response> {
-    const content = await Container.resolve(App).view.render(
-      view,
-      params,
-      layout,
-    );
+    const content = await app().view.render(view, params, layout);
 
     return new this().setContentType("text/html").setContent(content);
   }

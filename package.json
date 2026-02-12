@@ -1,6 +1,6 @@
 {
   "name": "skyguard-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight, dependency-free TypeScript backend framework",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,6 +16,10 @@
     "./middlewares": {
       "types": "./dist/middlewares/index.d.ts",
       "require": "./dist/middlewares/index.js"
+    },
+    "./validation": {
+      "types": "./dist/validators/validationSchema.d.ts",
+      "require": "./dist/validators/validationSchema.js"
     }
   },
   "keywords": [

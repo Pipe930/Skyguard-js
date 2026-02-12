@@ -3,6 +3,7 @@ import { Request, Response, HttpMethods } from "../http";
 import { HttpNotFoundException } from "../exceptions/httpNotFoundException";
 import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
+import { buildFullPath } from "./buildFullPath";
 
 /**
  * Central routing system of the framework.
@@ -83,9 +84,8 @@ export class Router {
     const action = layer.getAction;
     const allMiddlewares = [...this.globalMiddlewares, ...layer.getMiddlewares];
 
-    if (allMiddlewares.length > 0) {
+    if (allMiddlewares.length > 0)
       return this.runMiddlewares(request, allMiddlewares, action);
-    }
 
     return action(request);
   }
@@ -132,7 +132,7 @@ export class Router {
     action: RouteHandler,
     middlewares: Middleware[] = [],
   ): Layer {
-    const fullPath = this.buildFullPath(path, this.globalPrefix);
+    const fullPath = buildFullPath(path, this.globalPrefix);
     const layer = new Layer(fullPath, action);
 
     if (middlewares.length > 0) layer.setMiddlewares(middlewares);
@@ -157,27 +157,6 @@ export class Router {
   }
 
   /**
-   * Builds a normalized path by applying a prefix.
-   *
-   * @param path - Route path
-   * @param prefix - Prefix to apply
-   * @returns Normalized full path
-   */
-  public buildFullPath(path: string, prefix: string): string {
-    if (!prefix) return path;
-
-    const cleanPrefix = prefix.startsWith("/") ? prefix : `/${prefix}`;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    let fullPath = `${cleanPrefix}${cleanPath}`.replace(/\/+/g, "/");
-
-    if (fullPath.length > 1 && fullPath.endsWith("/")) {
-      fullPath = fullPath.slice(0, -1);
-    }
-
-    return fullPath;
-  }
-
-  /**
    * Creates a route group under a shared prefix.
    *
    * Use this to organize related routes and apply shared middlewares
@@ -194,11 +173,7 @@ export class Router {
    * });
    */
   public group(prefix: string, callback: (group: RouterGroup) => void): void {
-    const fullPrefix = this.globalPrefix
-      ? `${this.globalPrefix}/${prefix}`.replace(/\/+/g, "/")
-      : prefix;
-
-    const group = new RouterGroup(fullPrefix, this);
+    const group = new RouterGroup(prefix, this);
     callback(group);
   }
 

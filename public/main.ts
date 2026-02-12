@@ -4,11 +4,13 @@ import { RouteHandler } from "../src/types";
 import { json, redirect, text, render, download } from "../src/helpers";
 import { ValidationSchema } from "../src/validators";
 import { join } from "node:path";
-import { cors } from "../src/middlewares/cors";
+import { cors } from "../src/middlewares";
 
 const PORT = 3000;
 
 const app = createApp();
+
+app.setPrefix("api");
 
 app.staticFiles(join(__dirname, "..", "static"));
 
@@ -45,6 +47,10 @@ app.get("/test/{id}/nel/{param}", (request: Request) => {
 });
 
 app.get("/test", () => {
+  return text("holamundo");
+});
+
+app.get("/nueva-ruta", () => {
   return text("holamundo");
 });
 
@@ -144,4 +150,6 @@ app.post("/logout", (request: Request) => {
   return json({ message: "Logged out" });
 });
 
-app.listen(PORT);
+app.run(PORT, () => {
+  console.log(`Server running in port: http://localhost:${PORT}`);
+});

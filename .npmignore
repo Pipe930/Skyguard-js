@@ -15,7 +15,7 @@ node_modules/
 # Logs and temp
 *.log
 .DS_Store
-dist/*.tsbuildinfo
+dist/tsconfig.tsbuildinfo
 .vscode/
 
 .gitignore
