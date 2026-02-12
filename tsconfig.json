@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2024",
+    "target": "es2022",
     "module": "commonjs",
     "baseUrl": "./src",
     "outDir": "./dist",
-    "rootDir": "./",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declarationMap": false,
+    "sourceMap": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "incremental": true,
@@ -18,8 +17,8 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*", "tests/**/*", "public/**/*"],
-  "exclude": ["node_modules", "dist"],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
   "ts-node": {
     "files": true
   }

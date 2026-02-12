@@ -3,8 +3,8 @@ import type {
   ValidationContext,
   ValidationError,
   ValidationResult,
+  FieldDefinition,
 } from "./types";
-import type { FieldDefinition } from "./validationSchema";
 
 /**
  * Framework validation engine.

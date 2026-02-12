@@ -1,4 +1,4 @@
-import type { RuleOptions } from "./types";
+import type { FieldDefinition, RuleOptions } from "./types";
 import type { ValidationRule } from "./validationRule";
 import {
   BooleanRule,
@@ -12,14 +12,6 @@ import {
   type StringRuleOptions,
 } from "./rules";
 import { ValidatorFieldException } from "../exceptions/validationException";
-
-/**
- * Field definition used by the validation engine.
- */
-export interface FieldDefinition {
-  rules: Array<{ rule: ValidationRule; options?: RuleOptions }>;
-  optional: boolean;
-}
 
 /**
  * Declarative and chainable validation schema builder.

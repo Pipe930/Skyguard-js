@@ -1,8 +1,8 @@
 import { HttpMethods } from "./httpMethods";
 import type { Headers, HttpValue } from "../types";
 import { Layer } from "../routing/layer";
-import { Validator, FieldDefinition } from "../validators/index";
-import { Session } from "../sessions/session";
+import { Validator, FieldDefinition } from "../validators";
+import { Session } from "../sessions";
 
 /**
  * Represents an incoming client request within the framework.

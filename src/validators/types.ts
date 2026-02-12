@@ -1,3 +1,5 @@
+import { ValidationRule } from "./validationRule";
+
 /**
  * Result of a single validation rule.
  */
@@ -52,4 +54,12 @@ export interface ValidationContext {
 
   /** Full input data */
   data: unknown;
+}
+
+/**
+ * Field definition used by the validation engine.
+ */
+export interface FieldDefinition {
+  rules: Array<{ rule: ValidationRule; options?: RuleOptions }>;
+  optional: boolean;
 }

@@ -2,7 +2,22 @@
   "name": "skyguard-js",
   "version": "1.0.0",
   "description": "A lightweight, dependency-free TypeScript backend framework",
-  "main": "public/main.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    },
+    "./helpers": {
+      "types": "./dist/helpers/index.d.ts",
+      "require": "./dist/helpers/index.js"
+    },
+    "./middlewares": {
+      "types": "./dist/middlewares/index.d.ts",
+      "require": "./dist/middlewares/index.js"
+    }
+  },
   "keywords": [
     "typescript",
     "javascript",
@@ -26,6 +41,12 @@
   "engines": {
     "node": ">=24.13.0"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "package.json",
+    "LICENSE"
+  ],
   "scripts": {
     "exec": "ts-node public/main.ts",
     "lint": "eslint \"{src,tests}/**/*.ts\" --fix",

@@ -1,5 +1,5 @@
 export { ValidationRule } from "./validationRule";
-export { ValidationSchema, FieldDefinition } from "./validationSchema";
+export { ValidationSchema } from "./validationSchema";
 export { Validator } from "./validator";
 export * from "./rules";
 export {
@@ -7,4 +7,5 @@ export {
   ValidationContext,
   ValidationError,
   ValidationResult,
+  FieldDefinition,
 } from "./types";
