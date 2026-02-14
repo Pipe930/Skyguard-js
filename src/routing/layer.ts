@@ -44,7 +44,7 @@ export class Layer {
 
     this.url = url;
     this.regex = new RegExp(`^${regexSource}/?$`);
-    this.parameters = [...url.matchAll(paramRegex)].map((m) => m[1]);
+    this.parameters = [...url.matchAll(paramRegex)].map(m => m[1]);
     this.action = action;
   }
 

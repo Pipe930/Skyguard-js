@@ -79,8 +79,9 @@ export class Router {
    */
   public resolve(request: Request): Promise<Response> | Response {
     const layer = this.resolveLayer(request);
-    request.setLayer(layer);
 
+    if (layer.hasParameters())
+      request.setParams(layer.parseParameters(request.getUrl));
     const action = layer.getAction;
     const allMiddlewares = [...this.globalMiddlewares, ...layer.getMiddlewares];
 

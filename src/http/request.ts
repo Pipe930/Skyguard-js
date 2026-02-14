@@ -20,9 +20,6 @@ export class Request {
   /** Normalized request path (e.g. "/api/users/42") */
   private url: string;
 
-  /** Routing layer that resolved this request */
-  private layer: Layer;
-
   /** Incoming HTTP headers */
   private headers: Headers;
 
@@ -34,6 +31,9 @@ export class Request {
 
   /** Query string parameters */
   private query: Record<string, string> = {};
+
+  /** Dynamic route parameters (path params) */
+  private params: Record<string, string> = {};
 
   /** Session associated with the request */
   private session: Session;
@@ -52,15 +52,6 @@ export class Request {
 
   public setMethod(method: HttpMethods): this {
     this.method = method;
-    return this;
-  }
-
-  get getLayer(): Layer {
-    return this.layer;
-  }
-
-  public setLayer(layer: Layer): this {
-    this.layer = layer;
     return this;
   }
 
@@ -113,9 +104,13 @@ export class Request {
    * request.getParams("id"); // "42"
    */
   public getParams(key: string = null): HttpValue {
-    const parameters = this.layer.parseParameters(this.url);
-    if (key === null) return parameters;
-    return parameters[key] ?? null;
+    if (key === null) return this.params;
+    return this.params[key] ?? null;
+  }
+
+  public setParams(params: Record<string, string>): this {
+    this.params = params;
+    return this;
   }
 
   public getData(): Record<string, unknown> {
