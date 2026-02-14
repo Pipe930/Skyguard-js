@@ -5,18 +5,14 @@ import {
   NodeHttpAdapter,
   Response,
 } from "./http";
-import {
-  ContentParserException,
-  HttpNotFoundException,
-  SessionException,
-  ValidationException,
-} from "./exceptions";
+import { ValidationException } from "./exceptions";
 import { type View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers/app";
 import type { Middleware, RouteHandler } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
 import { createServer } from "node:http";
+import { HttpException } from "./exceptions/httpExceptions";
 
 /**
  * The `App` class acts as the **execution kernel** and **lifecycle orchestrator**
@@ -124,11 +120,15 @@ export class App {
    *
    * @param port - TCP port to listen on
    */
-  public run(port: number, callback: VoidFunction): void {
+  public run(
+    port: number,
+    callback: VoidFunction,
+    hostname: string = "127.0.0.1",
+  ): void {
     createServer((req, res) => {
       const adapter = new NodeHttpAdapter(req, res);
       void this.handle(adapter);
-    }).listen(port, () => {
+    }).listen(port, hostname, () => {
       callback();
     });
   }
@@ -219,21 +219,9 @@ export class App {
    * This method centralizes error handling and response mapping.
    */
   private handleError(error: unknown, adapter: HttpAdapter): void {
-    if (error instanceof HttpNotFoundException) {
-      adapter.sendResponse(Response.text("Not Found").setStatus(404));
-      return;
-    }
-
-    if (error instanceof ContentParserException) {
+    if (error instanceof HttpException) {
       adapter.sendResponse(
-        Response.json({ message: error.message }).setStatus(422),
-      );
-      return;
-    }
-
-    if (error instanceof SessionException) {
-      adapter.sendResponse(
-        Response.json({ message: error.message }).setStatus(401),
+        Response.json(error.toJSON()).setStatus(error.statusCode),
       );
       return;
     }
@@ -248,7 +236,12 @@ export class App {
       return;
     }
 
-    adapter.sendResponse(Response.text("Internal Server Error").setStatus(500));
+    adapter.sendResponse(
+      Response.json({
+        statusCode: 500,
+        message: "Internal Server Error",
+      }).setStatus(500),
+    );
     console.error(error);
   }
 }

@@ -7,19 +7,23 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
     },
     "./helpers": {
       "types": "./dist/helpers/index.d.ts",
-      "require": "./dist/helpers/index.js"
+      "import": "./dist/helpers/index.js"
     },
     "./middlewares": {
       "types": "./dist/middlewares/index.d.ts",
-      "require": "./dist/middlewares/index.js"
+      "import": "./dist/middlewares/index.js"
     },
     "./validation": {
       "types": "./dist/validators/validationSchema.d.ts",
-      "require": "./dist/validators/validationSchema.js"
+      "import": "./dist/validators/validationSchema.js"
+    },
+    "./exeptions": {
+      "types": "./dist/exceptions/httpExceptions.d.ts",
+      "import": "./dist/exceptions/httpExceptions.js"
     }
   },
   "keywords": [
@@ -54,6 +58,7 @@
   "scripts": {
     "exec": "ts-node public/main.ts",
     "lint": "eslint \"{src,tests}/**/*.ts\" --fix",
+    "format": "prettier --write \"{src,tests}/**/*.ts\"",
     "dev": "NODE_ENV=development nodemon public/main.ts",
     "test": "NODE_ENV=test jest --verbose",
     "test:watch": "jest --watch --onlyChanged",
@@ -72,9 +77,11 @@
     "@types/jest": "30.0.0",
     "@types/node": "25.0.8",
     "eslint": "9.39.2",
+    "eslint-config-prettier": "10.1.8",
     "globals": "17.2.0",
     "jest": "30.2.0",
     "nodemon": "3.1.11",
+    "prettier": "3.8.1",
     "ts-jest": "29.4.6",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",

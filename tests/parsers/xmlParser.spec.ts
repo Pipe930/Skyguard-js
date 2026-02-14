@@ -1,4 +1,4 @@
-import { ContentParserException } from "../../src/exceptions/contentParserException";
+import { UnprocessableContentError } from "../../src/exceptions/httpExceptions";
 import { XmlParser } from "../../src/parsers/xmlParser";
 
 describe("XmlParserTest", () => {
@@ -100,21 +100,21 @@ describe("XmlParserTest", () => {
   });
 
   it("should properly throw error when xml is empty", () => {
-    expect(() => parser.parse("")).toThrow(ContentParserException);
+    expect(() => parser.parse("")).toThrow(UnprocessableContentError);
     expect(() => parser.parse("")).toThrow("XML input is empty");
   });
 
   it("should properly throw error when xml structure is invalid", () => {
     const xml = `name>Juan</name>`;
 
-    expect(() => parser.parse(xml)).toThrow(ContentParserException);
+    expect(() => parser.parse(xml)).toThrow(UnprocessableContentError);
     expect(() => parser.parse(xml)).toThrow("Invalid XML structure");
   });
 
   it("should properly throw error on mismatched closing tags", () => {
     const xml = `<user><name>Juan</age></user>`;
 
-    expect(() => parser.parse(xml)).toThrow(ContentParserException);
+    expect(() => parser.parse(xml)).toThrow(UnprocessableContentError);
     expect(() => parser.parse(xml)).toThrow(
       "Unexpected or mismatched closing tag: </age>",
     );
@@ -123,7 +123,7 @@ describe("XmlParserTest", () => {
   it("should properly throw error on unclosed tags", () => {
     const xml = `<user><name>Juan</name>`;
 
-    expect(() => parser.parse(xml)).toThrow(ContentParserException);
+    expect(() => parser.parse(xml)).toThrow(UnprocessableContentError);
     expect(() => parser.parse(xml)).toThrow("Unclosed tag: <user>");
   });
 

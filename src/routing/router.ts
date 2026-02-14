@@ -1,6 +1,6 @@
 import type { HashMapRouters, Middleware, RouteHandler } from "../types";
 import { Request, Response, HttpMethods } from "../http";
-import { HttpNotFoundException } from "../exceptions/httpNotFoundException";
+import { NotFoundError } from "../exceptions/httpExceptions";
 import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
 import { buildFullPath } from "./buildFullPath";
@@ -59,7 +59,7 @@ export class Router {
       if (route.matches(request.getUrl)) return route;
     }
 
-    throw new HttpNotFoundException();
+    throw new NotFoundError("Route not found");
   }
 
   /**
@@ -110,7 +110,7 @@ export class Router {
   ): Response | Promise<Response> {
     if (middlewares.length === 0) return target(request);
 
-    return middlewares[0](request, (request) =>
+    return middlewares[0](request, request =>
       this.runMiddlewares(request, middlewares.slice(1), target),
     );
   }

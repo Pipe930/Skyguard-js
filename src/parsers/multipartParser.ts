@@ -1,4 +1,4 @@
-import { ContentParserException } from "../exceptions/contentParserException";
+import { UnprocessableContentError } from "../exceptions/httpExceptions";
 import type { ContentParser } from "./contentParser";
 import type { MultipartData, ParsedPart } from "./parserInterface";
 
@@ -24,7 +24,7 @@ export class MultipartParser implements ContentParser {
    * @param body - Raw request body
    * @param contentType - Full `Content-Type` header value
    * @returns Parsed multipart data (fields and files)
-   * @throws {ContentParserException} If the multipart boundary is missing
+   * @throws {UnprocessableContentError} If the multipart boundary is missing
    *
    * @example
    * // Typically called through ContentParserManager based on Content-Type:
@@ -36,7 +36,7 @@ export class MultipartParser implements ContentParser {
     const boundary = this.extractBoundary(contentType);
 
     if (!boundary) {
-      throw new ContentParserException(
+      throw new UnprocessableContentError(
         "Missing boundary in multipart/form-data",
       );
     }

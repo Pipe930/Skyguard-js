@@ -5,7 +5,7 @@ import { MultipartParser } from "./multipartParser";
 import { TextParser } from "./textParser";
 import { UrlEncodedParser } from "./urlEncodedParser";
 import { XmlParser } from "./xmlParser";
-import { ReadBodyException } from "../exceptions/contentParserException";
+import { UnprocessableContentError } from "../exceptions/httpExceptions";
 
 /**
  * Main request body parsing manager.
@@ -83,7 +83,7 @@ export class ContentParserManager {
       });
 
       req.on("error", () => {
-        reject(new ReadBodyException());
+        reject(new UnprocessableContentError("Failed to read request body"));
       });
     });
   }
@@ -95,6 +95,6 @@ export class ContentParserManager {
    * @returns Matching parser or `null` if none is found
    */
   private findParser(contentType: string): ContentParser | null {
-    return this.parsers.find((parser) => parser.canParse(contentType)) || null;
+    return this.parsers.find(parser => parser.canParse(contentType)) || null;
   }
 }

@@ -10,8 +10,6 @@ const PORT = 3000;
 
 const app = createApp();
 
-app.setPrefix("api");
-
 app.staticFiles(join(__dirname, "..", "static"));
 
 app.middlewares([
@@ -85,7 +83,7 @@ app.get("/home", () => {
   );
 });
 
-app.group("/tienda", (tienda) => {
+app.group("/tienda", tienda => {
   tienda.get("/pagina", () => {
     return json({ message: "desde ruta grupada" });
   });

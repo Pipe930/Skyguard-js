@@ -1,4 +1,4 @@
-import { ContentParserException } from "../../src/exceptions/contentParserException";
+import { UnprocessableContentError } from "../../src/exceptions/httpExceptions";
 import { MultipartParser } from "../../src/parsers/multipartParser";
 
 describe("MultipartParserTest", () => {
@@ -30,7 +30,7 @@ describe("MultipartParserTest", () => {
     const body = "test";
 
     expect(() => parser.parse(body, "multipart/form-data")).toThrow(
-      ContentParserException,
+      UnprocessableContentError,
     );
     expect(() => parser.parse(body, "multipart/form-data")).toThrow(
       "Missing boundary in multipart/form-data",

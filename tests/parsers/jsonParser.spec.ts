@@ -1,5 +1,5 @@
 import { JsonParser } from "../../src/parsers/jsonParser";
-import { ContentParserException } from "../../src/exceptions/contentParserException";
+import { UnprocessableContentError } from "../../src/exceptions/httpExceptions";
 
 describe("JsonParserTest", () => {
   let parser: JsonParser;
@@ -58,8 +58,10 @@ describe("JsonParserTest", () => {
     try {
       parser.parse(body);
     } catch (err) {
-      expect(err).toBeInstanceOf(ContentParserException);
-      expect((err as ContentParserException).code).toBe("CONTENT_PARSER_ERROR");
+      expect(err).toBeInstanceOf(UnprocessableContentError);
+      expect((err as UnprocessableContentError).code).toBe(
+        "UNPROCESSABLE_CONTENT",
+      );
     }
   });
 });

@@ -1,4 +1,4 @@
-import { FileDownloadException } from "../../src/exceptions/fileDownloadException";
+import { BadRequestError } from "../../src/exceptions/httpExceptions";
 import { FileDownloadHelper } from "../../src/static/fileDownload";
 import { stat, readFile } from "node:fs/promises";
 import { resolve, extname, basename } from "node:path";
@@ -101,7 +101,7 @@ describe("FileDownloadHelper", () => {
 
     await expect(
       fileDownloadHelper.download("/path/to/directory"),
-    ).rejects.toThrow(FileDownloadException);
+    ).rejects.toThrow(BadRequestError);
   });
 
   it("should throw exception when file cannot be read", async () => {

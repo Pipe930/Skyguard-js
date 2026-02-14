@@ -17,6 +17,7 @@ export default defineConfig(
       "coverage",
       "jest.config.ts",
     ],
+    extends: ["eslint-config-prettier"],
     languageOptions: {
       globals: {
         ...globals.node,

@@ -3,7 +3,12 @@ import { resolve, basename, extname } from "node:path";
 import { mimeTypesObject } from "./mimeTypes";
 import { ContentDisposition } from "./contentDisposition";
 import { Response } from "../http/response";
-import { FileDownloadException } from "../exceptions/fileDownloadException";
+import {
+  BadRequestError,
+  HttpException,
+  InternalServerError,
+  NotFoundError,
+} from "../exceptions/httpExceptions";
 
 /**
  * Helper utility for serving file downloads.
@@ -58,9 +63,7 @@ export class FileDownloadHelper {
       const fullPath = resolve(filePath);
       const stats = await stat(fullPath);
 
-      if (!stats.isFile()) {
-        throw new FileDownloadException(`Path is not a file: ${fullPath}`);
-      }
+      if (!stats.isFile()) throw new BadRequestError("Path is not a file");
 
       const content = await readFile(fullPath);
       const downloadName = filename || basename(fullPath);
@@ -74,9 +77,8 @@ export class FileDownloadHelper {
       if (headers) {
         for (const [key, value] of Object.entries(headers)) {
           // Prevent overriding Content-Disposition
-          if (key.toLowerCase() !== "content-disposition") {
+          if (key.toLowerCase() !== "content-disposition")
             downloadHeaders[key] = value;
-          }
         }
       }
 
@@ -84,8 +86,10 @@ export class FileDownloadHelper {
         .setStatus(200)
         .setContent(content)
         .setHeaders(downloadHeaders);
-    } catch {
-      throw new FileDownloadException("Failed to download file");
+    } catch (error) {
+      if (error.syscall === "stat") throw new NotFoundError("File not found");
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerError("Failed to download file");
     }
   }
 

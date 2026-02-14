@@ -1,4 +1,4 @@
-import { SessionException } from "../exceptions/sessionException";
+import { UnauthorizedError } from "../exceptions/httpExceptions";
 import type { SessionData, SessionStorage } from "./sessionStorage";
 import { randomBytes } from "node:crypto";
 
@@ -47,15 +47,15 @@ export class MemorySessionStorage implements SessionStorage {
    * Loads an existing session by its ID.
    *
    * @param id - Session identifier
-   * @throws {SessionException}
+   * @throws {UnauthorizedError}
    * Thrown if the ID is invalid, does not exist, or the session is expired
    */
   public load(id: string): void {
     if (!this.regexSessionId.test(id))
-      throw new SessionException("Invalid session");
+      throw new UnauthorizedError("Invalid session");
 
     const sessionData = MemorySessionStorage.storageSessions.get(id);
-    if (!sessionData) throw new SessionException("Invalid session");
+    if (!sessionData) throw new UnauthorizedError("Invalid session");
 
     if (sessionData.expiresAt > Date.now()) {
       this.sessionId = id;
@@ -147,9 +147,8 @@ export class MemorySessionStorage implements SessionStorage {
    * Completely destroys the current session.
    */
   public destroy(): void {
-    if (this.sessionId) {
+    if (this.sessionId)
       MemorySessionStorage.storageSessions.delete(this.sessionId);
-    }
 
     this.sessionId = null;
     this.data = {};
@@ -165,9 +164,8 @@ export class MemorySessionStorage implements SessionStorage {
     const now = Date.now();
 
     for (const [id, session] of MemorySessionStorage.storageSessions) {
-      if (session.expiresAt < now) {
+      if (session.expiresAt < now)
         MemorySessionStorage.storageSessions.delete(id);
-      }
     }
   }
 

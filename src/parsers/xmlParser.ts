@@ -1,4 +1,4 @@
-import { ContentParserException } from "../exceptions/contentParserException";
+import { UnprocessableContentError } from "../exceptions/httpExceptions";
 import type { ContentParser } from "./contentParser";
 
 /**
@@ -42,24 +42,22 @@ export class XmlParser implements ContentParser {
    * @param input - Raw XML content
    * @returns Parsed object representation of the XML
    *
-   * @throws {ContentParserException}
+   * @throws {UnprocessableContentError}
    * Thrown when the XML is empty, malformed, or has unbalanced tags.
    */
   public parse(input: string | Buffer): Record<string, unknown> {
     const text = Buffer.isBuffer(input) ? input.toString("utf-8") : input;
 
-    if (!text || text.trim().length === 0) {
-      throw new ContentParserException("XML input is empty");
-    }
+    if (!text || text.trim().length === 0)
+      throw new UnprocessableContentError("XML input is empty");
 
     const cleanXml = text
       .replace(/<\?xml[^?]*\?>/g, "")
       .replace(/<!--[\s\S]*?-->/g, "")
       .trim();
 
-    if (!cleanXml.startsWith("<") || !cleanXml.endsWith(">")) {
-      throw new ContentParserException("Invalid XML structure");
-    }
+    if (!cleanXml.startsWith("<") || !cleanXml.endsWith(">"))
+      throw new UnprocessableContentError("Invalid XML structure");
 
     this.validateBalancedTags(cleanXml);
 
@@ -76,29 +74,26 @@ export class XmlParser implements ContentParser {
       const tagName = match[1];
 
       if (fullTag.startsWith("</")) {
-        if (stack.length === 0 || stack.pop() !== tagName) {
-          throw new ContentParserException(
+        if (stack.length === 0 || stack.pop() !== tagName)
+          throw new UnprocessableContentError(
             `Unexpected or mismatched closing tag: </${tagName}>`,
           );
-        }
       } else {
         stack.push(tagName);
       }
     }
 
-    if (stack.length > 0) {
-      throw new ContentParserException(
+    if (stack.length > 0)
+      throw new UnprocessableContentError(
         `Unclosed tag: <${stack[stack.length - 1]}>`,
       );
-    }
   }
 
   private parseXmlContent(xml: string): Record<string, unknown> {
     const rootMatch = xml.match(/^<(\w+)[^>]*>([\s\S]*)<\/\1>$/);
 
-    if (!rootMatch) {
-      throw new ContentParserException("Invalid XML root element");
-    }
+    if (!rootMatch)
+      throw new UnprocessableContentError("Invalid XML root element");
 
     const [, rootTag, content] = rootMatch;
     const parsed = this.parseContent(content);
@@ -176,7 +171,7 @@ export class XmlParser implements ContentParser {
       "&apos;": "'",
     };
 
-    return text.replace(/&(lt|gt|amp|quot|apos);/g, (match) => {
+    return text.replace(/&(lt|gt|amp|quot|apos);/g, match => {
       return entities[match] || match;
     });
   }

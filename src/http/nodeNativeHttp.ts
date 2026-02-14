@@ -64,8 +64,8 @@ export class NodeHttpAdapter implements HttpAdapter {
   public sendResponse(response: Response): void {
     response.prepare();
     this.res.statusCode = response.getStatus;
-
     const headers = response.getHeaders;
+
     for (const [header, value] of Object.entries(headers)) {
       this.res.setHeader(header, value as string);
     }
