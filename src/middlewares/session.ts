@@ -23,7 +23,7 @@ type SessionStorageConstructor<T extends SessionStorage = SessionStorage> =
 function parseCookies(cookieHeader: string | null): Record<string, string> {
   if (!cookieHeader) return {};
   return Object.fromEntries(
-    cookieHeader.split(";").map((cookie) => {
+    cookieHeader.split(";").map(cookie => {
       const [key, ...value] = cookie.trim().split("=");
       return [key, decodeURIComponent(value.join("="))];
     }),
@@ -88,19 +88,19 @@ export const sessions = (
   };
 
   return async (request, next) => {
-    const cookies = parseCookies(request.getHeaders["cookie"] || "");
+    const cookies = parseCookies(request.getHeaders.cookie || "");
     const sessionId = cookies[config.cookieName];
 
     const storage = new StorageClass(options.maxAge || timeMaxAge);
 
-    if (sessionId) storage.load(sessionId);
+    if (sessionId) await storage.load(sessionId);
 
     const session = new Session(storage);
     request.setSession(session);
 
     const response = await next(request);
 
-    if (storage.id() !== null) {
+    if (storage.id()) {
       const cookieValue = buildSessionCookie(storage.id(), config);
       response.setHeader("Set-Cookie", cookieValue);
     }

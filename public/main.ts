@@ -4,7 +4,8 @@ import { RouteHandler } from "../src/types";
 import { json, redirect, text, render, download } from "../src/helpers";
 import { ValidationSchema } from "../src/validators";
 import { join } from "node:path";
-import { cors } from "../src/middlewares";
+import { cors, sessions } from "../src/middlewares";
+import { FileSessionStorage } from "../src/sessions";
 
 const PORT = 3000;
 
@@ -16,6 +17,7 @@ app.middlewares([
   cors({
     origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
   }),
+  sessions(FileSessionStorage),
 ]);
 
 const userSchema = ValidationSchema.create()

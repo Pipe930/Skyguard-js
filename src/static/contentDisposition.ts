@@ -161,7 +161,7 @@ export class ContentDisposition {
    * // => { type: "attachment", filename: "report.pdf" }
    */
   public parse(header: string): { type: string; filename: string | null } {
-    const parts = header.split(";").map((p) => p.trim());
+    const parts = header.split(";").map(p => p.trim());
     const type = parts[0];
 
     let filename: string | null = null;

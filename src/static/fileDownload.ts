@@ -87,7 +87,8 @@ export class FileDownloadHelper {
         .setContent(content)
         .setHeaders(downloadHeaders);
     } catch (error) {
-      if (error.syscall === "stat") throw new NotFoundError("File not found");
+      if ((error as NodeJS.ErrnoException).syscall === "stat")
+        throw new NotFoundError("File not found");
       if (error instanceof HttpException) throw error;
       throw new InternalServerError("Failed to download file");
     }

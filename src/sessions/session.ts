@@ -28,7 +28,7 @@ export class Session {
    *
    * @returns Session ID
    */
-  public id(): string {
+  public id(): string | null {
     return this.sessionStorage.id();
   }
 
@@ -60,9 +60,8 @@ export class Session {
    *   .set("user_id", 1)
    *   .set("role", "admin");
    */
-  public set(key: string, value: unknown): this {
-    this.sessionStorage.set(key, value);
-    return this;
+  public async set(key: string, value: unknown): Promise<void> {
+    await this.sessionStorage.set(key, value);
   }
 
   /**
@@ -83,9 +82,8 @@ export class Session {
    * @param key - Key to remove
    * @returns The current {@link Session} instance
    */
-  public remove(key: string): this {
-    this.sessionStorage.remove(key);
-    return this;
+  public async remove(key: string): Promise<void> {
+    await this.sessionStorage.remove(key);
   }
 
   /**
@@ -96,8 +94,7 @@ export class Session {
    *
    * @returns The current {@link Session} instance
    */
-  public destroy(): this {
+  public destroy(): void {
     this.sessionStorage.destroy();
-    return this;
   }
 }

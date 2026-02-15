@@ -41,7 +41,7 @@ export class MemorySessionStorage implements SessionStorage {
    *
    * @param expiredSession - Session lifetime in milliseconds
    */
-  constructor(private readonly expiredSession: number) {}
+  constructor(private readonly expiredSession?: number) {}
 
   /**
    * Loads an existing session by its ID.

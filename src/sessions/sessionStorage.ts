@@ -16,7 +16,7 @@ export interface SessionStorage {
    *
    * @param id - Unique session identifier
    */
-  load(id: string): void;
+  load(id: string): void | Promise<void>;
 
   /**
    * Starts a new session.
@@ -24,14 +24,14 @@ export interface SessionStorage {
    * If the session is already active, implementations
    * must avoid recreating it.
    */
-  start(): void;
+  start(): void | Promise<void>;
 
   /**
    * Returns the identifier of the current session.
    *
    * @returns Active session ID
    */
-  id(): string;
+  id(): string | null;
 
   /**
    * Retrieves a value from the session.
@@ -40,7 +40,7 @@ export interface SessionStorage {
    * @param defaultValue - Value returned if the key does not exist
    * @returns Stored value or the default value
    */
-  get<T = unknown>(key: string, defaultValue?: T): T;
+  get<T = unknown>(key: string, defaultValue?: T): T | undefined;
 
   /**
    * Stores a value in the session.
@@ -51,7 +51,7 @@ export interface SessionStorage {
    * @param key - Value key
    * @param value - Value to store
    */
-  set(key: string, value: unknown): void;
+  set(key: string, value: unknown): void | Promise<void>;
 
   /**
    * Checks whether a key exists in the session.
@@ -66,7 +66,7 @@ export interface SessionStorage {
    *
    * @param key - Key to remove
    */
-  remove(key: string): void;
+  remove(key: string): void | Promise<void>;
 
   /**
    * Completely destroys the session.
@@ -91,25 +91,4 @@ export interface SessionData {
 
   /** Expiration timestamp in milliseconds. */
   expiresAt: number;
-}
-
-/**
- * Contract for asynchronous session storage implementations.
- *
- * Defines the same operations as {@link SessionStorage},
- * but intended for asynchronous drivers such as:
- * - filesystem
- * - databases
- * - Redis
- *
- * All operations return Promises.
- */
-export interface AsyncSessionStorage {
-  start(): Promise<void>;
-  id(): string;
-  get<T = unknown>(key: string, defaultValue?: T): Promise<T>;
-  set(key: string, value: unknown): Promise<void>;
-  has(key: string): Promise<boolean>;
-  remove(key: string): Promise<void>;
-  destroy(): Promise<void>;
 }

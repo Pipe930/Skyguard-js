@@ -50,7 +50,9 @@ describe("RequestTest", () => {
     const layer = new Layer("/test/{param}/param/{bar}", () =>
       Response.text("holamundo"),
     );
-    const request = new Request("/test/2/param/1").setLayer(layer);
+    const request = new Request("/test/2/param/1").setParams(
+      layer.parseParameters("/test/2/param/1"),
+    );
 
     expect(request.getParams("param")).toBe("2");
     expect(request.getParams("bar")).toBe("1");
