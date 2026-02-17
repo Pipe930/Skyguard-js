@@ -150,6 +150,10 @@ app.post("/logout", (request: Request) => {
   return json({ message: "Logged out" });
 });
 
-app.run(PORT, () => {
-  console.log(`Server running in port: http://localhost:${PORT}`);
-});
+app.run(
+  PORT,
+  () => {
+    console.log(`Server running in port: http://localhost:${PORT}`);
+  },
+  "0.0.0.0",
+);
