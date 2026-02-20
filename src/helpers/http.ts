@@ -1,6 +1,5 @@
 import type { TemplateContext } from "../types";
 import { Response } from "../http/response";
-import { FileDownloadHelper } from "../static/fileDownload";
 
 /**
  * Creates an HTTP response with a JSON body.
@@ -60,8 +59,7 @@ export async function download(
   filename?: string,
   headers?: Record<string, string>,
 ): Promise<Response> {
-  const downloadClass = new FileDownloadHelper();
-  return await downloadClass.download(path, filename, headers);
+  return await Response.download(path, filename, headers);
 }
 
 /**

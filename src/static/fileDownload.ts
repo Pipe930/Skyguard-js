@@ -58,7 +58,7 @@ export class FileDownloadHelper {
     filePath: string,
     filename?: string,
     headers?: Record<string, string>,
-  ): Promise<Response> {
+  ): Promise<{ content: Buffer; downloadHeaders: Record<string, string> }> {
     try {
       const fullPath = resolve(filePath);
       const stats = await stat(fullPath);
@@ -67,7 +67,6 @@ export class FileDownloadHelper {
 
       const content = await readFile(fullPath);
       const downloadName = filename || basename(fullPath);
-
       const downloadHeaders: Record<string, string> = {
         "Content-Disposition": this.contentDisposition.attachment(downloadName),
         "Content-Length": content.length.toString(),
@@ -76,16 +75,12 @@ export class FileDownloadHelper {
 
       if (headers) {
         for (const [key, value] of Object.entries(headers)) {
-          // Prevent overriding Content-Disposition
           if (key.toLowerCase() !== "content-disposition")
             downloadHeaders[key] = value;
         }
       }
 
-      return new Response()
-        .setStatus(200)
-        .setContent(content)
-        .setHeaders(downloadHeaders);
+      return { content, downloadHeaders };
     } catch (error) {
       if ((error as NodeJS.ErrnoException).syscall === "stat")
         throw new NotFoundError("File not found");

@@ -1,11 +1,14 @@
 import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
-import { json, redirect, text, render, download } from "../src/helpers";
+import { json, redirect, text, download } from "../src/helpers";
 import { ValidationSchema } from "../src/validators";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
 import { FileSessionStorage } from "../src/sessions";
+import { hash, verify, createJWT } from "../src/crypto";
+import { UnauthorizedError } from "../src/exceptions/httpExceptions";
+import { authJWT } from "../src/middlewares/auth";
 
 const PORT = 3000;
 
@@ -67,24 +70,6 @@ app.get("/redirect", () => {
   return redirect("/test");
 });
 
-app.get("/home", () => {
-  return render(
-    "home",
-    {
-      title: "Productos",
-      products: [
-        { name: "Laptop", price: 999.99, inStock: true },
-        { name: "Mouse", price: 29.99, inStock: false },
-      ],
-      user: {
-        name: "Juan Pérez",
-        role: "admin",
-      },
-    },
-    "main",
-  );
-});
-
 app.group("/tienda", tienda => {
   tienda.get("/pagina", () => {
     return json({ message: "desde ruta grupada" });
@@ -102,11 +87,8 @@ const authMiddleware = async (
   request: Request,
   next: RouteHandler,
 ): Promise<Response> => {
-  if (request.getHeaders["authorization"] !== "test") {
-    return json({
-      message: "NotAuthenticated",
-    }).setStatus(401);
-  }
+  if (request.getHeaders["authorization"] !== "test")
+    throw new UnauthorizedError("Unauthorized");
   return await next(request);
 };
 
@@ -132,28 +114,51 @@ app.post("/login", (request: Request) => {
     return json({ message: "Logged in" });
   }
 
-  return json({ error: "Invalid credentials" }).setStatus(401);
+  throw new UnauthorizedError("Invalid credentials");
 });
 
 app.get("/me", (request: Request) => {
   const user = request.getSession.get("user");
 
-  if (!user) {
-    return json({ error: "Not authenticated" }).setStatus(401);
-  }
-
+  if (!user) throw new UnauthorizedError("Not authenticated");
   return json({ user });
 });
+
+app.post("/password-hashed", async (request: Request) => {
+  const { password } = request.getData();
+  const passwordHash = await hash(password as string);
+  const verifyHash = await verify(password as string, passwordHash);
+
+  return json({ data: passwordHash, verified: verifyHash }).setStatus(200);
+});
+
+app.get("/generate-jwt", () => {
+  const token = createJWT(
+    { id: 1, name: "Juan Pérez", role: "admin" },
+    "secret-key",
+    3600,
+  );
+
+  return json({
+    token,
+  });
+});
+
+app.get(
+  "/verify-jwt",
+  (request: Request) => {
+    const user = request.state.user;
+
+    return json({ user });
+  },
+  [authJWT("secret-key")],
+);
 
 app.post("/logout", (request: Request) => {
   request.getSession.destroy();
   return json({ message: "Logged out" });
 });
 
-app.run(
-  PORT,
-  () => {
-    console.log(`Server running in port: http://localhost:${PORT}`);
-  },
-  "0.0.0.0",
-);
+app.run(PORT, () => {
+  console.log(`Server running in port: http://localhost:${PORT}`);
+});

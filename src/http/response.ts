@@ -1,7 +1,8 @@
 import type { Headers, TemplateContext } from "../types";
 import { statusCodes } from "./statusCodes";
-import { InvalidHttpStatusException } from "../exceptions";
+import { InvalidHttpStatusException } from "../exceptions/invalidHttpStatusException";
 import { app } from "../helpers/app";
+import { FileDownloadHelper } from "../static/fileDownload";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -170,6 +171,20 @@ export class Response {
    */
   public static redirect(url: string): Response {
     return new this().setStatus(302).setHeader("location", url);
+  }
+
+  public static async download(
+    path: string,
+    filename?: string,
+    headers?: Record<string, string>,
+  ): Promise<Response> {
+    const downloadClass = new FileDownloadHelper();
+    const { content, downloadHeaders } = await downloadClass.download(
+      path,
+      filename,
+      headers,
+    );
+    return new this().setContent(content).setHeaders(downloadHeaders);
   }
 
   /**

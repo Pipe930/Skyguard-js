@@ -38,6 +38,8 @@ export class Request {
   /** Session associated with the request */
   private session: Session;
 
+  public state: Record<string, any> = {};
+
   constructor(url: string) {
     this.url = url;
   }

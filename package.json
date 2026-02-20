@@ -56,14 +56,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "exec": "ts-node public/main.ts",
+    "exec": "ts-node examples/main.ts",
     "lint": "eslint \"{src,tests}/**/*.ts\" --fix",
     "format": "prettier --write \"{src,tests}/**/*.ts\"",
-    "dev": "NODE_ENV=development nodemon public/main.ts",
+    "dev": "NODE_ENV=development nodemon examples/main.ts",
     "test": "NODE_ENV=test jest --verbose",
     "test:watch": "jest --watch --onlyChanged",
     "test:cov": "jest --coverage",
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc",
     "watch": "tsc -w"
   },
   "author": {

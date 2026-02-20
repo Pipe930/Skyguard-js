@@ -165,10 +165,9 @@ export const cors = (options: CorsOptions = {}): Middleware => {
     if (config.credentials)
       corsHeaders["Access-Control-Allow-Credentials"] = "true";
 
-    if (config.exposedHeaders.length) {
+    if (config.exposedHeaders.length)
       corsHeaders["Access-Control-Expose-Headers"] =
         config.exposedHeaders.join(", ");
-    }
 
     if (request.getMethod === HttpMethods.options) {
       corsHeaders["Access-Control-Allow-Methods"] = config.methods.join(", ");
@@ -176,12 +175,11 @@ export const cors = (options: CorsOptions = {}): Middleware => {
         config.allowedHeaders.join(", ");
       corsHeaders["Access-Control-Max-Age"] = String(config.maxAge);
 
-      if (!config.preflightContinue) {
+      if (!config.preflightContinue)
         return new Response()
           .setStatus(204)
           .setContent(null)
           .setHeaders(corsHeaders);
-      }
     }
 
     const response = await next(request);

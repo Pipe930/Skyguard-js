@@ -5,7 +5,7 @@ import {
   NodeHttpAdapter,
   Response,
 } from "./http";
-import { ValidationException } from "./exceptions";
+import { ValidationException } from "./exceptions/validationException";
 import { type View, RaptorEngine } from "./views";
 import { join } from "node:path";
 import { singleton } from "./helpers/app";
