@@ -121,19 +121,21 @@ app.get("/secure", () => Response.json({ secure: true }), [authMiddleware]);
 
 ---
 
-## Static Files
+## 📌 Static Files
 
-To serve static files, use the `static` method.
+To serve static files, use the application's `staticFiles` method with the directory path. The name of the folder will determine the initial route prefix.
 
 ```ts
 import { join } from "node:path";
 
-app.static(join(__dirname, "..", "static"));
+app.staticFiles(join(__dirname, "..", "static"));
+
+// Route http://localhost:3000/static/style.css will serve the file located at ./static/style.css
 ```
 
 ---
 
-## 📦 Data Validation
+## ⛔ Data Validation
 
 Skyguard.js provides a **declarative validation system** using schemas.
 
@@ -169,6 +171,115 @@ Validation is:
 - Fully typed
 - Reusable
 - Decoupled from transport layer
+
+---
+
+## 🚨 Exceptions & Error Handling
+
+The framework provides a set of built-in HTTP exceptions that can be thrown from route handlers or middleware. When an exception is thrown, the framework detects it and sends an appropriate HTTP response with the status code and message you specified in the class.
+
+```ts
+import { NotFoundError, InternalServerError } from "skyguard-js/exceptions";
+
+const listResources = ["1", "2", "3"];
+
+app.get("/resource/{id}", (request: Request) => {
+  const resource = request.getParams("id");
+
+  if (!listResources.includes(resource)) {
+    throw new NotFoundError("Resource not found");
+  }
+
+  return Response.json(resource);
+});
+
+app.get("/divide", (request: Request) => {
+  try {
+    const { a, b } = request.getQuery();
+    const result = Number(a) / Number(b);
+
+    return Response.json({ result });
+  } catch (error) {
+    throw new InternalServerError(
+      "An error occurred while processing your request",
+    );
+  }
+});
+```
+
+---
+
+## 🧱 Sessions
+
+To handle sessions, you must use the framework’s built-in middleware. Depending on where you want to store them (in memory, in files, or in a database), you need to use the corresponding storage class.
+
+```ts
+import { sessions } from "skyguard-js/middlewares";
+import { FileSessionStorage } from "skyguard-js";
+
+app.middlewares([sessions(FileSessionStorage)]);
+
+app.post("/login", (request: Request) => {
+  const { username, password } = request.getData();
+
+  if (username === "admin" && password === "secret") {
+    request.getSession.set("user", {
+      id: 1,
+      username: "admin",
+      role: "admin",
+    });
+
+    return json({ message: "Logged in" });
+  }
+
+  throw new UnauthorizedError("Invalid credentials");
+});
+
+app.get("/me", (request: Request) => {
+  const user = request.getSession.get("user");
+
+  if (!user) throw new UnauthorizedError("Not authenticated");
+  return json({ user });
+});
+```
+
+---
+
+## 🛡️ Segurity
+
+El framework incluye algunas funciones de hasheo de contraseñas y generación de JWT, incluyendo un middleware de autenticación con JWT.
+
+```ts
+import { hash, verify, createJWT } from "skyguard-js/crypto";
+import { authJWT } from "skyguard-js/middlewares";
+
+app.post("/register", async (request: Request) => {
+  const { username, password } = request.getData();
+  const hashedPassword = await hash(password);
+
+  // Save username and hashedPassword to database
+  // ...
+
+  return Response.json({ message: "User registered" });
+});
+
+app.post("/login", async (request: Request) => {
+  const { username, password } = request.getData();
+
+  // Retrieve user from database by username
+  // ...
+
+  const isValid = await verify(password, user.hashedPassword);
+
+  if (!isValid) {
+    throw new UnauthorizedError("Invalid credentials");
+  }
+
+  const token = createJWT({ sub: user.id, role: user.role }, "1h");
+
+  return Response.json({ token });
+});
+```
 
 ---
 

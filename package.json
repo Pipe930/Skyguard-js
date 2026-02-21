@@ -24,6 +24,10 @@
     "./exeptions": {
       "types": "./dist/exceptions/httpExceptions.d.ts",
       "import": "./dist/exceptions/httpExceptions.js"
+    },
+    "./crypto": {
+      "types": "./dist/crypto/index.d.ts",
+      "import": "./dist/crypto/index.js"
     }
   },
   "keywords": [
