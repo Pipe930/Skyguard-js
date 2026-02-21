@@ -26,12 +26,13 @@ describe("FileDownloadHelper", () => {
 
     const response = await fileDownloadHelper.download(mockFilePath);
 
-    expect(response.getStatus).toBe(200);
-    expect(response.getContent).toBe(mockContent);
-    expect(response.getHeaders["Content-Length"]).toBe(
+    expect(response.content).toBe(mockContent);
+    expect(response.downloadHeaders["Content-Length"]).toBe(
       mockContent.length.toString(),
     );
-    expect(response.getHeaders["Content-Disposition"]).toContain("test.txt");
+    expect(response.downloadHeaders["Content-Disposition"]).toContain(
+      "test.txt",
+    );
   });
 
   it("should download file with custom filename", async () => {
@@ -48,7 +49,7 @@ describe("FileDownloadHelper", () => {
       customFilename,
     );
 
-    expect(response.getHeaders["Content-Disposition"]).toContain(
+    expect(response.downloadHeaders["Content-Disposition"]).toContain(
       customFilename,
     );
   });
@@ -72,8 +73,8 @@ describe("FileDownloadHelper", () => {
       customHeaders,
     );
 
-    expect(response.getHeaders["X-Custom-Header"]).toBe("custom-value");
-    expect(response.getHeaders["Cache-Control"]).toBe("no-cache");
+    expect(response.downloadHeaders["X-Custom-Header"]).toBe("custom-value");
+    expect(response.downloadHeaders["Cache-Control"]).toBe("no-cache");
   });
 
   it("should not override Content-Disposition with custom headers", async () => {
@@ -92,7 +93,9 @@ describe("FileDownloadHelper", () => {
       customHeaders,
     );
 
-    expect(response.getHeaders["Content-Disposition"]).toContain("attachment");
+    expect(response.downloadHeaders["Content-Disposition"]).toContain(
+      "attachment",
+    );
   });
 
   it("should throw exception when path is not a file", async () => {
@@ -124,7 +127,7 @@ describe("FileDownloadHelper", () => {
 
     const response = await fileDownloadHelper.download("/test.pdf");
 
-    expect(response.getHeaders["Content-Type"]).toBe("application/pdf");
+    expect(response.downloadHeaders["Content-Type"]).toBe("application/pdf");
   });
 
   it("should default to octet-stream for unknown extensions", async () => {
@@ -138,7 +141,7 @@ describe("FileDownloadHelper", () => {
 
     const response = await fileDownloadHelper.download("/test.xyz");
 
-    expect(response.getHeaders["Content-Type"]).toBe(
+    expect(response.downloadHeaders["Content-Type"]).toBe(
       "application/octet-stream",
     );
   });
