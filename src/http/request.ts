@@ -1,8 +1,8 @@
 import { HttpMethods } from "./httpMethods";
 import type { Headers, HttpValue } from "../types";
-import { Layer } from "../routing/layer";
-import { Validator, FieldDefinition } from "../validators";
+import { Validator, type FieldDefinition } from "../validators";
 import { Session } from "../sessions";
+import type { UploadedFile } from "../storage/types";
 
 /**
  * Represents an incoming client request within the framework.
@@ -38,7 +38,19 @@ export class Request {
   /** Session associated with the request */
   private session: Session;
 
+  /**
+   * Per-request shared state container.
+   *
+   * This object can be freely used by middlewares and route handlers to store
+   * arbitrary data during the request lifecycle.
+   */
   public state: Record<string, any> = {};
+
+  /** Single uploaded file metadata. */
+  public file?: UploadedFile;
+
+  /** Multiple uploaded files metadata. */
+  public files?: UploadedFile[] | Record<string, UploadedFile[]>;
 
   constructor(url: string) {
     this.url = url;
@@ -110,18 +122,16 @@ export class Request {
     return this.params[key] ?? null;
   }
 
-  public setParams(params: Record<string, string>): this {
+  public setParams(params: Record<string, string>) {
     this.params = params;
-    return this;
   }
 
-  public getData(): Record<string, unknown> {
+  get getData(): Record<string, unknown> {
     return this.data;
   }
 
-  public setData(data: Record<string, any>): this {
+  public setData(data: Record<string, any>) {
     this.data = data;
-    return this;
   }
 
   get getSession(): Session {

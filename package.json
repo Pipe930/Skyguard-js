@@ -25,7 +25,7 @@
       "types": "./dist/exceptions/httpExceptions.d.ts",
       "import": "./dist/exceptions/httpExceptions.js"
     },
-    "./crypto": {
+    "./security": {
       "types": "./dist/crypto/index.d.ts",
       "import": "./dist/crypto/index.js"
     }

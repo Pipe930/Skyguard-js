@@ -9,10 +9,22 @@ import { FileSessionStorage } from "../src/sessions";
 import { hash, verify, createJWT } from "../src/crypto";
 import { UnauthorizedError } from "../src/exceptions/httpExceptions";
 import { authJWT } from "../src/middlewares/auth";
+import { createUploader } from "../src/storage/uploader";
+import { StorageType } from "../src/storage/types";
 
 const PORT = 3000;
 
 const app = createApp();
+
+const uploader = createUploader({
+  storageType: StorageType.DISK,
+  storageOptions: {
+    destination: "./uploads",
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
 
 app.staticFiles(join(__dirname, "..", "static"));
 
@@ -49,6 +61,14 @@ app.get("/test/{id}/nel/{param}", (request: Request) => {
   return jsonTest;
 });
 
+app.post(
+  "/upload",
+  (request: Request) => {
+    return json({ message: "Archivo subido exitosamente", file: request.file });
+  },
+  [uploader.single("file")],
+);
+
 app.get("/test", () => {
   return text("holamundo");
 });
@@ -63,7 +83,7 @@ app.post("/test", (request: Request) => {
 });
 
 app.post("/xml", (request: Request) => {
-  return json({ message: request.getData() });
+  return json({ message: request.getData });
 });
 
 app.get("/redirect", () => {
@@ -102,7 +122,7 @@ app.get("/download/report", async () => {
 });
 
 app.post("/login", (request: Request) => {
-  const { username, password } = request.getData();
+  const { username, password } = request.getData;
 
   if (username === "admin" && password === "secret") {
     request.getSession.set("user", {
@@ -125,7 +145,7 @@ app.get("/me", (request: Request) => {
 });
 
 app.post("/password-hashed", async (request: Request) => {
-  const { password } = request.getData();
+  const { password } = request.getData;
   const passwordHash = await hash(password as string);
   const verifyHash = await verify(password as string, passwordHash);
 

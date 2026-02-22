@@ -26,6 +26,10 @@ At its current stage, the framework focuses on **routing**, **internal architect
 - Request / Response abstractions
 - Declarative data validation
 - Simple template engine with layouts and helpers
+- Built-in HTTP exceptions
+- Password hashing and JWT token generation
+- CORS middleware
+- File uploads (via middleware)
 - Static file serving
 - Session handling (via middleware)
 
@@ -117,6 +121,25 @@ app.group("/admin", admin => {
 
 // Route-level middleware
 app.get("/secure", () => Response.json({ secure: true }), [authMiddleware]);
+```
+
+---
+
+## 🌐 CORS Middleware
+
+To enable CORS, use the built-in `cors` middleware.
+
+```ts
+import { cors } from "skyguard-js/middlewares";
+
+app.middlewares([
+  cors({
+    origin: ["http://localhost:3000", "https://myapp.com"],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  }),
+]);
 ```
 
 ---
@@ -245,12 +268,12 @@ app.get("/me", (request: Request) => {
 
 ---
 
-## 🛡️ Segurity
+## 🛡️ Security
 
-El framework incluye algunas funciones de hasheo de contraseñas y generación de JWT, incluyendo un middleware de autenticación con JWT.
+The framework includes some password hashing and JWT token generation functions, and also includes JWT authentication middleware.
 
 ```ts
-import { hash, verify, createJWT } from "skyguard-js/crypto";
+import { hash, verify, createJWT } from "skyguard-js/security";
 import { authJWT } from "skyguard-js/middlewares";
 
 app.post("/register", async (request: Request) => {
@@ -279,6 +302,34 @@ app.post("/login", async (request: Request) => {
 
   return Response.json({ token });
 });
+```
+
+---
+
+## 📂 File Uploads
+
+To handle file uploads, use the built-in `createUploader` function to create an uploader middleware with the desired storage configuration.
+
+```ts
+import { createUploader, StorageType } from "skyguard-js";
+
+const uploader = createUploader({
+  storageType: StorageType.DISK,
+  storageOptions: {
+    destination: "./uploads",
+  },
+});
+
+app.post(
+  "/upload",
+  (request: Request) => {
+    return Response.json({
+      message: "File uploaded successfully",
+      file: request.file,
+    });
+  },
+  [uploader.single("file")],
+);
 ```
 
 ---
@@ -318,17 +369,6 @@ app.get("/home", () => {
 
 ---
 
-## 🧱 Project Status
-
-⚠️ **Early-stage project**
-
-- Not production-ready
-- API may change
-- Features are still evolving
-- Intended primarily for learning and experimentation
-
----
-
 ## 🔮 Roadmap (Tentative)
 
 - Middleware system (✅)
@@ -336,9 +376,12 @@ app.get("/home", () => {
 - Request / Response abstraction (✅)
 - Data validation (✅)
 - Error handling improvements (✅)
-- Sessions & cookies (in progress)
-- Authentication & authorization
+- Sessions & cookies (✅)
+- Passoword hashing & JWT tokens (✅)
+- File uploads
 - Database & ORM integration
+- Authentication & authorization
+- WebSockets
 
 ---
 
