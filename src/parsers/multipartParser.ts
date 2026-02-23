@@ -12,6 +12,25 @@ import {
  * Parses multipart payloads into fields and files.
  */
 export class MultipartParser implements ContentParser {
+  private readonly maxParts: number;
+  private readonly maxFieldSize: number;
+  private readonly maxFileSize: number;
+  private readonly maxHeaderSize: number;
+
+  constructor(
+    options: {
+      maxParts?: number;
+      maxFieldSize?: number;
+      maxFileSize?: number;
+      maxHeaderSize?: number;
+    } = {},
+  ) {
+    this.maxParts = options.maxParts ?? 1000;
+    this.maxFieldSize = options.maxFieldSize ?? 1024 * 1024; // 1MB
+    this.maxFileSize = options.maxFileSize ?? 10 * 1024 * 1024; // 10MB
+    this.maxHeaderSize = options.maxHeaderSize ?? 16 * 1024; // 16KB
+  }
+
   /**
    * Checks whether the given content type is `multipart/form-data`.
    *
@@ -62,24 +81,45 @@ export class MultipartParser implements ContentParser {
     const boundaryBuffer = Buffer.from(`--${boundary}`);
     const parts = this.splitBuffer(buffer, boundaryBuffer);
 
+    if (parts.length > this.maxParts) {
+      throw new UnprocessableContentError(
+        `Multipart parts limit exceeded: ${this.maxParts}`,
+      );
+    }
+
     for (const part of parts) {
       if (part.length === 0 || part.toString().trim() === "--") continue;
 
       const parsed = this.parsePart(part);
-      if (parsed) {
-        if (parsed.filename) {
-          result.files.push({
-            fieldName: parsed.name,
-            filename: parsed.filename,
-            mimetype:
-              parsed.contentType || contentTypes["application-octet-stream"],
-            data: parsed.data,
-            size: parsed.data.length,
-          });
-        } else {
-          result.fields[parsed.name] = parsed.data.toString("utf-8");
+      if (!parsed) continue;
+      const size = parsed.data.length;
+
+      if (parsed.filename) {
+        if (size > this.maxFileSize) {
+          throw new UnprocessableContentError(
+            `File size limit exceeded: ${this.maxFileSize} bytes`,
+          );
         }
+
+        result.files.push({
+          fieldName: parsed.name,
+          filename: parsed.filename,
+          mimetype:
+            parsed.contentType ?? contentTypes["application-octet-stream"],
+          data: parsed.data,
+          size,
+        });
+
+        continue;
       }
+
+      if (size > this.maxFieldSize) {
+        throw new UnprocessableContentError(
+          `Field size limit exceeded: ${this.maxFieldSize} bytes`,
+        );
+      }
+
+      result.fields[parsed.name] = parsed.data.toString("utf-8");
     }
 
     return result;
@@ -104,8 +144,14 @@ export class MultipartParser implements ContentParser {
     const headerEndIndex = part.indexOf("\r\n\r\n");
     if (headerEndIndex === -1) return null;
 
+    if (headerEndIndex > this.maxHeaderSize) {
+      throw new UnprocessableContentError(
+        `Multipart headers too large: ${this.maxHeaderSize} bytes`,
+      );
+    }
+
     const headerSection = part.subarray(0, headerEndIndex).toString("utf-8");
-    const bodySection = part.subarray(headerEndIndex + 4);
+    const bodySection = this.trimEndingCRLF(part.subarray(headerEndIndex + 4));
     const headers = this.parseHeaders(headerSection);
     const disposition = headers["content-disposition"];
 
@@ -138,5 +184,14 @@ export class MultipartParser implements ContentParser {
     }
 
     return headers;
+  }
+
+  private trimEndingCRLF(data: Buffer): Buffer {
+    if (data.length < 2) return data;
+
+    const end = data.subarray(-2).toString("utf-8");
+    if (end === "\r\n") return data.subarray(0, data.length - 2);
+
+    return data;
   }
 }

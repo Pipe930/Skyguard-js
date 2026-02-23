@@ -78,17 +78,28 @@ export class Router {
    * const response = await router.resolve(request);
    */
   public resolve(request: Request): Promise<Response> | Response {
-    const layer = this.resolveLayer(request);
+    const executeLayer = (req: Request): Promise<Response> | Response => {
+      const layer = this.resolveLayer(req);
 
-    if (layer.hasParameters())
-      request.setParams(layer.parseParameters(request.url));
-    const action = layer.getAction;
-    const allMiddlewares = [...this.globalMiddlewares, ...layer.getMiddlewares];
+      if (layer.hasParameters()) {
+        req.setParams(layer.parseParameters(req.url));
+      }
 
-    if (allMiddlewares.length > 0)
-      return this.runMiddlewares(request, allMiddlewares, action);
+      const action = layer.getAction;
+      const routeMiddlewares = layer.getMiddlewares;
 
-    return action(request);
+      if (routeMiddlewares.length > 0) {
+        return this.runMiddlewares(req, routeMiddlewares, action);
+      }
+
+      return action(req);
+    };
+
+    if (this.globalMiddlewares.length > 0) {
+      return this.runMiddlewares(request, this.globalMiddlewares, executeLayer);
+    }
+
+    return executeLayer(request);
   }
 
   /**

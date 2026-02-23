@@ -54,8 +54,8 @@ describe("MultipartParserTest", () => {
     const result = parser.parse(body, contentType);
 
     expect(result.fields).toEqual({
-      username: "juan\r\n",
-      age: "30\r\n",
+      username: "juan",
+      age: "30",
     });
 
     expect(result.files.length).toBe(0);
@@ -85,8 +85,8 @@ describe("MultipartParserTest", () => {
     expect(file.fieldName).toBe("file");
     expect(file.filename).toBe("test.txt");
     expect(file.mimetype).toBe("text/plain");
-    expect(file.data.toString("utf-8")).toBe("hello world\r\n");
-    expect(file.size).toBe(Buffer.from("hello world\r\n").length);
+    expect(file.data.toString("utf-8")).toBe("hello world");
+    expect(file.size).toBe(Buffer.from("hello world").length);
   });
 
   it("should parse fields and files together", () => {
@@ -107,7 +107,7 @@ describe("MultipartParserTest", () => {
     const result = parser.parse(body, contentType);
 
     expect(result.fields).toEqual({
-      title: "My Post\r\n",
+      title: "My Post",
     });
 
     expect(result.files.length).toBe(1);
@@ -130,5 +130,60 @@ describe("MultipartParserTest", () => {
 
     expect(result.fields).toEqual({});
     expect(result.files).toEqual([]);
+  });
+
+  it("should fail when field size exceeds configured limit", () => {
+    const boundary = "limit-field";
+    const contentType = `multipart/form-data; boundary=${boundary}`;
+    const smallLimitParser = new MultipartParser({ maxFieldSize: 4 });
+
+    const body = Buffer.from(
+      `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="bio"\r\n\r\n` +
+        `toolong\r\n` +
+        `--${boundary}--`,
+    );
+
+    expect(() => smallLimitParser.parse(body, contentType)).toThrow(
+      "Field size limit exceeded: 4 bytes",
+    );
+  });
+
+  it("should fail when file size exceeds configured limit", () => {
+    const boundary = "limit-file";
+    const contentType = `multipart/form-data; boundary=${boundary}`;
+    const smallLimitParser = new MultipartParser({ maxFileSize: 5 });
+
+    const body = Buffer.from(
+      `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="a.txt"\r\n` +
+        `Content-Type: text/plain\r\n\r\n` +
+        `123456\r\n` +
+        `--${boundary}--`,
+    );
+
+    expect(() => smallLimitParser.parse(body, contentType)).toThrow(
+      "File size limit exceeded: 5 bytes",
+    );
+  });
+
+  it("should fail when parts exceed configured limit", () => {
+    const boundary = "limit-parts";
+    const contentType = `multipart/form-data; boundary=${boundary}`;
+    const smallLimitParser = new MultipartParser({ maxParts: 1 });
+
+    const body = Buffer.from(
+      `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="a"\r\n\r\n` +
+        `1\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="b"\r\n\r\n` +
+        `2\r\n` +
+        `--${boundary}--`,
+    );
+
+    expect(() => smallLimitParser.parse(body, contentType)).toThrow(
+      "Multipart parts limit exceeded: 1",
+    );
   });
 });

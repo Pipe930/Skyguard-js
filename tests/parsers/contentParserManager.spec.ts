@@ -114,7 +114,7 @@ describe("ContentParserManager", () => {
     const result = (await manager.parse(req)) as MultipartData;
 
     expect(result.fields).toEqual({
-      title: "Post\r\n",
+      title: "Post",
     });
   });
 
@@ -156,7 +156,7 @@ describe("ContentParserManager", () => {
     const result = await manager.parse(req);
 
     expect(Buffer.isBuffer(result)).toBe(true);
-    expect(result.toString()).toBe("binary-data");
+    expect((result as Buffer).toString()).toBe("binary-data");
   });
 
   it("should default contentType to text/plain", async () => {
