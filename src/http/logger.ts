@@ -1,5 +1,4 @@
-import { IncomingMessage } from "node:http";
-import { Response } from "./response";
+import { IncomingMessage, ServerResponse } from "node:http";
 
 export class Logger {
   private stream: NodeJS.WritableStream;
@@ -8,14 +7,18 @@ export class Logger {
     this.stream = process.stdout;
   }
 
-  public log(req: IncomingMessage, res: Response, startTime: bigint): void {
+  public log(
+    req: IncomingMessage,
+    res: ServerResponse,
+    startTime: bigint,
+  ): void {
     const method = req.method || "-";
     const url = req.url || "-";
-    const contentLength = res.getHeaders["content-length"] || "-";
+    const contentLength = res.getHeader("content-length") || "-";
 
     const diff = process.hrtime.bigint() - startTime;
     const responseTime = (Number(diff) / 1_000_000).toFixed(3);
-    const coloredStatus = this.colorizeStatus(res.getStatus);
+    const coloredStatus = this.colorizeStatus(res.statusCode);
     const logLine = `${method} ${url} ${coloredStatus} ${responseTime} ms - ${contentLength}`;
 
     this.stream.write(logLine + "\n");

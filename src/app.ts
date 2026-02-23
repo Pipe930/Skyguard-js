@@ -2,6 +2,7 @@ import { Router, RouterGroup } from "./routing";
 import {
   type HttpAdapter,
   HttpMethods,
+  Logger,
   NodeHttpAdapter,
   Response,
 } from "./http";
@@ -46,6 +47,9 @@ export class App {
   /** Static file handler (optional) */
   private staticFileHandler: StaticFileHandler | null = null;
 
+  private logger: Logger;
+  private startTime: bigint;
+
   /**
    * Bootstraps and configures the application.
    *
@@ -59,6 +63,7 @@ export class App {
     const app = singleton(App);
     app.router = new Router();
     app.view = new RaptorEngine(join(__dirname, "..", "views"));
+    app.logger = new Logger();
 
     return app;
   }
@@ -126,8 +131,12 @@ export class App {
     hostname: string = "127.0.0.1",
   ): void {
     createServer((req, res) => {
+      this.startTime = process.hrtime.bigint();
       const adapter = new NodeHttpAdapter(req, res);
       void this.handle(adapter);
+      setImmediate(() => {
+        this.logger.log(req, res, this.startTime);
+      });
     }).listen(port, hostname, () => {
       callback();
     });
