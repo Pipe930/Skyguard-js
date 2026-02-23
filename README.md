@@ -67,11 +67,11 @@ Routes are registered using HTTP methods on the `app` instance.
 
 ```ts
 app.get("/posts/{id}", (request: Request) => {
-  return Response.json(request.getParams());
+  return Response.json(request.params);
 });
 
 app.post("/posts", (request: Request) => {
-  return Response.json(request.getData());
+  return Response.json(request.data);
 });
 ```
 
@@ -103,7 +103,7 @@ const authMiddleware = async (
   request: Request,
   next: RouteHandler,
 ): Promise<Response> => {
-  if (request.getHeaders["authorization"] !== "secret") {
+  if (request.headers["authorization"] !== "secret") {
     return Response.json({ message: "Unauthorized" }).setStatus(401);
   }
 
@@ -202,7 +202,7 @@ import { NotFoundError, InternalServerError } from "skyguard-js/exceptions";
 const listResources = ["1", "2", "3"];
 
 app.get("/resource/{id}", (request: Request) => {
-  const resource = request.getParams("id");
+  const resource = request.params["id"];
 
   if (!listResources.includes(resource)) {
     throw new NotFoundError("Resource not found");
@@ -213,7 +213,7 @@ app.get("/resource/{id}", (request: Request) => {
 
 app.get("/divide", (request: Request) => {
   try {
-    const { a, b } = request.getQuery();
+    const { a, b } = request.query;
     const result = Number(a) / Number(b);
 
     return Response.json({ result });
@@ -238,10 +238,10 @@ import { FileSessionStorage } from "skyguard-js";
 app.middlewares([sessions(FileSessionStorage)]);
 
 app.post("/login", (request: Request) => {
-  const { username, password } = request.getData();
+  const { username, password } = request.data;
 
   if (username === "admin" && password === "secret") {
-    request.getSession.set("user", {
+    request.session.set("user", {
       id: 1,
       username: "admin",
       role: "admin",
@@ -254,7 +254,7 @@ app.post("/login", (request: Request) => {
 });
 
 app.get("/me", (request: Request) => {
-  const user = request.getSession.get("user");
+  const user = request.session.get("user");
 
   if (!user) throw new UnauthorizedError("Not authenticated");
   return json({ user });
@@ -272,7 +272,7 @@ import { hash, verify, createJWT } from "skyguard-js/security";
 import { authJWT } from "skyguard-js/middlewares";
 
 app.post("/register", async (request: Request) => {
-  const { username, password } = request.getData();
+  const { username, password } = request.data;
   const hashedPassword = await hash(password);
 
   // Save username and hashedPassword to database
@@ -282,7 +282,7 @@ app.post("/register", async (request: Request) => {
 });
 
 app.post("/login", async (request: Request) => {
-  const { username, password } = request.getData();
+  const { username, password } = request.data;
 
   // Retrieve user from database by username
   // ...

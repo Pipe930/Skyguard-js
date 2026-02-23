@@ -21,7 +21,7 @@
       "types": "./dist/validators/validationSchema.d.ts",
       "import": "./dist/validators/validationSchema.js"
     },
-    "./exeptions": {
+    "./exceptions": {
       "types": "./dist/exceptions/httpExceptions.d.ts",
       "import": "./dist/exceptions/httpExceptions.js"
     },

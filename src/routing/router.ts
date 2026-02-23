@@ -53,10 +53,10 @@ export class Router {
    * const layer = router.resolveLayer(request);
    */
   public resolveLayer(request: Request): Layer {
-    const routes = this.routes[request.getMethod];
+    const routes = this.routes[request.method];
 
     for (const route of routes) {
-      if (route.matches(request.getUrl)) return route;
+      if (route.matches(request.url)) return route;
     }
 
     throw new NotFoundError("Route not found");
@@ -81,7 +81,7 @@ export class Router {
     const layer = this.resolveLayer(request);
 
     if (layer.hasParameters())
-      request.setParams(layer.parseParameters(request.getUrl));
+      request.setParams(layer.parseParameters(request.url));
     const action = layer.getAction;
     const allMiddlewares = [...this.globalMiddlewares, ...layer.getMiddlewares];
 

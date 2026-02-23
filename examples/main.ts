@@ -45,8 +45,8 @@ app.middlewares([
 
 app.get("/test/{id}/nel/{param}", (request: Request) => {
   const jsonTest = json({
-    params: request.getParams(),
-    queries: request.getQueryParams(),
+    params: request.params,
+    queries: request.query,
   });
   return jsonTest;
 });
@@ -74,7 +74,7 @@ app.post("/test", (request: Request) => {
 });
 
 app.post("/xml", (request: Request) => {
-  return json({ message: request.getData });
+  return json({ message: request.data });
 });
 
 app.get("/redirect", () => {
@@ -89,7 +89,7 @@ app.group("/tienda", tienda => {
   tienda.get("/holamundo/{param}", (request: Request) => {
     return json({
       message: "desde ruta agrupada con parametros",
-      params: request.getParams(),
+      params: request.params,
     });
   });
 });
@@ -98,7 +98,7 @@ const authMiddleware = async (
   request: Request,
   next: RouteHandler,
 ): Promise<Response> => {
-  if (request.getHeaders["authorization"] !== "test")
+  if (request.headers["authorization"] !== "test")
     throw new UnauthorizedError("Unauthorized");
   return await next(request);
 };
@@ -113,10 +113,10 @@ app.get("/download/report", async () => {
 });
 
 app.post("/login", (request: Request) => {
-  const { username, password } = request.getData;
+  const { username, password } = request.data;
 
   if (username === "admin" && password === "secret") {
-    request.getSession.set("user", {
+    request.session.set("user", {
       id: 1,
       username: "admin",
       role: "admin",
@@ -129,14 +129,14 @@ app.post("/login", (request: Request) => {
 });
 
 app.get("/me", (request: Request) => {
-  const user = request.getSession.get("user");
+  const user = request.session.get("user");
 
   if (!user) throw new UnauthorizedError("Not authenticated");
   return json({ user });
 });
 
 app.post("/password-hashed", async (request: Request) => {
-  const { password } = request.getData;
+  const { password } = request.data;
   const passwordHash = await hash(password as string);
   const verifyHash = await verify(password as string, passwordHash);
 
@@ -166,7 +166,7 @@ app.get(
 );
 
 app.post("/logout", (request: Request) => {
-  request.getSession.destroy();
+  request.session.destroy();
   return json({ message: "Logged out" });
 });
 

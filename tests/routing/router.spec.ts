@@ -43,7 +43,7 @@ describe("RouterTest", () => {
       },
     ];
 
-    routes.forEach((route) => {
+    routes.forEach(route => {
       router.get(route.url, route.action);
     });
 
@@ -123,8 +123,8 @@ describe("RouterTest", () => {
     const response = await router.resolve(requestMock);
 
     expect(responseExcepted).toBe(response);
-    expect(response.getHeaders["x-test-one"]).toBe("one");
-    expect(response.getHeaders["x-test-two"]).toBe("two");
+    expect(response.headers["x-test-one"]).toBe("one");
+    expect(response.headers["x-test-two"]).toBe("two");
   });
 
   it("should middleware stack can be stopped", async () => {
@@ -149,7 +149,7 @@ describe("RouterTest", () => {
     const requestMock = await createRequestMock(url, HttpMethods.get);
     const response = await router.resolve(requestMock);
 
-    expect("stopped").toBe(response.getContent);
-    expect(response.getHeaders["x-test-two"]).toBeUndefined();
+    expect("stopped").toBe(response.content);
+    expect(response.headers["x-test-two"]).toBeUndefined();
   });
 });

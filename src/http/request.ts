@@ -1,5 +1,5 @@
 import { HttpMethods } from "./httpMethods";
-import type { Headers, HttpValue } from "../types";
+import type { Headers } from "../types";
 import { Validator, type FieldDefinition } from "../validators";
 import { Session } from "../sessions";
 import type { UploadedFile } from "../parsers/parserInterface";
@@ -18,25 +18,25 @@ import type { UploadedFile } from "../parsers/parserInterface";
  */
 export class Request {
   /** Normalized request path (e.g. "/api/users/42") */
-  private url: string;
+  private _url: string;
 
   /** Incoming HTTP headers */
-  private headers: Headers;
+  private _headers: Headers;
 
   /** Normalized HTTP method */
-  private method: HttpMethods;
+  private _method: HttpMethods;
 
   /** Parsed request body payload */
-  private data: Record<string, any> = {};
+  private _data: Record<string, any> = {};
 
   /** Query string parameters */
-  private query: Record<string, string> = {};
+  private _query: Record<string, string> = {};
 
   /** Dynamic route parameters (path params) */
-  private params: Record<string, string> = {};
+  private _params: Record<string, string> = {};
 
   /** Session associated with the request */
-  private session: Session;
+  private _session: Session;
 
   /**
    * Per-request shared state container.
@@ -53,95 +53,64 @@ export class Request {
   public files?: UploadedFile[] | Record<string, UploadedFile[]>;
 
   constructor(url: string) {
-    this.url = url;
+    this._url = url;
   }
 
-  get getUrl(): string {
-    return this.url;
+  get url(): string {
+    return this._url;
   }
 
-  get getMethod(): HttpMethods {
-    return this.method;
+  get method(): HttpMethods {
+    return this._method;
   }
 
   public setMethod(method: HttpMethods): this {
-    this.method = method;
+    this._method = method;
     return this;
   }
 
-  get getHeaders(): Headers {
-    return this.headers;
+  get headers(): Headers {
+    return this._headers;
   }
 
   public setHeaders(headers: Headers): this {
-    this.headers = headers;
+    this._headers = headers;
     return this;
   }
 
-  /**
-   * Returns query string parameters.
-   *
-   * If no key is provided, all query parameters are returned.
-   *
-   * @param key - Optional query parameter name
-   * @returns A single value, all parameters, or `null` if not found
-   *
-   * @example
-   * // URL: /users?page=2&limit=10
-   * request.getQueryParams();        // { page: "2", limit: "10" }
-   * request.getQueryParams("page"); // "2"
-   */
-  public getQueryParams(key: string = null): HttpValue {
-    if (key === null) return this.query;
-    return this.query[key] ?? null;
+  get query(): Record<string, string> {
+    return this._query;
   }
 
-  public setQueryParams(query: Record<string, string>): this {
-    this.query = query;
+  public setQuery(query: Record<string, string>): this {
+    this._query = query;
     return this;
   }
 
-  /**
-   * Returns dynamic route parameters (path params).
-   *
-   * These parameters are resolved by the routing layer based on
-   * the matched route pattern.
-   *
-   * @param key - Optional parameter name
-   * @returns A single value, all parameters, or `null` if not found
-   *
-   * @example
-   * // Route: /users/{id}
-   * // URL:   /users/42
-   *
-   * request.getParams();     // { id: "42" }
-   * request.getParams("id"); // "42"
-   */
-  public getParams(key: string = null): HttpValue {
-    if (key === null) return this.params;
-    return this.params[key] ?? null;
+  get params(): Record<string, string> {
+    return this._params;
   }
 
   public setParams(params: Record<string, string>): this {
-    this.params = params;
+    this._params = params;
     return this;
   }
 
-  get getData(): Record<string, unknown> {
-    return this.data;
+  get data(): Record<string, unknown> {
+    return this._data;
   }
 
   public setData(data: Record<string, any>): this {
-    this.data = data;
+    this._data = data;
     return this;
   }
 
-  get getSession(): Session {
-    return this.session;
+  get session(): Session {
+    return this._session;
   }
 
   public setSession(session: Session) {
-    this.session = session;
+    this._session = session;
   }
 
   /**

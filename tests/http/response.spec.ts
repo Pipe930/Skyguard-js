@@ -5,27 +5,27 @@ describe("ResponseTest", () => {
     const content = { test: "text", num: 1 };
     const response = Response.json(content);
 
-    expect(200).toBe(response.getStatus);
-    expect({ "content-type": "application/json" }).toEqual(response.getHeaders);
-    expect(JSON.stringify(content)).toEqual(response.getContent);
+    expect(200).toBe(response.statusCode);
+    expect({ "content-type": "application/json" }).toEqual(response.headers);
+    expect(JSON.stringify(content)).toEqual(response.content);
   });
 
   it("should text response is constructed correctly", () => {
     const content = "text";
     const response = Response.text(content);
 
-    expect(200).toBe(response.getStatus);
-    expect({ "content-type": "text/plain" }).toEqual(response.getHeaders);
-    expect(content).toEqual(response.getContent);
+    expect(200).toBe(response.statusCode);
+    expect({ "content-type": "text/plain" }).toEqual(response.headers);
+    expect(content).toEqual(response.content);
   });
 
   it("should redirect response is constructed correctly", () => {
     const url = "redirect/url";
     const response = Response.redirect(url);
 
-    expect(302).toBe(response.getStatus);
-    expect({ location: url }).toEqual(response.getHeaders);
-    expect(response.getContent).toBeNull();
+    expect(302).toBe(response.statusCode);
+    expect({ location: url }).toEqual(response.headers);
+    expect(response.content).toBeNull();
   });
 
   it("should preapre method removes content headers if there is no content", () => {
@@ -35,7 +35,7 @@ describe("ResponseTest", () => {
     response.setHeader("content-length", "10");
     response.prepare();
 
-    expect(response.getHeaders).toEqual({
+    expect(response.headers).toEqual({
       "content-length": "10",
       "content-type": "test",
     });
@@ -46,8 +46,6 @@ describe("ResponseTest", () => {
     const reponse = Response.text(content);
     reponse.prepare();
 
-    expect(content.length.toString()).toBe(
-      reponse.getHeaders["content-length"],
-    );
+    expect(content.length.toString()).toBe(reponse.headers["content-length"]);
   });
 });

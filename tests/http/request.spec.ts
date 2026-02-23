@@ -11,15 +11,15 @@ describe("RequestTest", () => {
 
     const request = new Request(url)
       .setMethod(method)
-      .setQueryParams(params)
+      .setQuery(params)
       .setHeaders(headers)
       .setData(data);
 
-    expect(request.getUrl).toBe(url);
-    expect(request.getMethod).toBe(method);
-    expect(request.getQueryParams()).toEqual(params);
-    expect(request.getHeaders).toEqual(headers);
-    expect(request.getData).toEqual(data);
+    expect(request.url).toBe(url);
+    expect(request.method).toBe(method);
+    expect(request.query).toEqual(params);
+    expect(request.headers).toEqual(headers);
+    expect(request.data).toEqual(data);
   });
 
   it("should data returns value if key is given", () => {
@@ -30,7 +30,7 @@ describe("RequestTest", () => {
 
     const request = new Request("").setData(data);
 
-    expect(request.getData).toEqual(data);
+    expect(request.data).toEqual(data);
   });
 
   it("should queries returns value if key is given", () => {
@@ -39,11 +39,11 @@ describe("RequestTest", () => {
       num: "2",
     };
 
-    const request = new Request("").setQueryParams(params);
+    const request = new Request("").setQuery(params);
 
-    expect(params["test"]).toBe(request.getQueryParams("test"));
-    expect(params["num"]).toBe(request.getQueryParams("num"));
-    expect(request.getQueryParams("notexists")).toBeNull();
+    expect(params["test"]).toBe(request.query["test"]);
+    expect(params["num"]).toBe(request.query["num"]);
+    expect(request.query["notexists"]).toBeUndefined();
   });
 
   it("should queries returns value if key is given", () => {
@@ -54,8 +54,8 @@ describe("RequestTest", () => {
       layer.parseParameters("/test/2/param/1"),
     );
 
-    expect(request.getParams("param")).toBe("2");
-    expect(request.getParams("bar")).toBe("1");
-    expect(request.getParams("notexists")).toBeNull();
+    expect(request.params["param"]).toBe("2");
+    expect(request.params["bar"]).toBe("1");
+    expect(request.params["notexists"]).toBeUndefined();
   });
 });

@@ -39,13 +39,13 @@ export class NodeHttpAdapter implements HttpAdapter {
 
     const request = new Request(url.pathname)
       .setMethod((this.req.method as HttpMethods) || HttpMethods.get)
-      .setQueryParams(Object.fromEntries(url.searchParams.entries()))
+      .setQuery(Object.fromEntries(url.searchParams.entries()))
       .setHeaders(this.req.headers);
 
     if (
-      request.getMethod === HttpMethods.post ||
-      request.getMethod === HttpMethods.put ||
-      request.getMethod === HttpMethods.patch
+      request.method === HttpMethods.post ||
+      request.method === HttpMethods.put ||
+      request.method === HttpMethods.patch
     ) {
       const parsedData = await this.contentParser.parse(this.req);
       request.setData(parsedData);
@@ -65,15 +65,15 @@ export class NodeHttpAdapter implements HttpAdapter {
    */
   public sendResponse(response: Response): void {
     response.prepare();
-    this.res.statusCode = response.getStatus;
-    const headers = response.getHeaders;
+    this.res.statusCode = response.statusCode;
+    const headers = response.headers;
 
     for (const [header, value] of Object.entries(headers)) {
       this.res.setHeader(header, value as string);
     }
 
-    if (!response.getContent) this.res.removeHeader("Content-Type");
+    if (!response.content) this.res.removeHeader("Content-Type");
 
-    this.res.end(response.getContent);
+    this.res.end(response.content);
   }
 }

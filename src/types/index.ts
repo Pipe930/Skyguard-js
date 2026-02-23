@@ -46,20 +46,6 @@ export type HashMapRouters = Partial<Record<HttpMethods, Layer[]>>;
 export type Headers = IncomingHttpHeaders;
 
 /**
- * Generic type for HTTP-serializable values.
- *
- * Represents any value that can be:
- * - Serialized as JSON
- * - Sent as plain text
- * - Explicitly null
- *
- * Commonly used for:
- * - Response bodies
- * - Dynamic payloads
- */
-export type HttpValue = Record<string, unknown> | string | null;
-
-/**
  * Helper function type for template engines.
  *
  * Represents a utility function callable from

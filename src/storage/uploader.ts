@@ -350,12 +350,12 @@ class Uploader {
    */
   private getMultipartData(request: Request): MultipartData | null {
     if (
-      request.getHeaders["content-type"] &&
-      request.getHeaders["content-type"].startsWith(
+      request.headers["content-type"] &&
+      request.headers["content-type"].startsWith(
         contentTypes["multipart-form-data"],
       )
     )
-      return request.getData as unknown as MultipartData;
+      return request.data as unknown as MultipartData;
 
     return null;
   }
@@ -447,7 +447,7 @@ class Uploader {
     request: Request,
     multipartData: MultipartData,
   ): void {
-    const currentData = request.getData || {};
+    const currentData = request.data || {};
     const newData = {
       ...currentData,
       ...multipartData.fields,

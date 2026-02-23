@@ -36,7 +36,7 @@ import type { Middleware } from "../types";
  */
 export const authJWT = (secret: string): Middleware => {
   return async (request, next) => {
-    const authHeader = request.getHeaders.authorization;
+    const authHeader = request.headers.authorization;
 
     // Validate Authorization header presence and scheme.
     if (!authHeader || !authHeader.startsWith("Bearer "))

@@ -24,35 +24,35 @@ export class Response {
    * HTTP status code.
    * @default 200
    */
-  private status = 200;
+  private _statusCode = 200;
 
   /**
    * Collection of response headers.
    */
-  private headers: Headers = Object.create(null) as Headers;
+  private _headers: Headers = Object.create(null) as Headers;
 
   /**
    * Response body content.
    */
-  private content: string | Buffer | null = null;
+  private _content: string | Buffer | null = null;
 
-  get getStatus(): number {
-    return this.status;
+  get statusCode(): number {
+    return this._statusCode;
   }
 
   public setStatus(newStatus: number): this {
     const status = statusCodes[newStatus] ?? null;
     if (!status) throw new InvalidHttpStatusException(newStatus);
-    this.status = newStatus;
+    this._statusCode = newStatus;
     return this;
   }
 
-  get getHeaders(): Headers {
-    return this.headers;
+  get headers(): Headers {
+    return this._headers;
   }
 
   public setHeaders(headers: Headers): this {
-    this.headers = this.merge(this.headers, headers);
+    this._headers = this.merge(this._headers, headers);
     return this;
   }
 
@@ -61,12 +61,12 @@ export class Response {
   }
 
   public setHeader(header: string, value: string): this {
-    this.headers[header] = value;
+    this._headers[header] = value;
     return this;
   }
 
   public removeHeader(header: string): void {
-    delete this.headers[header];
+    delete this._headers[header];
   }
 
   /**
@@ -81,16 +81,16 @@ export class Response {
    *   .setContent("<h1>Hello</h1>");
    */
   public setContentType(value: string): this {
-    this.headers["content-type"] = value;
+    this._headers["content-type"] = value;
     return this;
   }
 
-  get getContent(): string | Buffer | null {
-    return this.content;
+  get content(): string | Buffer | null {
+    return this._content;
   }
 
   public setContent(content: string | Buffer): this {
-    this.content = content;
+    this._content = content;
     return this;
   }
 
@@ -109,20 +109,20 @@ export class Response {
    * adapter.sendResponse(response);
    */
   public prepare(): void {
-    if (!this.headers["content-type"] && this.content) {
-      if (Buffer.isBuffer(this.content)) {
-        this.headers["content-type"] = "application/octet-stream";
+    if (!this._headers["content-type"] && this._content) {
+      if (Buffer.isBuffer(this._content)) {
+        this._headers["content-type"] = "application/octet-stream";
       } else {
-        this.headers["content-type"] = "text/plain";
+        this._headers["content-type"] = "text/plain";
       }
     }
 
-    if (this.content && !this.headers["content-length"]) {
-      const length = Buffer.isBuffer(this.content)
-        ? this.content.length
-        : Buffer.byteLength(this.content, "utf-8");
+    if (this._content && !this._headers["content-length"]) {
+      const length = Buffer.isBuffer(this._content)
+        ? this._content.length
+        : Buffer.byteLength(this._content, "utf-8");
 
-      this.headers["content-length"] = length.toString();
+      this._headers["content-length"] = length.toString();
     }
   }
 

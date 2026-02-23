@@ -154,7 +154,7 @@ export const cors = (options: CorsOptions = {}): Middleware => {
   };
 
   return async (request: Request, next: RouteHandler) => {
-    const allowedOrigin = resolveOrigin(request.getHeaders.origin, config);
+    const allowedOrigin = resolveOrigin(request.headers.origin, config);
     const corsHeaders: Record<string, string> = {};
 
     if (allowedOrigin) {
@@ -169,7 +169,7 @@ export const cors = (options: CorsOptions = {}): Middleware => {
       corsHeaders["Access-Control-Expose-Headers"] =
         config.exposedHeaders.join(", ");
 
-    if (request.getMethod === HttpMethods.options) {
+    if (request.method === HttpMethods.options) {
       corsHeaders["Access-Control-Allow-Methods"] = config.methods.join(", ");
       corsHeaders["Access-Control-Allow-Headers"] =
         config.allowedHeaders.join(", ");

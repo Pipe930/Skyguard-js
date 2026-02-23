@@ -88,7 +88,7 @@ export const sessions = (
   };
 
   return async (request, next) => {
-    const cookies = parseCookies(request.getHeaders.cookie || "");
+    const cookies = parseCookies(request.headers.cookie || "");
     const sessionId = cookies[config.cookieName];
 
     const storage = new StorageClass(options.maxAge || timeMaxAge);

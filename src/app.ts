@@ -86,9 +86,9 @@ export class App {
     try {
       const request = await adapter.getRequest();
 
-      if (this.staticFileHandler && request.getMethod === HttpMethods.get) {
+      if (this.staticFileHandler && request.method === HttpMethods.get) {
         const staticResponse = await this.staticFileHandler.tryServeFile(
-          request.getUrl,
+          request.url,
         );
 
         if (staticResponse) {
@@ -134,9 +134,7 @@ export class App {
       this.startTime = process.hrtime.bigint();
       const adapter = new NodeHttpAdapter(req, res);
       void this.handle(adapter);
-      setImmediate(() => {
-        this.logger.log(req, res, this.startTime);
-      });
+      this.logger.log(req, res, this.startTime);
     }).listen(port, hostname, () => {
       callback();
     });
