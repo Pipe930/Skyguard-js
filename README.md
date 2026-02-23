@@ -163,20 +163,15 @@ app.staticFiles(join(__dirname, "..", "static"));
 Skyguard.js provides a **declarative validation system** using schemas.
 
 ```ts
-import { ValidationSchema } from "skyguard-js/validation";
+import { validator } from "skyguard-js/validation";
 
-export const userSchema = ValidationSchema.create()
-  .field("name")
-  .required("Name is required")
-  .string({ maxLength: 60 })
-  .field("email")
-  .required()
-  .email()
-  .field("age")
-  .number({ min: 18, max: 99 })
-  .field("active")
-  .boolean()
-  .build();
+const userSchema = validator.schema({
+  name: validator.string({ maxLength: 60 }),
+  email: validator.email().required(),
+  age: validator.number({ min: 18 }),
+  active: validator.boolean().required(),
+  birthdate: validator.date({ max: new Date() }),
+});
 
 app.post("/users", (request: Request) => {
   const validatedData = request.validateData(userSchema);
@@ -378,7 +373,7 @@ app.get("/home", () => {
 - Error handling improvements (✅)
 - Sessions & cookies (✅)
 - Passoword hashing & JWT tokens (✅)
-- File uploads
+- File uploads (✅)
 - Database & ORM integration
 - Authentication & authorization
 - WebSockets

@@ -238,7 +238,6 @@ export class App {
     if (error instanceof ValidationException) {
       adapter.sendResponse(
         Response.json({
-          success: false,
           errors: error.getErrorsByField(),
         }).setStatus(400),
       );
