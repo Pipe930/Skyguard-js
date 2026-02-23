@@ -1,3 +1,17 @@
+export const contentTypes = {
+  "application-json": "application/json",
+  "application-x-www-form-urlencoded": "application/x-www-form-urlencoded",
+  "application-xml": "application/xml",
+  "application-octet-stream": "application/octet-stream",
+  "application-xhtml": "application/xhtml+xml",
+  "text-plain": "text/plain",
+  "text-xml": "text/xml",
+  "text-html": "text/html",
+  "text-css": "text/css",
+  "text-javascript": "text/javascript",
+  "multipart-form-data": "multipart/form-data",
+} as const;
+
 /**
  * Represents the final result of parsing a `multipart/form-data` request.
  *
@@ -16,11 +30,32 @@ export interface MultipartData {
  * and domain services.
  */
 export interface UploadedFile {
+  /** Name of the multipart field that produced the file */
   fieldName: string;
+
+  /** Generated filename used on disk */
   filename: string;
-  mimeType: string;
-  data: Buffer;
+
+  /** MIME type detected from the multipart payload */
+  mimetype: string;
+
+  /** File size in bytes */
   size: number;
+
+  /** Original filename from the client */
+  originalname?: string;
+
+  /** File transfer encoding (usually "7bit") */
+  encoding?: string;
+
+  /** Directory where the file was saved */
+  destination?: string;
+
+  /** Absolute or relative path to the stored file */
+  path?: string;
+
+  /** Raw file buffer when using MemoryStorage */
+  data?: Buffer;
 }
 
 /**

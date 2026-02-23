@@ -1,14 +1,10 @@
-import {
-  type StorageOptions,
-  type UploadedFile,
-  UploadErrorCode,
-  type Storage,
-} from "./types";
+import { type StorageOptions, UploadErrorCode, type Storage } from "./types";
 import { writeFile, unlink } from "node:fs/promises";
 import { join, extname } from "node:path";
 import { randomBytes } from "node:crypto";
 import { Request } from "../http/request";
 import { UploadException } from "../exceptions/uploadException";
+import type { UploadedFile } from "../parsers/parserInterface";
 
 /**
  * Disk-based storage engine responsible for persisting uploaded files
@@ -56,8 +52,8 @@ export class DiskStorage implements Storage {
    *  - filename: auto-generated unique filename
    */
   constructor(options: StorageOptions = {}) {
-    this.destination = options.destination || "./uploads";
-    this.filenameGenerator = options.filename || this.generateUniqueFilename;
+    this.destination = options.destination ?? "./uploads";
+    this.filenameGenerator = options.filename ?? this.generateUniqueFilename;
   }
 
   /**
@@ -66,7 +62,7 @@ export class DiskStorage implements Storage {
    * The method resolves the destination directory, generates a filename,
    * writes the file buffer to disk, and returns the final file metadata.
    *
-   * @param req Current HTTP request.
+   * @param request Current HTTP request.
    * @param file Partial file metadata.
    * @param fileData File buffer received from the multipart parser.
    *
@@ -75,13 +71,13 @@ export class DiskStorage implements Storage {
    * @throws UploadException if the file cannot be written to disk.
    */
   public async handleFile(
-    req: Request,
+    request: Request,
     file: Partial<UploadedFile>,
     fileData: Buffer,
   ): Promise<UploadedFile> {
     try {
-      const destination = await this.resolveDestination(req, file);
-      const filename = await this.filenameGenerator(req, file);
+      const destination = await this.resolveDestination(request, file);
+      const filename = await this.filenameGenerator(request, file);
       const filePath = join(destination, filename);
 
       await writeFile(filePath, fileData);
@@ -95,6 +91,7 @@ export class DiskStorage implements Storage {
         destination,
         filename,
         path: filePath,
+        data: fileData,
       };
     } catch (error) {
       throw new UploadException(
@@ -130,11 +127,11 @@ export class DiskStorage implements Storage {
    * Otherwise the static directory is returned.
    */
   private async resolveDestination(
-    req: Request,
+    request: Request,
     file: Partial<UploadedFile>,
   ): Promise<string> {
     if (typeof this.destination === "function") {
-      return await this.destination(req, file);
+      return await this.destination(request, file);
     }
     return this.destination;
   }
@@ -151,7 +148,7 @@ export class DiskStorage implements Storage {
    *  1700000000000-a3f9b1c2d4e5f678.png
    */
   private generateUniqueFilename(
-    req: Request,
+    request: Request,
     file: Partial<UploadedFile>,
   ): string {
     const timestamp = Date.now();
@@ -181,24 +178,25 @@ export class MemoryStorage implements Storage {
    *
    * The file buffer is attached to the returned {@link UploadedFile}.
    *
-   * @param req Current HTTP request.
+   * @param request Current HTTP request.
    * @param file Partial file metadata.
    * @param fileData Raw file buffer.
    *
    * @returns Uploaded file metadata including the in-memory buffer.
    */
   public async handleFile(
-    req: Request,
+    request: Request,
     file: Partial<UploadedFile>,
     fileData: Buffer,
   ): Promise<UploadedFile> {
     return {
       fieldName: file.fieldName!,
+      filename: file.filename!,
       originalname: file.originalname!,
       encoding: file.encoding || "7bit",
       mimetype: file.mimetype!,
       size: fileData.length,
-      buffer: fileData,
+      data: fileData,
     };
   }
 

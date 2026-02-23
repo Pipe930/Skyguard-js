@@ -1,4 +1,5 @@
 import type { ContentParser } from "./contentParser";
+import { contentTypes } from "./parserInterface";
 
 /**
  * Plain text content parser.
@@ -9,8 +10,8 @@ import type { ContentParser } from "./contentParser";
 export class TextParser implements ContentParser {
   public canParse(contentType: string): boolean {
     return (
-      contentType.includes("text/plain") ||
-      contentType.includes("application/xhtml")
+      contentType.includes(contentTypes["text-plain"]) ||
+      contentType.includes(contentTypes["application-xhtml"])
     );
   }
 

@@ -64,6 +64,7 @@ app.get("/test/{id}/nel/{param}", (request: Request) => {
 app.post(
   "/upload",
   (request: Request) => {
+    console.log("Archivo subido:", request.file);
     return json({ message: "Archivo subido exitosamente", file: request.file });
   },
   [uploader.single("file")],

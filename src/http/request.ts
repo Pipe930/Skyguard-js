@@ -2,7 +2,7 @@ import { HttpMethods } from "./httpMethods";
 import type { Headers, HttpValue } from "../types";
 import { Validator, type FieldDefinition } from "../validators";
 import { Session } from "../sessions";
-import type { UploadedFile } from "../storage/types";
+import type { UploadedFile } from "../parsers/parserInterface";
 
 /**
  * Represents an incoming client request within the framework.

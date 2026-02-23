@@ -1,5 +1,6 @@
 import { UnprocessableContentError } from "../exceptions/httpExceptions";
 import type { ContentParser } from "./contentParser";
+import { contentTypes } from "./parserInterface";
 
 /**
  * JSON content parser.
@@ -8,9 +9,7 @@ import type { ContentParser } from "./contentParser";
  */
 export class JsonParser implements ContentParser {
   public canParse(contentType: string): boolean {
-    return (
-      contentType.includes("application/json") || contentType.includes("+json")
-    );
+    return contentType.includes(contentTypes["application-json"]);
   }
 
   public parse(body: Buffer | string): unknown {

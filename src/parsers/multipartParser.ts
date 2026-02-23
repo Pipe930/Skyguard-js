@@ -1,6 +1,10 @@
 import { UnprocessableContentError } from "../exceptions/httpExceptions";
 import type { ContentParser } from "./contentParser";
-import type { MultipartData, ParsedPart } from "./parserInterface";
+import {
+  contentTypes,
+  type MultipartData,
+  type ParsedPart,
+} from "./parserInterface";
 
 /**
  * `multipart/form-data` content parser.
@@ -15,7 +19,7 @@ export class MultipartParser implements ContentParser {
    * @returns `true` if the content type is multipart
    */
   public canParse(contentType: string): boolean {
-    return contentType.includes("multipart/form-data");
+    return contentType.includes(contentTypes["multipart-form-data"]);
   }
 
   /**
@@ -67,7 +71,8 @@ export class MultipartParser implements ContentParser {
           result.files.push({
             fieldName: parsed.name,
             filename: parsed.filename,
-            mimeType: parsed.contentType || "application/octet-stream",
+            mimetype:
+              parsed.contentType || contentTypes["application-octet-stream"],
             data: parsed.data,
             size: parsed.data.length,
           });

@@ -4,15 +4,18 @@ import {
   type UploaderConfig,
   type UploadLimits,
   type Storage,
-  type UploadedFile,
   UploadErrorCode,
   type FieldConfig,
-  type MultipartData,
 } from "./types";
 import { Request } from "../http/request";
 import { UploadException } from "../exceptions/uploadException";
 import { DiskStorage, MemoryStorage } from "./storage";
 import type { Middleware, RouteHandler } from "../types";
+import {
+  contentTypes,
+  type MultipartData,
+  type UploadedFile,
+} from "../parsers/parserInterface";
 
 /**
  * Core uploader component.
@@ -60,11 +63,11 @@ class Uploader {
     }
 
     this.limits = {
-      fileSize: config.limits?.fileSize ?? 10 * 1024 * 1024, // 10MB default
+      fileSize: config.limits?.fileSize ?? 10 * 1024 * 1024,
       files: config.limits?.files ?? 10,
       fields: config.limits?.fields ?? Infinity,
       fieldNameSize: config.limits?.fieldNameSize ?? 100,
-      fieldSize: config.limits?.fieldSize ?? 1024 * 1024, // 1MB default
+      fieldSize: config.limits?.fieldSize ?? 1024 * 1024,
     };
 
     this.fileFilter = config.fileFilter;
@@ -92,9 +95,7 @@ class Uploader {
     return async (request: Request, next: RouteHandler) => {
       const multipartData = this.getMultipartData(request);
 
-      if (!multipartData) {
-        return await next(request);
-      }
+      if (!multipartData) return await next(request);
 
       this.validateFieldLimits(multipartData);
 
@@ -142,9 +143,7 @@ class Uploader {
     return async (request: Request, next: RouteHandler) => {
       const multipartData = this.getMultipartData(request);
 
-      if (!multipartData) {
-        return await next(request);
-      }
+      if (!multipartData) return await next(request);
 
       this.validateFieldLimits(multipartData);
 
@@ -203,9 +202,7 @@ class Uploader {
     return async (request: Request, next: RouteHandler) => {
       const multipartData = this.getMultipartData(request);
 
-      if (!multipartData) {
-        return await next(request);
-      }
+      if (!multipartData) return await next(request);
 
       this.validateFieldLimits(multipartData);
 
@@ -268,18 +265,15 @@ class Uploader {
     return async (request: Request, next: RouteHandler) => {
       const multipartData = this.getMultipartData(request);
 
-      if (!multipartData) {
-        return await next(request);
-      }
+      if (!multipartData) return await next(request);
 
       this.validateFieldLimits(multipartData);
 
-      if (multipartData.files.length > this.limits.files) {
+      if (multipartData.files.length > this.limits.files)
         throw new UploadException(
           `Too many files. Max ${this.limits.files}`,
           UploadErrorCode.LIMIT_FILE_COUNT,
         );
-      }
 
       const files: UploadedFile[] = [];
       for (const fileData of multipartData.files) {
@@ -311,9 +305,7 @@ class Uploader {
     return async (request: Request, next: RouteHandler) => {
       const multipartData = this.getMultipartData(request);
 
-      if (!multipartData) {
-        return await next(request);
-      }
+      if (!multipartData) return await next(request);
 
       if (multipartData.files.length > 0) {
         throw new UploadException(
@@ -330,29 +322,6 @@ class Uploader {
   }
 
   /**
-   * Extracts {@link MultipartData} from the request body.
-   *
-   * This uploader assumes a prior multipart parser stored a structure like:
-   * `{ fields: Record<string, string>, files: ... }` in `request.getData`.
-   *
-   * @param req Current HTTP request.
-   * @returns The parsed multipart payload or `null` if not present/invalid.
-   */
-  private getMultipartData(req: Request): MultipartData | null {
-    const data = req.getData;
-
-    if (!data || typeof data !== "object") {
-      return null;
-    }
-
-    if (data && "fields" in data && "files" in data) {
-      return data as unknown as MultipartData;
-    }
-
-    return null;
-  }
-
-  /**
    * Persists a single file using the configured {@link Storage} engine.
    *
    * @param req Current HTTP request.
@@ -360,17 +329,35 @@ class Uploader {
    * @returns The stored file metadata returned by the storage engine.
    */
   private async processFile(
-    req: Request,
+    request: Request,
     fileData: MultipartData["files"][0],
   ): Promise<UploadedFile> {
     const partialFile: Partial<UploadedFile> = {
       fieldName: fileData.fieldName,
       originalname: fileData.filename,
-      mimetype: fileData.mimeType,
+      mimetype: fileData.mimetype,
       size: fileData.size,
     };
 
-    return await this.storage.handleFile(req, partialFile, fileData.data);
+    return await this.storage.handleFile(request, partialFile, fileData.data);
+  }
+
+  /**
+   * Extracts multipart data from the request if available.
+   *
+   * @param request Current HTTP request.
+   * @returns Parsed multipart data or null if not present.
+   */
+  private getMultipartData(request: Request): MultipartData | null {
+    if (
+      request.getHeaders["content-type"] &&
+      request.getHeaders["content-type"].startsWith(
+        contentTypes["multipart-form-data"],
+      )
+    )
+      return request.getData as unknown as MultipartData;
+
+    return null;
   }
 
   /**
@@ -386,32 +373,31 @@ class Uploader {
    * @throws Error when the filter throws or returns an error
    */
   private async applyFileFilter(
-    req: Request,
+    request: Request,
     fileData: MultipartData["files"][0],
   ): Promise<void> {
     if (!this.fileFilter) return;
 
-    return new Promise((resolve, reject) => {
-      const partialFile: Partial<UploadedFile> = {
-        fieldName: fileData.fieldName,
-        originalname: fileData.filename,
-        mimetype: fileData.mimeType,
-      };
+    const partialFile: Partial<UploadedFile> = {
+      fieldName: fileData.fieldName,
+      originalname: fileData.filename,
+      mimetype: fileData.mimetype,
+    };
 
-      this.fileFilter!(req, partialFile, (error, acceptFile) => {
-        if (error) {
-          reject(error);
-        } else if (!acceptFile) {
-          reject(
+    return new Promise<void>((resolve, reject) => {
+      this.fileFilter!(request, partialFile, (error, acceptFile) => {
+        if (error) return reject(error);
+
+        if (!acceptFile) {
+          return reject(
             new UploadException(
-              `File type not allowed: ${fileData.mimeType}`,
+              `File type not allowed: ${fileData.mimetype}`,
               UploadErrorCode.INVALID_FILE_TYPE,
               fileData.fieldName,
             ),
           );
-        } else {
-          resolve();
         }
+        resolve();
       });
     });
   }
@@ -441,12 +427,11 @@ class Uploader {
   private validateFieldLimits(multipartData: MultipartData): void {
     const fieldCount = Object.keys(multipartData.fields).length;
 
-    if (fieldCount > this.limits.fields) {
+    if (fieldCount > this.limits.fields)
       throw new UploadException(
         `Too many fields. Max ${this.limits.fields}`,
         UploadErrorCode.LIMIT_FIELD_COUNT,
       );
-    }
   }
 
   /**
@@ -459,15 +444,15 @@ class Uploader {
    * @param multipartData Parsed multipart payload containing text fields.
    */
   private attachFieldsToRequest(
-    req: Request,
+    request: Request,
     multipartData: MultipartData,
   ): void {
-    const currentData = req.getData || {};
+    const currentData = request.getData || {};
     const newData = {
       ...currentData,
       ...multipartData.fields,
     };
-    req.setData(newData);
+    request.setData(newData);
   }
 
   /**

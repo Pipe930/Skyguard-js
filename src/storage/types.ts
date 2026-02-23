@@ -1,3 +1,4 @@
+import type { UploadedFile } from "../parsers/parserInterface";
 import { Request } from "../http/request";
 
 /**
@@ -11,39 +12,6 @@ import { Request } from "../http/request";
 export enum StorageType {
   DISK = "disk",
   MEMORY = "memory",
-}
-
-/**
- * Metadata describing an uploaded file after it has been processed
- * by a storage engine.
- */
-export interface UploadedFile {
-  /** Name of the multipart field that produced the file */
-  fieldName: string;
-
-  /** Original filename from the client */
-  originalname: string;
-
-  /** File transfer encoding (usually "7bit") */
-  encoding: string;
-
-  /** MIME type detected from the multipart payload */
-  mimetype: string;
-
-  /** File size in bytes */
-  size: number;
-
-  /** Directory where the file was saved */
-  destination?: string;
-
-  /** Generated filename used on disk */
-  filename?: string;
-
-  /** Absolute or relative path to the stored file */
-  path?: string;
-
-  /** Raw file buffer when using MemoryStorage */
-  buffer?: Buffer;
 }
 
 /**
@@ -101,13 +69,13 @@ export interface Storage {
   /**
    * Processes and stores an uploaded file.
    *
-   * @param req Current HTTP request.
+   * @param request Current HTTP request.
    * @param file Partial file metadata.
    * @param fileData Raw file buffer.
    * @returns Final uploaded file metadata.
    */
   handleFile(
-    req: Request,
+    request: Request,
     file: Partial<UploadedFile>,
     fileData: Buffer,
   ): Promise<UploadedFile>;
@@ -140,7 +108,7 @@ export type FileFilterCallback = (
  * The callback must be invoked to accept or reject the file.
  */
 export type FileFilter = (
-  req: Request,
+  request: Request,
   file: Partial<UploadedFile>,
   callback: FileFilterCallback,
 ) => void | Promise<void>;
@@ -179,26 +147,6 @@ export interface FieldConfig {
 
   /** Maximum number of files allowed for this field */
   maxCount?: number;
-}
-
-/**
- * Parsed multipart form-data produced by the multipart parser.
- *
- * This structure is attached to the Request object before the
- * uploader middleware processes files.
- */
-export interface MultipartData {
-  /** Text form fields */
-  fields: Record<string, string>;
-
-  /** Uploaded file descriptors */
-  files: Array<{
-    fieldName: string;
-    filename: string;
-    mimeType: string;
-    data: Buffer;
-    size: number;
-  }>;
 }
 
 /**

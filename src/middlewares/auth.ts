@@ -1,6 +1,6 @@
 import { verifyJWT } from "../crypto/jwt";
 import { UnauthorizedError } from "../exceptions/httpExceptions";
-import { Middleware } from "../types";
+import type { Middleware } from "../types";
 
 /**
  * JWT authentication middleware.
