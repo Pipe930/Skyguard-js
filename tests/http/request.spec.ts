@@ -15,11 +15,11 @@ describe("RequestTest", () => {
       .setHeaders(headers)
       .setData(data);
 
-    expect(url).toBe(request.getUrl);
-    expect(method).toBe(request.getMethod);
-    expect(params).toEqual(request.getQueryParams());
-    expect(headers).toEqual(request.getHeaders);
-    expect(data).toEqual(request.getData());
+    expect(request.getUrl).toBe(url);
+    expect(request.getMethod).toBe(method);
+    expect(request.getQueryParams()).toEqual(params);
+    expect(request.getHeaders).toEqual(headers);
+    expect(request.getData).toEqual(data);
   });
 
   it("should data returns value if key is given", () => {
@@ -30,7 +30,7 @@ describe("RequestTest", () => {
 
     const request = new Request("").setData(data);
 
-    expect(data).toBe(request.getData());
+    expect(request.getData).toEqual(data);
   });
 
   it("should queries returns value if key is given", () => {

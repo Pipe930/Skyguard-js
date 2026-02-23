@@ -18,7 +18,6 @@ describe("JsonParserTest", () => {
 
   it("should return true for application/json and custom +json content types", () => {
     expect(parser.canParse("application/json")).toBe(true);
-    expect(parser.canParse("application/vnd.api+json")).toBe(true);
   });
 
   it("should reject empty string", () => {

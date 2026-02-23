@@ -122,16 +122,18 @@ export class Request {
     return this.params[key] ?? null;
   }
 
-  public setParams(params: Record<string, string>) {
+  public setParams(params: Record<string, string>): this {
     this.params = params;
+    return this;
   }
 
   get getData(): Record<string, unknown> {
     return this.data;
   }
 
-  public setData(data: Record<string, any>) {
+  public setData(data: Record<string, any>): this {
     this.data = data;
+    return this;
   }
 
   get getSession(): Session {

@@ -3,7 +3,7 @@ export const contentTypes = {
   "application-x-www-form-urlencoded": "application/x-www-form-urlencoded",
   "application-xml": "application/xml",
   "application-octet-stream": "application/octet-stream",
-  "application-xhtml": "application/xhtml+xml",
+  "application-xhtml": "application/xhtml",
   "text-plain": "text/plain",
   "text-xml": "text/xml",
   "text-html": "text/html",
@@ -55,7 +55,7 @@ export interface UploadedFile {
   path?: string;
 
   /** Raw file buffer when using MemoryStorage */
-  data?: Buffer;
+  data: Buffer;
 }
 
 /**

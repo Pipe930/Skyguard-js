@@ -84,7 +84,7 @@ describe("MultipartParserTest", () => {
 
     expect(file.fieldName).toBe("file");
     expect(file.filename).toBe("test.txt");
-    expect(file.mimeType).toBe("text/plain");
+    expect(file.mimetype).toBe("text/plain");
     expect(file.data.toString("utf-8")).toBe("hello world\r\n");
     expect(file.size).toBe(Buffer.from("hello world\r\n").length);
   });
@@ -112,7 +112,7 @@ describe("MultipartParserTest", () => {
 
     expect(result.files.length).toBe(1);
     expect(result.files[0].filename).toBe("img.png");
-    expect(result.files[0].mimeType).toBe("image/png");
+    expect(result.files[0].mimetype).toBe("image/png");
   });
 
   it("should ignore invalid parts", () => {
