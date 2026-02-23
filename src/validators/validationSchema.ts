@@ -1,5 +1,5 @@
-import type { FieldDefinition, RuleOptions } from "./types";
-import type { ValidationRule } from "./validationRule";
+import type { FieldDefinition } from "./types";
+import type { BaseValidationRule } from "./validationRule";
 import {
   BooleanRule,
   DateRule,
@@ -7,216 +7,167 @@ import {
   EmailRule,
   NumberRule,
   type NumberRuleOptions,
-  RequiredRule,
   StringRule,
   type StringRuleOptions,
 } from "./rules";
-import { ValidatorFieldException } from "../exceptions/validationException";
 
 /**
- * Declarative and chainable validation schema builder.
- *
- * This class does not execute validation.
- * Its responsibility is to build a schema definition that will later
- * be interpreted by the validation engine.
- *
- * Design:
- * - Builder Pattern
- * - Fluent Interface
- *
- * Usage flow:
- * 1) Create an instance via {@link ValidationSchema.create}
- * 2) Select a field with {@link ValidationSchema.field}
- * 3) Chain validation rules for the selected field
- * 4) Finish with {@link ValidationSchema.build}
- *
- * @example
- * const schema = ValidationSchema.create()
- *   .field("email")
- *     .required("Email is required")
- *     .string()
- *     .email()
- *   .field("age")
- *     .number({ min: 18, max: 100 })
- *   .field("bio")
- *     .optional()
- *     .string({ max: 500 })
- *   .build();
+ * Main validator class - provides factory methods for creating validators
  */
-export class ValidationSchema {
+class Validator {
   /**
-   * Internal schema field definitions.
-   */
-  private fields = new Map<string, FieldDefinition>();
-
-  /**
-   * Currently selected field name.
+   * Creates a string validator
    *
-   * All chained rules apply to this field until {@link ValidationSchema.field}
-   * is called again.
-   */
-  private currentField: string | null = null;
-
-  /**
-   * Private constructor.
+   * @param options - String validation options (maxLength, minLength, isEmpty, etc.)
+   * @returns StringValidator instance
    *
-   * Forces creation through {@link ValidationSchema.create}
-   * to keep a controlled API.
+   * @example
+   * validator.string({ maxLength: 60, isEmpty: false })
    */
-  private constructor() {}
-
-  /**
-   * Creates a new {@link ValidationSchema} instance.
-   *
-   * @returns A new {@link ValidationSchema}
-   */
-  public static create(): ValidationSchema {
-    return new ValidationSchema();
+  string(options?: StringRuleOptions): StringRule {
+    const stringRule = new StringRule();
+    stringRule.rules.push({ rule: stringRule, options });
+    return stringRule;
   }
 
   /**
-   * Selects (or creates) a field within the schema.
+   * Creates an email validator
    *
-   * All subsequently chained rules will be applied to this field.
+   * @param message - Optional custom error message
+   * @returns EmailValidator instance
    *
-   * @param name - Field name
-   * @returns The schema instance (for chaining)
+   * @example
+   * validator.email().required()
    */
-  public field(name: string): this {
-    this.currentField = name;
+  email(message?: string): EmailRule {
+    const emailRule = new EmailRule();
+    emailRule.rules.push({ rule: emailRule, options: { message } });
+    return emailRule;
+  }
 
-    if (!this.fields.has(name)) {
-      this.fields.set(name, {
-        rules: [],
-        optional: false,
+  /**
+   * Creates a number validator
+   *
+   * @param options - Number validation options (min, max, etc.)
+   * @returns NumberValidator instance
+   *
+   * @example
+   * validator.number({ min: 18, max: 65 })
+   */
+  number(options?: NumberRuleOptions): NumberRule {
+    const numberRule = new NumberRule();
+    numberRule.rules.push({ rule: numberRule, options });
+    return numberRule;
+  }
+
+  /**
+   * Creates a boolean validator
+   *
+   * @param message - Optional custom error message
+   * @returns BooleanValidator instance
+   *
+   * @example
+   * validator.boolean().required()
+   */
+  boolean(message?: string): BooleanRule {
+    const booleanRule = new BooleanRule();
+    booleanRule.rules.push({ rule: booleanRule, options: { message } });
+    return booleanRule;
+  }
+
+  /**
+   * Creates a date validator
+   *
+   * @param options - Date validation options (min, max, etc.)
+   * @returns DateValidator instance
+   *
+   * @example
+   * validator.date({ max: new Date() })
+   */
+  date(options?: DateRuleOptions): DateRule {
+    const dateRule = new DateRule();
+    dateRule.rules.push({ rule: dateRule, options });
+    return dateRule;
+  }
+
+  /**
+   * Creates a validation schema from a field definition object
+   *
+   * @param schemaDefinition - Object mapping field names to validators
+   * @returns ValidationSchema instance
+   *
+   * @example
+   * const userSchema = validator.schema({
+   *   name: validator.string({ maxLength: 60 }),
+   *   email: validator.email().required(),
+   *   age: validator.number({ min: 18 })
+   * })
+   */
+  schema(
+    schemaDefinition: Record<string, BaseValidationRule>,
+  ): Map<string, FieldDefinition> {
+    const schema = new ValidationSchema();
+
+    for (const [fieldName, validator] of Object.entries(schemaDefinition)) {
+      schema.addField(fieldName, {
+        rules: validator.rules,
+        optional: validator._optional,
       });
     }
 
-    return this;
+    return schema.build();
+  }
+}
+
+/**
+ * ValidationSchema - Internal representation of validation rules
+ *
+ * This class is created by the Validator.schema() method and contains
+ * the compiled validation rules for all fields.
+ */
+class ValidationSchema {
+  private fields = new Map<string, FieldDefinition>();
+
+  /**
+   * Adds a field definition to the schema
+   *
+   * @param name - Field name
+   * @param definition - Field validation definition
+   * @internal
+   */
+  addField(name: string, definition: FieldDefinition): void {
+    this.fields.set(name, definition);
   }
 
   /**
-   * Marks the current field as required.
+   * Gets the internal field definitions map
    *
-   * - The field must exist in the input
-   * - The value must not be `null` or `undefined`
-   *
-   * @param message - Optional custom error message
-   * @returns The schema instance (for chaining)
+   * @returns Map of field names to their definitions
+   * @internal
    */
-  public required(message?: string): this {
-    this.setOptional(false);
-    this.addRule(new RequiredRule(), { message });
-    return this;
-  }
-
-  /**
-   * Validates that the current field value is a string.
-   *
-   * @param options - String validation options
-   * @returns The schema instance (for chaining)
-   */
-  public string(options?: StringRuleOptions): this {
-    this.addRule(new StringRule(), options);
-    return this;
-  }
-
-  /**
-   * Validates that the current field value is a number.
-   *
-   * @param options - Numeric validation options
-   * @returns The schema instance (for chaining)
-   */
-  public number(options?: NumberRuleOptions): this {
-    this.addRule(new NumberRule(), options);
-    return this;
-  }
-
-  /**
-   * Validates that the current field value is a boolean.
-   *
-   * @param message - Optional custom error message
-   * @returns The schema instance (for chaining)
-   */
-  public boolean(message?: string): this {
-    this.addRule(new BooleanRule(), { message });
-    return this;
-  }
-
-  /**
-   * Validates that the current field value is a valid email.
-   *
-   * @param message - Optional custom error message
-   * @returns The schema instance (for chaining)
-   */
-  public email(message?: string): this {
-    this.addRule(new EmailRule(), { message });
-    return this;
-  }
-
-  /**
-   * Validates that the current field value is a valid date.
-   *
-   * @param options - Date validation options
-   * @returns The schema instance (for chaining)
-   */
-  public date(options?: DateRuleOptions): this {
-    this.addRule(new DateRule(), options);
-    return this;
-  }
-
-  /**
-   * Marks the current field as optional.
-   *
-   * This allows defining optional fields with constraints.
-   *
-   * @returns The schema instance (for chaining)
-   *
-   * @example
-   * schema.field("bio")
-   *   .optional()
-   *   .string({ max: 500 });
-   */
-  public optional(): this {
-    this.setOptional(true);
-    return this;
-  }
-
-  /**
-   * Adds a custom validation rule to the current field.
-   *
-   * Useful for business-specific logic that should not live
-   * in the standard rules set.
-   *
-   * @param rule - Custom rule instance
-   * @param options - Rule options
-   * @returns The schema instance (for chaining)
-   */
-  public custom(rule: ValidationRule, options?: RuleOptions): this {
-    this.addRule(rule, options);
-    return this;
-  }
-
-  /**
-   * Finalizes the schema build process.
-   *
-   * @returns The internal schema definition consumed by the validation engine
-   */
-  public build(): Map<string, FieldDefinition> {
+  build(): Map<string, FieldDefinition> {
     return this.fields;
   }
 
-  private setOptional(optional: boolean): void {
-    if (!this.currentField) throw new ValidatorFieldException();
-
-    const field = this.fields.get(this.currentField);
-    if (field) field.optional = optional;
+  /**
+   * Gets a specific field definition
+   *
+   * @param name - Field name
+   * @returns Field definition or undefined
+   */
+  getField(name: string): FieldDefinition | undefined {
+    return this.fields.get(name);
   }
 
-  private addRule(rule: ValidationRule, options?: RuleOptions): void {
-    if (!this.currentField) throw new ValidatorFieldException();
-
-    const field = this.fields.get(this.currentField);
-    if (field) field.rules.push({ rule, options });
+  /**
+   * Gets all field names in the schema
+   *
+   * @returns Array of field names
+   */
+  getFieldNames(): string[] {
+    return Array.from(this.fields.keys());
   }
 }
+
+// Export a singleton instance for convenience
+export const validator = new Validator();

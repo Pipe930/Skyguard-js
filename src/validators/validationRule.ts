@@ -1,3 +1,4 @@
+import { RequiredRule } from "./rules";
 import type { RuleOptions, ValidationContext, ValidationError } from "./types";
 
 /**
@@ -33,12 +34,19 @@ export interface ValidationRule {
  * Abstract base class for implementing validation rules.
  */
 export abstract class BaseValidationRule implements ValidationRule {
+  public _optional = false;
   /**
    * Creates a new validation rule.
    *
    * @param name - Unique rule name
    */
-  constructor(public readonly name: string) {}
+  constructor(
+    public readonly name: string,
+    public readonly rules: Array<{
+      rule: ValidationRule;
+      options?: RuleOptions;
+    }> = [],
+  ) {}
 
   /**
    * Executes the rule validation.
@@ -47,6 +55,17 @@ export abstract class BaseValidationRule implements ValidationRule {
     context: ValidationContext,
     options?: RuleOptions,
   ): ValidationError | null;
+
+  public required(message?: string): this {
+    this._optional = false;
+    this.rules.push({ rule: new RequiredRule(), options: { message } });
+    return this;
+  }
+
+  public optional(): this {
+    this._optional = true;
+    return this;
+  }
 
   /**
    * Creates a standardized {@link ValidationError} object.

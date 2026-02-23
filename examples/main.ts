@@ -2,7 +2,7 @@ import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
 import { json, redirect, text, download } from "../src/helpers";
-import { ValidationSchema } from "../src/validators";
+import { validator } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
 import { FileSessionStorage } from "../src/sessions";
@@ -28,30 +28,20 @@ const uploader = createUploader({
 
 app.staticFiles(join(__dirname, "..", "static"));
 
+const userSchema = validator.schema({
+  name: validator.string({ maxLength: 60 }),
+  email: validator.email().required(),
+  age: validator.number({ min: 18 }),
+  active: validator.boolean().required(),
+  birthdate: validator.date({ max: new Date() }),
+});
+
 app.middlewares([
   cors({
     origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
   }),
   sessions(FileSessionStorage),
 ]);
-
-const userSchema = ValidationSchema.create()
-  .field("name")
-  .string({ maxLength: 60, isEmpty: false })
-  .field("email")
-  .required()
-  .email()
-  .field("birthdate")
-  .date({ max: new Date() })
-  .field("age")
-  .number({ min: 18, max: 65 })
-  .field("active")
-  .required()
-  .boolean()
-  .field("bio")
-  .optional()
-  .string()
-  .build();
 
 app.get("/test/{id}/nel/{param}", (request: Request) => {
   const jsonTest = json({
@@ -79,8 +69,8 @@ app.get("/nueva-ruta", () => {
 });
 
 app.post("/test", (request: Request) => {
-  const dataValid = request.validateData(userSchema);
-  return json(dataValid).setStatus(201);
+  const validData = request.validateData(userSchema);
+  return json(validData).setStatus(201);
 });
 
 app.post("/xml", (request: Request) => {
