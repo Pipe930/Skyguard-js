@@ -10,8 +10,8 @@
       "import": "./dist/index.js"
     },
     "./helpers": {
-      "types": "./dist/helpers/index.d.ts",
-      "import": "./dist/helpers/index.js"
+      "types": "./dist/helpers/http.d.ts",
+      "import": "./dist/helpers/http.js"
     },
     "./middlewares": {
       "types": "./dist/middlewares/index.d.ts",

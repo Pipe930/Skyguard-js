@@ -331,43 +331,46 @@ app.post(
 
 ## 📄 Views & Template Engine
 
-To render HTML views, use the `render` helper.
+Para renderizar vistas, primero debes configurar el motor de plantillas utilizando el método `engineTemplates` del `app`, configurar la ruta de las vistas con el metodo `views` del `app`, y luego puedes usar el método `render` dentro de tus handlers para renderizar las vistas con los datos que quieras pasar.
 
 ```ts
-import { render } from "skyguard-js/helpers";
+import { engine } from "express-handlebars";
+import ejs from "ejs";
+import { join } from "node:path";
+
+app.views(__dirname, "views");
+
+// Config for Express Handlebars
+app.engineTemplates(
+  "hbs",
+  engine({
+    extname: "hbs",
+    layoutsDir: join(__dirname, "views"),
+    defaultLayout: "main",
+  }),
+);
+
+// Config for EJS
+app.engineTemplates("ejs", (templatePath, data) => {
+  return ejs.renderFile(templatePath, data);
+});
 
 app.get("/home", () => {
-  return render(
-    "home",
-    {
-      title: "Products",
-      products: [
-        { name: "Laptop", price: 999.99 },
-        { name: "Mouse", price: 29.99 },
-      ],
-      user: { name: "John", role: "admin" },
-    },
-    "main",
-  );
+  return render("index", {
+    title: "Home Page",
+    message: "Welcome to the home page!",
+  });
 });
 ```
 
-### Supported features
-
-- Variable interpolation (`{{ variable }}`)
-- Conditionals (`{{#if}}`)
-- Loops (`{{#each}}`)
-- Layouts
-- Partials
-- Built-in helpers (`upper`, `lower`, `date`)
-- Custom helpers
+Hasta el momento funciona con motores de plantillas de terceros como **Express Handlebars**, **Pug** y **EJS**, pero la idea es implementar un motor de plantillas propio en el futuro.
 
 ---
 
 ## 🔮 Roadmap (Tentative)
 
 - Middleware system (✅)
-- Template engine (✅)
+- Template engines supported (✅)
 - Request / Response abstraction (✅)
 - Data validation (✅)
 - Error handling improvements (✅)

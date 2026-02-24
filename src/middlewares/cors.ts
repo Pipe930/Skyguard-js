@@ -177,7 +177,7 @@ export const cors = (options: CorsOptions = {}): Middleware => {
 
       if (!config.preflightContinue)
         return new Response()
-          .setStatus(204)
+          .setStatusCode(204)
           .setContent(null)
           .setHeaders(corsHeaders);
     }

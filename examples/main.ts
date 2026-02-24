@@ -1,7 +1,7 @@
 import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
-import { json, redirect, text, download } from "../src/helpers";
+import { json, redirect, text, download, render } from "../src/helpers/http";
 import { validator } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
@@ -60,6 +60,10 @@ app.post(
   [uploader.single("file")],
 );
 
+app.get("/home", () => {
+  return render("<>h1>Hola mundo</h1><p>Esta es una vista renderizada</p>");
+});
+
 app.get("/test", () => {
   return text("holamundo");
 });
@@ -70,7 +74,7 @@ app.get("/nueva-ruta", () => {
 
 app.post("/test", (request: Request) => {
   const validData = request.validateData(userSchema);
-  return json(validData).setStatus(201);
+  return json(validData).setStatusCode(201);
 });
 
 app.post("/xml", (request: Request) => {
@@ -140,7 +144,7 @@ app.post("/password-hashed", async (request: Request) => {
   const passwordHash = await hash(password as string);
   const verifyHash = await verify(password as string, passwordHash);
 
-  return json({ data: passwordHash, verified: verifyHash }).setStatus(200);
+  return json({ data: passwordHash, verified: verifyHash }).setStatusCode(200);
 });
 
 app.get("/generate-jwt", () => {

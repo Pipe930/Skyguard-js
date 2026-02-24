@@ -93,7 +93,7 @@ export class StaticFileHandler {
           "last-modified": stats.mtime.toUTCString(),
           ETag: `"${stats.size}-${stats.mtime.getTime()}"`,
         })
-        .setStatus(200);
+        .setStatusCode(200);
     } catch {
       return null;
     }

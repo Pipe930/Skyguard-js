@@ -1,8 +1,9 @@
-import type { Headers, TemplateContext } from "../types";
+import type { Headers } from "../types";
 import { statusCodes } from "./statusCodes";
 import { InvalidHttpStatusException } from "../exceptions/invalidHttpStatusException";
-import { app } from "../helpers/app";
 import { FileDownloadHelper } from "../static/fileDownload";
+import { ViewEngine } from "../views/engineTemplate";
+import { Container } from "../container/container";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -40,7 +41,7 @@ export class Response {
     return this._statusCode;
   }
 
-  public setStatus(newStatus: number): this {
+  public setStatusCode(newStatus: number): this {
     const status = statusCodes[newStatus] ?? null;
     if (!status) throw new InvalidHttpStatusException(newStatus);
     this._statusCode = newStatus;
@@ -170,7 +171,7 @@ export class Response {
    * });
    */
   public static redirect(url: string): Response {
-    return new this().setStatus(302).setHeader("location", url);
+    return new this().setStatusCode(302).setHeader("location", url);
   }
 
   public static async download(
@@ -202,12 +203,16 @@ export class Response {
    * return Response.render("auth/login", {}, "auth");
    */
   public static async render(
-    view: string,
-    params: TemplateContext,
-    layout: string = null,
+    data: string,
+    params?: Record<string, unknown>,
   ): Promise<Response> {
-    const content = await app().view.render(view, params, layout);
+    const viewEngine = Container.resolve(ViewEngine);
 
-    return new this().setContentType("text/html").setContent(content);
+    if (viewEngine.hasEngine())
+      data = await viewEngine.render(data, params ?? {});
+
+    return new this()
+      .setContentType("text/html; charset=utf-8")
+      .setContent(Buffer.from(data, "utf-8"));
   }
 }

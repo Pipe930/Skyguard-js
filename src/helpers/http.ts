@@ -1,4 +1,3 @@
-import type { TemplateContext } from "../types";
 import { Response } from "../http/response";
 
 /**
@@ -74,9 +73,8 @@ export async function download(
  * return await render("users/profile", { user }, "main");
  */
 export async function render(
-  view: string,
-  params: TemplateContext,
-  layout?: string,
+  data: string,
+  params?: Record<string, unknown>,
 ): Promise<Response> {
-  return await Response.render(view, params, layout);
+  return await Response.render(data, params);
 }

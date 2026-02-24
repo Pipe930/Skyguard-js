@@ -7,13 +7,16 @@ import {
   Response,
 } from "./http";
 import { ValidationException } from "./exceptions/validationException";
-import { type View, RaptorEngine } from "./views";
 import { join } from "node:path";
-import { singleton } from "./helpers/app";
 import type { Middleware, RouteHandler } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
 import { createServer } from "node:http";
 import { HttpException } from "./exceptions/httpExceptions";
+import {
+  type TemplateEngineFunction,
+  ViewEngine,
+} from "./views/engineTemplate";
+import { Container } from "./container/container";
 
 /**
  * The `App` class acts as the **execution kernel** and **lifecycle orchestrator**
@@ -37,18 +40,17 @@ export class App {
   /** Main routing system */
   private router: Router;
 
-  /**
-   * View engine used to render templates.
-   *
-   * Typically consumed inside controllers to generate HTML responses.
-   */
-  public view: View;
-
   /** Static file handler (optional) */
   private staticFileHandler: StaticFileHandler | null = null;
 
+  /** Logger instance for request logging */
   private logger: Logger;
+
+  /** Timestamp marking the start of request processing (for logging) */
   private startTime: bigint;
+
+  /** View engine for rendering templates (optional) */
+  private viewEngine: ViewEngine;
 
   /**
    * Bootstraps and configures the application.
@@ -60,10 +62,10 @@ export class App {
    * @returns The singleton `App` instance
    */
   public static bootstrap(): App {
-    const app = singleton(App);
+    const app = Container.singleton(App);
     app.router = new Router();
-    app.view = new RaptorEngine(join(__dirname, "..", "views"));
     app.logger = new Logger();
+    app.viewEngine = Container.singleton(ViewEngine);
 
     return app;
   }
@@ -115,6 +117,51 @@ export class App {
    */
   public staticFiles(publicPath: string): void {
     this.staticFileHandler = new StaticFileHandler(publicPath);
+  }
+
+  /**
+   * Configures the views directory for template rendering.
+   *
+   * @param pathSegments Path segments leading to the views directory
+   * @example
+   * app.views(__dirname, "views");
+   */
+  public views(...pathSegments: string[]): void {
+    this.viewEngine.setViewsPath(join(...pathSegments));
+  }
+
+  /**
+   * Configures the template engine for rendering views.
+   *
+   * @param extension - File extension associated with the template engine (e.g. "hbs", "ejs")
+   * @param engine - Function that renders a template given its path and data
+   *
+   * @example
+   * app.engineTemplates("hbs", (templatePath, data) => {
+   *   const content = fs.readFileSync(templatePath, "utf-8");
+   *   return content.replace(/{{\s*(\w+)\s*}}/g, (_, key) => {
+   *     return data[key] ?? "";
+   *   });
+   * });
+   *
+   * // With express-handlebars
+   * app.engineTemplates(
+   *   "hbs",
+   *   engine({
+   *     extname: "hbs",
+   *     layoutsDir: join(__dirname, "views"),
+   *     defaultLayout: "main",
+   *   }),
+   * );
+   *
+   * The `extension` parameter allows the framework to automatically select the correct
+   * template engine based on the file extension of the view being rendered.
+   */
+  public engineTemplates(
+    extension: string,
+    engine: TemplateEngineFunction,
+  ): void {
+    this.viewEngine.setEngine(extension, engine);
   }
 
   /**
@@ -228,7 +275,7 @@ export class App {
   private handleError(error: unknown, adapter: HttpAdapter): void {
     if (error instanceof HttpException) {
       adapter.sendResponse(
-        Response.json(error.toJSON()).setStatus(error.statusCode),
+        Response.json(error.toJSON()).setStatusCode(error.statusCode),
       );
       return;
     }
@@ -237,7 +284,7 @@ export class App {
       adapter.sendResponse(
         Response.json({
           errors: error.getErrorsByField(),
-        }).setStatus(400),
+        }).setStatusCode(400),
       );
       return;
     }
@@ -246,7 +293,7 @@ export class App {
       Response.json({
         statusCode: 500,
         message: "Internal Server Error",
-      }).setStatus(500),
+      }).setStatusCode(500),
     );
     console.error(error);
   }
