@@ -35,6 +35,11 @@ At its current stage, the framework focuses on **routing**, **internal architect
 
 ---
 
+> [!NOTE]
+> It is recommended to develop with `TypeScript` for a more secure and efficient development process; the framework already has native support for `TypeScript` and includes the necessary types.
+
+---
+
 ## 📦 Installation
 
 ```bash
@@ -331,7 +336,7 @@ app.post(
 
 ## 📄 Views & Template Engine
 
-Para renderizar vistas, primero debes configurar el motor de plantillas utilizando el método `engineTemplates` del `app`, configurar la ruta de las vistas con el metodo `views` del `app`, y luego puedes usar el método `render` dentro de tus handlers para renderizar las vistas con los datos que quieras pasar.
+To render views, you must first set up the template engine using the `engineTemplates` method of the `app`, set the view path with the `views` method of the `app`, and then you can use the `render` method within your handlers to render the views with the data you want to pass.
 
 ```ts
 import { engine } from "express-handlebars";
@@ -363,7 +368,7 @@ app.get("/home", () => {
 });
 ```
 
-Hasta el momento funciona con motores de plantillas de terceros como **Express Handlebars**, **Pug** y **EJS**, pero la idea es implementar un motor de plantillas propio en el futuro.
+Currently, it works with third-party template engines such as **Express Handlebars**, **Pug**, and **EJS**, but the idea is to implement its own template engine in the future.
 
 ---
 
