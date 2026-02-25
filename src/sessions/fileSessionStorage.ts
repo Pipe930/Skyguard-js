@@ -247,9 +247,7 @@ export class FileSessionStorage implements SessionStorage {
             }
           } catch {
             // Corrupt/unreadable → best-effort cleanup
-            try {
-              await unlink(full);
-            } catch {}
+            await unlink(full);
           }
         }),
     );
@@ -318,7 +316,9 @@ export class FileSessionStorage implements SessionStorage {
   private async safeUnlink(path: string): Promise<void> {
     try {
       await unlink(path);
-    } catch {}
+    } catch {
+      /** eslint-disable-next-line no-empty */
+    }
   }
 
   /**

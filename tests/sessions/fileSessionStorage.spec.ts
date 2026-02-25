@@ -13,6 +13,7 @@ import {
 } from "fs/promises";
 import { randomBytes } from "crypto";
 import { join } from "path";
+import { SessionData } from "sessions/sessionStorage";
 
 jest.mock("fs/promises");
 jest.mock("crypto");
@@ -92,7 +93,9 @@ describe("FileSessionStorage", () => {
     await storage.load(mockSessionId);
 
     expect(writeFile).toHaveBeenCalled();
-    const savedData = JSON.parse((writeFile as jest.Mock).mock.calls[0][1]);
+    const savedData = JSON.parse(
+      (writeFile as jest.Mock).mock.calls[0]?.[1] as string,
+    ) as SessionData;
     expect(savedData.expiresAt).toBe(Date.now() + mockExpiredSession * 1000);
   });
 
@@ -122,7 +125,7 @@ describe("FileSessionStorage", () => {
     it("should assign ID before async I/O", async () => {
       let idBeforeIO: string | null = null;
 
-      (mkdir as jest.Mock).mockImplementation(async () => {
+      (mkdir as jest.Mock).mockImplementation(() => {
         idBeforeIO = storage.id();
       });
 

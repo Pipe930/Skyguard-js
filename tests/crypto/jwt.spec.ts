@@ -15,7 +15,7 @@ describe("JWT core behaviour", () => {
 
   it("createJWT() creates token with header/payload/signature and sets iat/exp", () => {
     const token = createJWT(payload, secret, 60);
-    const decoded = decodeJWT(token)!;
+    const decoded = decodeJWT(token);
     const now = Math.floor(Date.now() / 1000);
 
     expect(token.split(".")).toHaveLength(3);
@@ -30,7 +30,7 @@ describe("JWT core behaviour", () => {
     const verified = verifyJWT(token, secret);
 
     expect(verified).not.toBeNull();
-    expect(verified!.sub).toBe("user_123");
+    expect(verified.sub).toBe("user_123");
   });
 
   it("verifyJWT() returns null when token format is invalid", () => {
@@ -71,6 +71,6 @@ describe("JWT core behaviour", () => {
     const decoded = decodeJWT(fake);
 
     expect(decoded).not.toBeNull();
-    expect(decoded!.payload.sub).toBe("user_123");
+    expect(decoded.payload.sub).toBe("user_123");
   });
 });

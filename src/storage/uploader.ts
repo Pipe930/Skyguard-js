@@ -385,7 +385,7 @@ class Uploader {
     };
 
     return new Promise<void>((resolve, reject) => {
-      this.fileFilter!(request, partialFile, (error, acceptFile) => {
+      this.fileFilter(request, partialFile, (error, acceptFile) => {
         if (error) return reject(error);
 
         if (!acceptFile) {

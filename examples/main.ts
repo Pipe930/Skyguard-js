@@ -31,7 +31,6 @@ app.staticFiles(join(__dirname, "..", "static"));
 const userSchema = schema({
   name: v.string({ maxLength: 60 }),
   email: v.string().email(),
-  role: v.string(),
   age: v.number({ min: 18 }),
   url: v.string().url(),
   active: v.boolean(),

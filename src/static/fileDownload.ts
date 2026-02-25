@@ -2,7 +2,6 @@ import { stat, readFile } from "node:fs/promises";
 import { resolve, basename, extname } from "node:path";
 import { mimeTypesObject } from "./mimeTypes";
 import { ContentDisposition } from "./contentDisposition";
-import { Response } from "../http/response";
 import {
   BadRequestError,
   HttpException,

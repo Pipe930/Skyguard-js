@@ -74,7 +74,7 @@ export interface SessionStorage {
    * Removes all associated data and invalidates the session
    * for subsequent requests.
    */
-  destroy(): void;
+  destroy(): void | Promise<void>;
 }
 
 /**

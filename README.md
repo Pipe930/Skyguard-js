@@ -168,7 +168,7 @@ app.staticFiles(join(__dirname, "..", "static"));
 To validate data in the body of client requests, the framework provides the creation of validation schemas, which are created as follows:
 
 ```ts
-import { v, schema } from "skyguard-js/validation";
+import { v, schema } from "skyguard-js";
 
 const userSchema = schema({
   name: v.string({ maxLength: 60 }),

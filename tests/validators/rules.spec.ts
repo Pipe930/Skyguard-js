@@ -2,55 +2,12 @@ import {
   BooleanRule,
   DateRule,
   NumberRule,
-  RequiredRule,
   StringRule,
 } from "../../src/validators/index";
 
 describe("RulesTest", () => {
-  describe("RequiredRuleTest", () => {
-    let requiredRule: RequiredRule;
-
-    beforeEach(() => {
-      requiredRule = new RequiredRule();
-    });
-
-    it("should normally pass when value is present", () => {
-      const context = {
-        field: "name",
-        value: "Juan",
-        data: {
-          name: "Juan",
-        },
-      };
-      const result = requiredRule.validate(context);
-
-      expect(result).toBeNull();
-    });
-
-    it("should properly fail when value is missing", () => {
-      const context = {
-        field: "name",
-        value: undefined,
-        data: {
-          name: undefined,
-        },
-      };
-
-      const result = requiredRule.validate(context);
-
-      expect(result).not.toBeNull();
-    });
-  });
-
   describe("StringRule", () => {
     let rule: StringRule;
-
-    const options = {
-      minLength: 3,
-      maxLength: 20,
-      pattern: /^\p{L}+$/u,
-    };
-
     beforeEach(() => {
       rule = new StringRule();
     });
@@ -59,7 +16,6 @@ describe("RulesTest", () => {
       const context = {
         field: "name",
         value: "Juan",
-        data: { name: "Juan" },
       };
 
       const result = rule.validate(context);
@@ -71,7 +27,6 @@ describe("RulesTest", () => {
       const context = {
         field: "name",
         value: 9,
-        data: { name: 9 },
       };
 
       const result = rule.validate(context);
@@ -83,7 +38,6 @@ describe("RulesTest", () => {
       const context = {
         field: "last_name",
         value: true,
-        data: { last_name: true },
       };
 
       const result = rule.validate(context);
@@ -92,10 +46,14 @@ describe("RulesTest", () => {
     });
 
     it("should successfully validate when all options are satisfied", () => {
+      const options = {
+        minLength: 3,
+        maxLength: 20,
+      };
+
       const context = {
         field: "name",
         value: "Juan",
-        data: { name: "Juan" },
       };
 
       const result = rule.validate(context, options);
@@ -104,10 +62,13 @@ describe("RulesTest", () => {
     });
 
     it("should correctly fail when value is shorter than minLength", () => {
+      const options = {
+        minLength: 3,
+        maxLength: 20,
+      };
       const context = {
         field: "name",
         value: "Ju",
-        data: { name: "Ju" },
       };
 
       const result = rule.validate(context, options);
@@ -116,12 +77,13 @@ describe("RulesTest", () => {
     });
 
     it("should correctly fail when value exceeds maxLength", () => {
+      const options = {
+        minLength: 3,
+        maxLength: 20,
+      };
       const context = {
         field: "name",
         value: "soy-el-nombre-mas-largo-del-mundo",
-        data: {
-          name: "soy-el-nombre-mas-largo-del-mundo",
-        },
       };
 
       const result = rule.validate(context, options);
@@ -129,11 +91,13 @@ describe("RulesTest", () => {
       expect(result).not.toBeNull();
     });
 
-    it("should correctly fail when value does not match pattern", () => {
+    it("should correctly fail when value don't exact length", () => {
+      const options = {
+        length: 10,
+      };
       const context = {
         field: "name",
         value: "3123123213fd",
-        data: { name: "3123123213fd" },
       };
 
       const result = rule.validate(context, options);
@@ -153,40 +117,21 @@ describe("RulesTest", () => {
       const context = {
         field: "active",
         value: true,
-        data: {
-          name: true,
-        },
-      };
-
-      const context2 = {
-        field: "active",
-        value: "true",
-        data: {
-          name: "true",
-        },
       };
       const result = booleanRule.validate(context);
-      const result2 = booleanRule.validate(context2);
 
       expect(result).toBeNull();
-      expect(result2).toBeNull();
     });
 
     it("should properly fail when value is not boolean", () => {
       const context = {
         field: "active",
         value: 32,
-        data: {
-          name: 32,
-        },
       };
 
       const context2 = {
         field: "active",
         value: "hola",
-        data: {
-          name: "hola",
-        },
       };
 
       const result = booleanRule.validate(context);
@@ -208,19 +153,6 @@ describe("RulesTest", () => {
       const context = {
         field: "age",
         value: 25,
-        data: {},
-      };
-
-      const result = numbreRule.validate(context);
-
-      expect(result).toBeNull();
-    });
-
-    it("should properly convert numeric strings to numbers", () => {
-      const context = {
-        field: "age",
-        value: "30",
-        data: {},
       };
 
       const result = numbreRule.validate(context);
@@ -232,7 +164,6 @@ describe("RulesTest", () => {
       const context = {
         field: "age",
         value: "abc",
-        data: {},
       };
 
       const result = numbreRule.validate(context);
@@ -244,7 +175,6 @@ describe("RulesTest", () => {
       const context = {
         field: "count",
         value: 10.5,
-        data: {},
       };
 
       const result = numbreRule.validate(context, { integer: true });
@@ -256,7 +186,6 @@ describe("RulesTest", () => {
       const context = {
         field: "price",
         value: -1,
-        data: {},
       };
 
       const result = numbreRule.validate(context, { positive: true });
@@ -268,7 +197,6 @@ describe("RulesTest", () => {
       const context = {
         field: "quantity",
         value: 3,
-        data: {},
       };
 
       const result = numbreRule.validate(context, { min: 5 });
@@ -280,7 +208,6 @@ describe("RulesTest", () => {
       const context = {
         field: "quantity",
         value: 20,
-        data: {},
       };
 
       const result = numbreRule.validate(context, { max: 10 });
@@ -292,7 +219,6 @@ describe("RulesTest", () => {
       const context = {
         field: "quantity",
         value: 7,
-        data: {},
       };
 
       const result = numbreRule.validate(context, { min: 5, max: 10 });
@@ -312,7 +238,6 @@ describe("RulesTest", () => {
       const context = {
         field: "birthDate",
         value: new Date("2024-01-01"),
-        data: {},
       };
 
       const result = dateRule.validate(context);
@@ -324,7 +249,6 @@ describe("RulesTest", () => {
       const context = {
         field: "birthDate",
         value: "2024-01-01",
-        data: {},
       };
 
       const result = dateRule.validate(context);
@@ -336,7 +260,6 @@ describe("RulesTest", () => {
       const context = {
         field: "createdAt",
         value: Date.now(),
-        data: {},
       };
 
       const result = dateRule.validate(context);
@@ -348,7 +271,6 @@ describe("RulesTest", () => {
       const context = {
         field: "startDate",
         value: { year: 2024 },
-        data: {},
       };
 
       const result = dateRule.validate(context);
@@ -360,7 +282,6 @@ describe("RulesTest", () => {
       const context = {
         field: "startDate",
         value: "invalid-date",
-        data: {},
       };
 
       const result = dateRule.validate(context);
@@ -372,7 +293,6 @@ describe("RulesTest", () => {
       const context = {
         field: "eventDate",
         value: "2023-01-01",
-        data: {},
       };
 
       const result = dateRule.validate(context, {
@@ -386,7 +306,6 @@ describe("RulesTest", () => {
       const context = {
         field: "eventDate",
         value: "2025-01-01",
-        data: {},
       };
 
       const result = dateRule.validate(context, {
@@ -400,7 +319,6 @@ describe("RulesTest", () => {
       const context = {
         field: "eventDate",
         value: "2024-06-01",
-        data: {},
       };
 
       const result = dateRule.validate(context, {

@@ -4,7 +4,6 @@ import type { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
 import { ContentParserManager } from "../parsers/contentParserManager";
-import { Logger } from "./logger";
 
 /**
  * Node.js HTTP adapter.

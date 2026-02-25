@@ -93,13 +93,13 @@ export const verifyJWT = (token: string, secret: string): JWTPayload | null => {
     .replace(/\//g, "_")
     .replace(/=/g, "");
 
-  const signatureBuffer = Buffer.from(signature!);
+  const signatureBuffer = Buffer.from(signature);
   const computedBuffer = Buffer.from(expectedSignature);
 
   if (!timingSafeEqual(signatureBuffer, computedBuffer)) return null;
 
   try {
-    const payload: JWTPayload = JSON.parse(base64UrlDecode(encodedPayload));
+    const payload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
 
     if (!payload.exp) return null;
 
@@ -107,7 +107,7 @@ export const verifyJWT = (token: string, secret: string): JWTPayload | null => {
     if (now > payload.exp) return null;
 
     return payload;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -126,11 +126,11 @@ export const decodeJWT = (
       return null;
     }
 
-    const header = JSON.parse(base64UrlDecode(parts[0]));
-    const payload = JSON.parse(base64UrlDecode(parts[1]));
+    const header = JSON.parse(base64UrlDecode(parts[0])) as JWTHeader;
+    const payload = JSON.parse(base64UrlDecode(parts[1])) as JWTPayload;
 
     return { header, payload };
-  } catch (error) {
+  } catch {
     return null;
   }
 };

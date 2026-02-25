@@ -31,29 +31,27 @@ export class StringRule extends BaseValidationRule<string> {
         value,
       );
 
-    let str = value;
-
-    if (options?.isEmpty && str === "")
+    if (options?.isEmpty && value === "")
       return this.createError(field, `${field} cannot be empty`, value);
 
-    if (options?.minLength && str.length < options.minLength)
+    if (options?.minLength && value.length < options.minLength)
       return this.createError(
         field,
         `${field} must be at least ${options.minLength} characters`,
         value,
       );
 
-    if (options?.maxLength && str.length > options.maxLength)
+    if (options?.maxLength && value.length > options.maxLength)
       return this.createError(
         field,
         `${field} must be at most ${options.maxLength} characters`,
         value,
       );
 
-    if (options?.length && str.length === options.length)
+    if (options?.length && value.length !== options.length)
       return this.createError(
         field,
-        `${field} must be at exact length ${options.length} characters`,
+        `${field} must be exactly ${options.length} characters`,
         value,
       );
 

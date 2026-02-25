@@ -19,7 +19,7 @@ export class Logger {
     const diff = process.hrtime.bigint() - startTime;
     const responseTime = (Number(diff) / 1_000_000).toFixed(3);
     const coloredStatus = this.colorizeStatus(res.statusCode);
-    const logLine = `${method} ${url} ${coloredStatus} ${responseTime} ms - ${contentLength}`;
+    const logLine = `${method} ${url} ${coloredStatus} ${responseTime} ms - ${contentLength.toString()}`;
 
     this.stream.write(logLine + "\n");
   }

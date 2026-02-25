@@ -83,10 +83,10 @@ export class DiskStorage implements Storage {
       await writeFile(filePath, fileData);
 
       return {
-        fieldName: file.fieldName!,
-        originalname: file.originalname!,
+        fieldName: file.fieldName,
+        originalname: file.originalname,
         encoding: file.encoding || "7bit",
-        mimetype: file.mimetype!,
+        mimetype: file.mimetype,
         size: fileData.length,
         destination,
         filename,
@@ -114,9 +114,7 @@ export class DiskStorage implements Storage {
    */
   public async removeFile(file: UploadedFile): Promise<void> {
     if (file.path) {
-      try {
-        await unlink(file.path);
-      } catch {}
+      await unlink(file.path);
     }
   }
 
@@ -190,11 +188,11 @@ export class MemoryStorage implements Storage {
     fileData: Buffer,
   ): Promise<UploadedFile> {
     return {
-      fieldName: file.fieldName!,
-      filename: file.filename!,
-      originalname: file.originalname!,
+      fieldName: file.fieldName,
+      filename: file.filename,
+      originalname: file.originalname,
       encoding: file.encoding || "7bit",
-      mimetype: file.mimetype!,
+      mimetype: file.mimetype,
       size: fileData.length,
       data: fileData,
     };
