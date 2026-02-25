@@ -1,5 +1,6 @@
 jest.mock("node:crypto", () => {
-  const actual = jest.requireActual("node:crypto");
+  const actual =
+    jest.requireActual<typeof import("node:crypto")>("node:crypto");
   return {
     ...actual,
     randomBytes: jest.fn(),

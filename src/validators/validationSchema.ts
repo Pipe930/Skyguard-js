@@ -1,4 +1,4 @@
-import type { FieldDefinition } from "./types";
+import type { FieldDefinition, RuleOptions } from "./types";
 import type { BaseValidationRule } from "./validationRule";
 import {
   BooleanRule,
@@ -11,6 +11,7 @@ import {
   ArrayRule,
   type ArrayRuleOptions,
   LiteralRule,
+  ObjectRule,
 } from "./rules";
 
 /**
@@ -90,6 +91,17 @@ class Validator {
     const arrayRule = new ArrayRule(typeValid);
     arrayRule.rules.push({ rule: arrayRule, options });
     return arrayRule;
+  }
+
+  object(
+    objectSchemaDefinition: Record<string, BaseValidationRule>,
+    options?: RuleOptions,
+  ): ObjectRule {
+    const objectSchema = schema(objectSchemaDefinition);
+    const objectRule = new ObjectRule(objectSchema);
+
+    objectRule.rules.push({ rule: objectRule, options });
+    return objectRule;
   }
 
   /**

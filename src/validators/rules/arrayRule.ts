@@ -6,8 +6,8 @@ export interface ArrayRuleOptions extends RuleOptions {
   maxLength?: number;
 }
 
-export class ArrayRule extends BaseValidationRule<Array<any>> {
-  private readonly typeValid: BaseValidationRule;
+export class ArrayRule extends BaseValidationRule<Array<unknown>> {
+  private readonly typeValid?: BaseValidationRule;
 
   constructor(typeValid?: BaseValidationRule) {
     super("array");
@@ -44,12 +44,21 @@ export class ArrayRule extends BaseValidationRule<Array<any>> {
       );
     }
 
-    if (this.typeValid) {
-      for (const key of value) {
-        const error = this.typeValid.validate({
-          field: "item list",
-          value: key,
-        });
+    if (!this.typeValid) return null;
+
+    const itemRules = this.typeValid.rules.length
+      ? this.typeValid.rules
+      : [{ rule: this.typeValid, options: undefined }];
+
+    for (const [index, item] of value.entries()) {
+      for (const { rule, options: itemOptions } of itemRules) {
+        const error = rule.validate(
+          {
+            field: `${field}[${index}]`,
+            value: item,
+          },
+          itemOptions,
+        );
 
         if (error) return error;
       }

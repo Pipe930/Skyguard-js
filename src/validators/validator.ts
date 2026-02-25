@@ -109,10 +109,10 @@ export class Validator {
       throw new ValidationException(result.errors);
 
     for (const [fieldName, fieldDef] of schema.entries()) {
-      if (!(fieldName in result) && fieldDef.defaultValue)
+      if (!(fieldName in result) && fieldDef.defaultValue !== undefined)
         result.data[fieldName] = fieldDef.defaultValue;
     }
 
-    return result.data!;
+    return result.data;
   }
 }

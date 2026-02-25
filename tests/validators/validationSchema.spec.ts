@@ -1,4 +1,4 @@
-import { NumberRule, StringRule } from "../../src/validators/index";
+import { NumberRule, ObjectRule, StringRule } from "../../src/validators/index";
 import { EmailRule } from "../../src/validators/rules/stringRule";
 import { v, schema } from "../../src/validators/validationSchema";
 
@@ -85,5 +85,33 @@ describe("ValidationSchemaTest", () => {
     expect(schemaTest.has("age")).toBe(true);
     expect(schemaTest.get("name")?.rules[0].rule).toBeInstanceOf(StringRule);
     expect(schemaTest.get("age")?.rules[0].rule).toBeInstanceOf(NumberRule);
+  });
+
+  it("should register an object rule with nested schema", () => {
+    const schemaTest = schema({
+      role: v.object({
+        name: v.string(),
+      }),
+    });
+
+    const rules = schemaTest.get("role")?.rules;
+
+    expect(rules).toHaveLength(1);
+    expect(rules?.[0].rule).toBeInstanceOf(ObjectRule);
+  });
+
+  it("should support deeply nested object definitions", () => {
+    const schemaTest = schema({
+      role: v.object({
+        name: v.string(),
+        permission: v.object({
+          name: v.string(),
+          action: v.literal("manager"),
+        }),
+      }),
+    });
+
+    expect(schemaTest.has("role")).toBe(true);
+    expect(schemaTest.get("role")?.rules[0].rule).toBeInstanceOf(ObjectRule);
   });
 });

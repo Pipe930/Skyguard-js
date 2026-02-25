@@ -13,8 +13,8 @@
     "skipLibCheck": true,
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": false
   },
   "include": ["src/**/*", "tests/**/*"],

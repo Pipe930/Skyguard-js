@@ -25,7 +25,7 @@ export interface ValidationResult {
   errors: ValidationError[];
 
   /** Optional validated data */
-  data?: unknown;
+  data: Record<string, unknown>;
 }
 
 /**

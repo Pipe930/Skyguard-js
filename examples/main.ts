@@ -37,6 +37,11 @@ const userSchema = schema({
   birthdate: v.date({ max: new Date() }),
   admin: v.literal(true).optional(),
   test: v.array(),
+  roles: v.array(
+    v.object({
+      name: v.string().regex(/^[a-z]+$/),
+    }),
+  ),
 });
 
 app.middlewares([

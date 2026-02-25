@@ -1,7 +1,10 @@
+import { schema, v } from "../../src/validators/validationSchema";
 import {
+  ArrayRule,
   BooleanRule,
   DateRule,
   NumberRule,
+  ObjectRule,
   StringRule,
 } from "../../src/validators/index";
 
@@ -327,6 +330,84 @@ describe("RulesTest", () => {
       });
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe("ObjectRuleTest", () => {
+    it("should validate nested object schema", () => {
+      const roleSchema = schema({
+        name: v.string().regex(/^[0-9a-z]+$/),
+        permission: v.object({
+          name: v.string().regex(/^[0-9a-z]+$/),
+          action: v.literal("manager"),
+        }),
+      });
+
+      const rule = new ObjectRule(roleSchema);
+      const result = rule.validate({
+        field: "role",
+        value: {
+          name: "admin1",
+          permission: {
+            name: "users",
+            action: "manager",
+          },
+        },
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it("should include nested path when nested object fails", () => {
+      const roleSchema = schema({
+        name: v.string(),
+        permission: v.object({
+          name: v.string(),
+          action: v.literal("manager"),
+        }),
+      });
+
+      const rule = new ObjectRule(roleSchema);
+      const result = rule.validate({
+        field: "role",
+        value: {
+          name: "admin",
+          permission: {
+            name: "users",
+            action: "editor",
+          },
+        },
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.field).toBe("role.permission.action");
+    });
+  });
+
+  describe("ArrayRuleTest", () => {
+    it("should validate all chained item rules", () => {
+      const itemRule = v.string().regex(/^[a-z]+$/);
+      const rule = new ArrayRule(itemRule);
+
+      const result = rule.validate({
+        field: "tags",
+        value: ["alpha", "beta"],
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it("should fail using nested item path when one array item is invalid", () => {
+      const itemRule = v.string().regex(/^[a-z]+$/);
+      const rule = new ArrayRule(itemRule);
+
+      const result = rule.validate({
+        field: "tags",
+        value: ["alpha", "BETA"],
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.field).toBe("tags[1]");
     });
   });
 });

@@ -78,7 +78,12 @@ export class ContentDisposition {
 
   private sanitizeFilename(filename: string): string {
     return filename
-      .replace(/[\x00-\x1F\x7F-\x9F]/g, "")
+      .split("")
+      .filter(char => {
+        const code = char.charCodeAt(0);
+        return !(code <= 0x1f || (code >= 0x7f && code <= 0x9f));
+      })
+      .join("")
       .replace(/["\r\n]/g, "")
       .replace(/[/\\]/g, "")
       .replace(/\s+/g, " ")
