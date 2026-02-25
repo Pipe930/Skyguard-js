@@ -1,7 +1,6 @@
 import {
   BooleanRule,
   DateRule,
-  EmailRule,
   NumberRule,
   RequiredRule,
   StringRule,
@@ -410,91 +409,6 @@ describe("RulesTest", () => {
       });
 
       expect(result).toBeNull();
-    });
-  });
-
-  describe("EmailRuleTest", () => {
-    let rule: EmailRule;
-
-    beforeEach(() => {
-      rule = new EmailRule();
-    });
-
-    it("should successfully validate when value is a valid email string", () => {
-      const context = {
-        field: "email",
-        value: "juan@example.com",
-        data: { email: "juan@example.com" },
-      };
-
-      const result = rule.validate(context);
-
-      expect(result).toBeNull();
-    });
-
-    it("should correctly fail when value is not a string", () => {
-      const context = {
-        field: "email",
-        value: 123,
-        data: { email: 123 },
-      };
-
-      const result = rule.validate(context);
-
-      expect(result).not.toBeNull();
-    });
-
-    it("should correctly fail when email format is invalid", () => {
-      const context = {
-        field: "email",
-        value: "invalid-email",
-        data: { email: "invalid-email" },
-      };
-
-      const result = rule.validate(context);
-
-      expect(result).not.toBeNull();
-    });
-
-    it("should correctly fail when email is missing domain", () => {
-      const context = {
-        field: "email",
-        value: "juan@",
-        data: { email: "juan@" },
-      };
-
-      const result = rule.validate(context);
-
-      expect(result).not.toBeNull();
-    });
-
-    it("should correctly fail when email is missing username", () => {
-      const context = {
-        field: "email",
-        value: "@example.com",
-        data: { email: "@example.com" },
-      };
-
-      const result = rule.validate(context);
-
-      expect(result).not.toBeNull();
-    });
-
-    it("should properly return custom error message when provided", () => {
-      const context = {
-        field: "email",
-        value: "invalid-email",
-        data: { email: "invalid-email" },
-      };
-
-      const options = {
-        message: "email format is incorrect",
-      };
-
-      const result = rule.validate(context, options);
-
-      expect(result).not.toBeNull();
-      expect(result?.message).toBe("email format is incorrect");
     });
   });
 });

@@ -17,10 +17,6 @@
       "types": "./dist/middlewares/index.d.ts",
       "import": "./dist/middlewares/index.js"
     },
-    "./validation": {
-      "types": "./dist/validators/validationSchema.d.ts",
-      "import": "./dist/validators/validationSchema.js"
-    },
     "./exceptions": {
       "types": "./dist/exceptions/httpExceptions.d.ts",
       "import": "./dist/exceptions/httpExceptions.js"

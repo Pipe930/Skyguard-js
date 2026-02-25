@@ -4,11 +4,13 @@ import {
   BooleanRule,
   DateRule,
   type DateRuleOptions,
-  EmailRule,
   NumberRule,
   type NumberRuleOptions,
   StringRule,
   type StringRuleOptions,
+  ArrayRule,
+  type ArrayRuleOptions,
+  LiteralRule,
 } from "./rules";
 
 /**
@@ -28,21 +30,6 @@ class Validator {
     const stringRule = new StringRule();
     stringRule.rules.push({ rule: stringRule, options });
     return stringRule;
-  }
-
-  /**
-   * Creates an email validator
-   *
-   * @param message - Optional custom error message
-   * @returns EmailValidator instance
-   *
-   * @example
-   * validator.email().required()
-   */
-  email(message?: string): EmailRule {
-    const emailRule = new EmailRule();
-    emailRule.rules.push({ rule: emailRule, options: { message } });
-    return emailRule;
   }
 
   /**
@@ -88,6 +75,40 @@ class Validator {
     const dateRule = new DateRule();
     dateRule.rules.push({ rule: dateRule, options });
     return dateRule;
+  }
+
+  /**
+   * Creates an array validator
+   *
+   * @param options - Array validation options (minItems, maxItems, itemRules, etc.)
+   * @returns ArrayRule instance
+   *
+   * @example
+   * validator.array({ minLength: 1 }).string()
+   */
+  array(options?: ArrayRuleOptions): ArrayRule {
+    const arrayRule = new ArrayRule();
+    arrayRule.rules.push({ rule: arrayRule, options });
+    return arrayRule;
+  }
+
+  /**
+   * Creates a literal value validator
+   *
+   * @param value - The literal value to validate against
+   * @param message - Optional custom error message
+   * @returns LiteralRule instance
+   *
+   * @example
+   * validator.literal("admin").required()
+   */
+  literal(value: unknown, message?: string): LiteralRule {
+    const literalRule = new LiteralRule(value);
+    literalRule.rules.push({
+      rule: literalRule,
+      options: { message },
+    });
+    return literalRule;
   }
 
   /**

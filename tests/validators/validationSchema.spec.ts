@@ -1,5 +1,4 @@
 import {
-  EmailRule,
   NumberRule,
   RequiredRule,
   StringRule,
@@ -91,13 +90,13 @@ describe("ValidationSchemaTest", () => {
 
   it("should register multiple rules in order for the same field", () => {
     const schema = validator.schema({
-      email: validator.email().required(),
+      email: validator.string().email().required(),
     });
     const rules = schema.get("email")?.rules;
 
-    expect(rules).toHaveLength(2);
-    expect(rules?.[0].rule).toBeInstanceOf(EmailRule);
-    expect(rules?.[1].rule).toBeInstanceOf(RequiredRule);
+    expect(rules).toHaveLength(3);
+    expect(rules?.[0].rule).toBeInstanceOf(StringRule);
+    expect(rules?.[2].rule).toBeInstanceOf(RequiredRule);
   });
 
   it("should support defining multiple independent fields", () => {

@@ -30,10 +30,13 @@ app.staticFiles(join(__dirname, "..", "static"));
 
 const userSchema = validator.schema({
   name: validator.string({ maxLength: 60 }),
-  email: validator.email().required(),
+  email: validator.string().email().required(),
   age: validator.number({ min: 18 }),
+  url: validator.string().url().optional(),
   active: validator.boolean().required(),
   birthdate: validator.date({ max: new Date() }),
+  admin: validator.literal(true).required(),
+  test: validator.array().string(),
 });
 
 app.middlewares([

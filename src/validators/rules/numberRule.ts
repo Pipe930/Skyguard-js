@@ -6,6 +6,7 @@ export interface NumberRuleOptions extends RuleOptions {
   max?: number;
   integer?: boolean;
   positive?: boolean;
+  negative?: boolean;
 }
 
 /**
@@ -37,6 +38,9 @@ export class NumberRule extends BaseValidationRule {
 
     if (options?.positive && num <= 0)
       return this.createError(field, `${field} must be positive`, value);
+
+    if (options?.negative && num >= 0)
+      return this.createError(field, `${field} must be negative`, value);
 
     if (options?.min && num < options.min)
       return this.createError(

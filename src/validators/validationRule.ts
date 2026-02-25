@@ -35,11 +35,7 @@ export interface ValidationRule {
  */
 export abstract class BaseValidationRule implements ValidationRule {
   public _optional = false;
-  /**
-   * Creates a new validation rule.
-   *
-   * @param name - Unique rule name
-   */
+
   constructor(
     public readonly name: string,
     public readonly rules: Array<{
@@ -48,36 +44,33 @@ export abstract class BaseValidationRule implements ValidationRule {
     }> = [],
   ) {}
 
-  /**
-   * Executes the rule validation.
-   */
   abstract validate(
     context: ValidationContext,
     options?: RuleOptions,
   ): ValidationError | null;
 
+  /**
+   * Marks the field as required.
+   *
+   * @param message - Optional custom error message
+   * @returns This rule instance for chaining
+   */
   public required(message?: string): this {
     this._optional = false;
     this.rules.push({ rule: new RequiredRule(), options: { message } });
     return this;
   }
 
+  /**
+   * Marks the field as optional.
+   *
+   * @returns This rule instance for chaining
+   */
   public optional(): this {
     this._optional = true;
     return this;
   }
 
-  /**
-   * Creates a standardized {@link ValidationError} object.
-   *
-   * Concrete rules should use this helper to ensure consistent
-   * error shapes across the framework.
-   *
-   * @param field - Field name that failed validation
-   * @param message - Human-readable error message
-   * @param value - Invalid value (optional)
-   * @returns A {@link ValidationError} instance
-   */
   protected createError(
     field: string,
     message: string,
