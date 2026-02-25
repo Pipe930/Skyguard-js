@@ -6,6 +6,8 @@ import {
   NumberRule,
   ObjectRule,
   StringRule,
+  UnionRule,
+  BigIntRule,
 } from "../../src/validators/index";
 
 describe("RulesTest", () => {
@@ -230,6 +232,71 @@ describe("RulesTest", () => {
     });
   });
 
+  describe("BigIntRuleTest", () => {
+    let bigIntRule: BigIntRule;
+
+    beforeEach(() => {
+      bigIntRule = new BigIntRule();
+    });
+
+    it("should successfully validate a valid bigint", () => {
+      const context = { field: "amount", value: 10n };
+
+      const result = bigIntRule.validate(context);
+
+      expect(result).toBeNull();
+    });
+
+    it("should correctly fail when value is not a bigint", () => {
+      const context = { field: "amount", value: 10 };
+
+      const result = bigIntRule.validate(context);
+
+      expect(result).not.toBeNull();
+    });
+
+    it("should validate gt option", () => {
+      const ctxOk = { field: "n", value: 6n };
+      const ctxFail = { field: "n", value: 5n };
+
+      expect(bigIntRule.validate(ctxOk, { gt: 5n })).toBeNull();
+      expect(bigIntRule.validate(ctxFail, { gt: 5n })).not.toBeNull();
+    });
+
+    it("should validate gte/lt/lte option", () => {
+      expect(
+        bigIntRule.validate({ field: "n", value: 5n }, { gte: 5n }),
+      ).toBeNull();
+      expect(
+        bigIntRule.validate({ field: "n", value: 4n }, { gte: 5n }),
+      ).not.toBeNull();
+      expect(
+        bigIntRule.validate({ field: "n", value: 4n }, { lt: 5n }),
+      ).toBeNull();
+      expect(
+        bigIntRule.validate({ field: "n", value: 5n }, { lt: 5n }),
+      ).not.toBeNull();
+      expect(
+        bigIntRule.validate({ field: "n", value: 5n }, { lte: 5n }),
+      ).toBeNull();
+    });
+
+    it("should validate positive and negative options", () => {
+      expect(
+        bigIntRule.validate({ field: "n", value: 1n }, { positive: true }),
+      ).toBeNull();
+      expect(
+        bigIntRule.validate({ field: "n", value: 0n }, { positive: true }),
+      ).not.toBeNull();
+      expect(
+        bigIntRule.validate({ field: "n", value: -1n }, { negative: true }),
+      ).toBeNull();
+      expect(
+        bigIntRule.validate({ field: "n", value: 0n }, { negative: true }),
+      ).not.toBeNull();
+    });
+  });
+
   describe("DateRuleTest", () => {
     let dateRule: DateRule;
 
@@ -408,6 +475,62 @@ describe("RulesTest", () => {
 
       expect(result).not.toBeNull();
       expect(result?.field).toBe("tags[1]");
+    });
+  });
+
+  describe("UnionRuleTest", () => {
+    it("should pass when one rule in union matches", () => {
+      const rule = new UnionRule([v.number(), v.boolean()]);
+
+      const numberResult = rule.validate({
+        field: "active",
+        value: 10,
+      });
+
+      const booleanResult = rule.validate({
+        field: "active",
+        value: false,
+      });
+
+      expect(numberResult).toBeNull();
+      expect(booleanResult).toBeNull();
+    });
+
+    it("should fail when no union rules match", () => {
+      const rule = new UnionRule([v.number(), v.boolean()]);
+
+      const result = rule.validate({
+        field: "active",
+        value: "enabled",
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.field).toBe("active");
+      expect(result?.rule).toBe("union");
+    });
+
+    it("should validate union members with chained rules", () => {
+      const rule = new UnionRule([
+        v.string().regex(/^ok$/),
+        v.number({ min: 5 }),
+      ]);
+
+      const validString = rule.validate({
+        field: "state",
+        value: "ok",
+      });
+      const validNumber = rule.validate({
+        field: "state",
+        value: 7,
+      });
+      const invalid = rule.validate({
+        field: "state",
+        value: 3,
+      });
+
+      expect(validString).toBeNull();
+      expect(validNumber).toBeNull();
+      expect(invalid).not.toBeNull();
     });
   });
 });

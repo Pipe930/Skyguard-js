@@ -5,3 +5,5 @@ export { StringRule, StringRuleOptions } from "./stringRule";
 export { ArrayRule, ArrayRuleOptions } from "./arrayRule";
 export { LiteralRule } from "./literalRule";
 export { ObjectRule } from "./objectRule";
+export { UnionRule } from "./unionRule";
+export { BigIntRule, BigIntRuleOptions } from "./bigIntRule";

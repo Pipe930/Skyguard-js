@@ -183,7 +183,6 @@ export class MemoryStorage implements Storage {
    * @returns Uploaded file metadata including the in-memory buffer.
    */
 
-  /** eslint-disable-next-line require-await */
   public async handleFile(
     request: Request,
     file: Partial<UploadedFile>,

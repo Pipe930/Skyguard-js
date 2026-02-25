@@ -33,9 +33,10 @@ const userSchema = schema({
   email: v.string().email(),
   age: v.number({ min: 18 }),
   url: v.string().url(),
-  active: v.boolean(),
+  active: v.union([v.number(), v.boolean()]),
   birthdate: v.date({ max: new Date() }),
   admin: v.literal(true).optional(),
+  pi: v.bigint().gt(5n),
   test: v.array(),
   roles: v.array(
     v.object({

@@ -12,6 +12,8 @@ import {
   type ArrayRuleOptions,
   LiteralRule,
   ObjectRule,
+  BigIntRule,
+  UnionRule,
 } from "./rules";
 
 /**
@@ -49,13 +51,28 @@ class Validator {
   }
 
   /**
+   * Creates a bigint validator.
+   *
+   * @param message - Optional custom error message
+   * @returns BigIntRule instance
+   *
+   * @example
+   * validator.bigint()
+   */
+  bigint(message?: string): BigIntRule {
+    const bigIntRule = new BigIntRule();
+    bigIntRule.rules.push({ rule: bigIntRule, options: { message } });
+    return bigIntRule;
+  }
+
+  /**
    * Creates a boolean validator
    *
    * @param message - Optional custom error message
    * @returns BooleanValidator instance
    *
    * @example
-   * validator.boolean().required()
+   * validator.boolean()
    */
   boolean(message?: string): BooleanRule {
     const booleanRule = new BooleanRule();
@@ -93,6 +110,19 @@ class Validator {
     return arrayRule;
   }
 
+  /**
+   * Creates an object validator with a nested schema.
+   *
+   * @param objectSchemaDefinition - Record mapping field names to their validators
+   * @param options - Optional rule options (message, etc.)
+   * @returns ObjectRule instance
+   *
+   * @example
+   * validator.object({
+   *   id: validator.number(),
+   *   name: validator.string({ maxLength: 100 })
+   * })
+   */
   object(
     objectSchemaDefinition: Record<string, BaseValidationRule>,
     options?: RuleOptions,
@@ -105,6 +135,25 @@ class Validator {
   }
 
   /**
+   * Creates a union validator that passes if any of the supplied rules pass.
+   *
+   * @param unionRules - Array of validation rules to try in order
+   * @param options - Optional rule options (message, etc.)
+   * @returns UnionRule instance
+   *
+   * @example
+   * validator.union([
+   *   validator.string(),
+   *   validator.number()
+   * ])
+   */
+  union(unionRules: BaseValidationRule[], options?: RuleOptions): UnionRule {
+    const unionRule = new UnionRule(unionRules);
+    unionRule.rules.push({ rule: unionRule, options });
+    return unionRule;
+  }
+
+  /**
    * Creates a literal value validator
    *
    * @param value - The literal value to validate against
@@ -112,7 +161,7 @@ class Validator {
    * @returns LiteralRule instance
    *
    * @example
-   * validator.literal("admin").required()
+   * validator.literal("admin")
    */
   literal(value: unknown, message?: string): LiteralRule {
     const literalRule = new LiteralRule(value);
@@ -164,7 +213,7 @@ class ValidationSchema {
  * @example
  * const userSchema = validator.schema({
  *   name: validator.string({ maxLength: 60 }),
- *   email: validator.email().required(),
+ *   email: validator.email(),
  *   age: validator.number({ min: 18 })
  * })
  */
