@@ -17,14 +17,13 @@ export class BooleanRule extends BaseValidationRule {
   ): ValidationError | null {
     const { field, value } = context;
 
-    const validValues = [true, false, "true", "false", 0, 1];
-
-    if (!validValues.includes(value as any))
+    if (typeof value !== "boolean") {
       return this.createError(
         field,
         options?.message || `${field} must be a boolean`,
         value,
       );
+    }
 
     return null;
   }
