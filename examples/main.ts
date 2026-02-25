@@ -2,7 +2,7 @@ import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
 import { json, redirect, text, download, render } from "../src/helpers/http";
-import { validator } from "../src/validators/validationSchema";
+import { v, schema } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
 import { FileSessionStorage } from "../src/sessions";
@@ -28,15 +28,16 @@ const uploader = createUploader({
 
 app.staticFiles(join(__dirname, "..", "static"));
 
-const userSchema = validator.schema({
-  name: validator.string({ maxLength: 60 }),
-  email: validator.string().email().required(),
-  age: validator.number({ min: 18 }),
-  url: validator.string().url().optional(),
-  active: validator.boolean().required(),
-  birthdate: validator.date({ max: new Date() }),
-  admin: validator.literal(true).required(),
-  test: validator.array().string(),
+const userSchema = schema({
+  name: v.string({ maxLength: 60 }),
+  email: v.string().email(),
+  role: v.string(),
+  age: v.number({ min: 18 }),
+  url: v.string().url(),
+  active: v.boolean(),
+  birthdate: v.date({ max: new Date() }),
+  admin: v.literal(true).optional(),
+  test: v.array(),
 });
 
 app.middlewares([

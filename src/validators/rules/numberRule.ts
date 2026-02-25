@@ -14,7 +14,7 @@ export interface NumberRuleOptions extends RuleOptions {
  *
  * Validates that a value is a number.
  */
-export class NumberRule extends BaseValidationRule {
+export class NumberRule extends BaseValidationRule<number> {
   constructor() {
     super("number");
   }
@@ -24,32 +24,31 @@ export class NumberRule extends BaseValidationRule {
     options?: NumberRuleOptions,
   ): ValidationError | null {
     const { field, value } = context;
-    const num = typeof value === "string" ? Number(value) : value;
 
-    if (typeof num !== "number" || isNaN(num))
+    if (typeof value !== "number")
       return this.createError(
         field,
         options?.message || `${field} must be a number`,
         value,
       );
 
-    if (options?.integer && !Number.isInteger(num))
+    if (options?.integer && !Number.isInteger(value))
       return this.createError(field, `${field} must be an integer`, value);
 
-    if (options?.positive && num <= 0)
+    if (options?.positive && value <= 0)
       return this.createError(field, `${field} must be positive`, value);
 
-    if (options?.negative && num >= 0)
+    if (options?.negative && value >= 0)
       return this.createError(field, `${field} must be negative`, value);
 
-    if (options?.min && num < options.min)
+    if (options?.min && value < options.min)
       return this.createError(
         field,
         `${field} must be at least ${options.min}`,
         value,
       );
 
-    if (options?.max && num > options.max)
+    if (options?.max && value > options.max)
       return this.createError(
         field,
         `${field} must be at most ${options.max}`,

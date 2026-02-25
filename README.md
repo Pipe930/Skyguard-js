@@ -165,17 +165,17 @@ app.staticFiles(join(__dirname, "..", "static"));
 
 ## ⛔ Data Validation
 
-Skyguard.js provides a **declarative validation system** using schemas.
+To validate data in the body of client requests, the framework provides the creation of validation schemas, which are created as follows:
 
 ```ts
-import { validator } from "skyguard-js/validation";
+import { v, schema } from "skyguard-js/validation";
 
-const userSchema = validator.schema({
-  name: validator.string({ maxLength: 60 }),
-  email: validator.email().required(),
-  age: validator.number({ min: 18 }),
-  active: validator.boolean().required(),
-  birthdate: validator.date({ max: new Date() }),
+const userSchema = schema({
+  name: v.string({ maxLength: 60 }),
+  email: v.email(),
+  age: v.number({ min: 18 }),
+  active: v.boolean().default(false),
+  birthdate: v.date({ max: new Date() }),
 });
 
 app.post("/users", (request: Request) => {
@@ -187,6 +187,8 @@ app.post("/users", (request: Request) => {
   });
 });
 ```
+
+By default each property you define in the schema is required, to define it optional you use the `.optional()` or `.default(value)` function
 
 Validation is:
 

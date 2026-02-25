@@ -21,9 +21,6 @@ export interface ValidationError {
  * Full validation result.
  */
 export interface ValidationResult {
-  /** Indicates whether the validation passed */
-  valid: boolean;
-
   /** List of validation errors */
   errors: ValidationError[];
 
@@ -51,9 +48,6 @@ export interface ValidationContext {
 
   /** Field value */
   value: unknown;
-
-  /** Full input data */
-  data: unknown;
 }
 
 /**
@@ -62,4 +56,5 @@ export interface ValidationContext {
 export interface FieldDefinition {
   rules: Array<{ rule: ValidationRule; options?: RuleOptions }>;
   optional: boolean;
+  defaultValue?: unknown;
 }

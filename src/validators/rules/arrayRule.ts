@@ -6,9 +6,12 @@ export interface ArrayRuleOptions extends RuleOptions {
   maxLength?: number;
 }
 
-export class ArrayRule extends BaseValidationRule {
-  constructor() {
+export class ArrayRule extends BaseValidationRule<Array<any>> {
+  private readonly typeValid: BaseValidationRule;
+
+  constructor(typeValid?: BaseValidationRule) {
     super("array");
+    this.typeValid = typeValid;
   }
 
   validate(
@@ -41,69 +44,14 @@ export class ArrayRule extends BaseValidationRule {
       );
     }
 
-    return null;
-  }
+    if (this.typeValid) {
+      for (const key of value) {
+        const error = this.typeValid.validate({
+          field: "item list",
+          value: key,
+        });
 
-  public string(message?: string): this {
-    this.rules.push({
-      rule: new ArrayStringRule(),
-      options: { message },
-    });
-    return this;
-  }
-
-  public number(message?: string): this {
-    this.rules.push({
-      rule: new ArrayNumberRule(),
-      options: { message },
-    });
-    return this;
-  }
-}
-
-class ArrayStringRule extends BaseValidationRule {
-  constructor() {
-    super("arrayString");
-  }
-
-  validate(
-    context: ValidationContext,
-    options?: ArrayRuleOptions,
-  ): ValidationError | null {
-    const { field, value } = context;
-
-    for (let i = 0; i < (value as any[]).length; i++) {
-      if (typeof value[i] !== "string") {
-        return this.createError(
-          field,
-          options?.message || `${field} must be an array of strings`,
-          value,
-        );
-      }
-    }
-
-    return null;
-  }
-}
-
-export class ArrayNumberRule extends BaseValidationRule {
-  constructor() {
-    super("arrayNumber");
-  }
-
-  validate(
-    context: ValidationContext,
-    options?: ArrayRuleOptions,
-  ): ValidationError | null {
-    const { field, value } = context;
-
-    for (let i = 0; i < (value as any[]).length; i++) {
-      if (typeof value[i] !== "number") {
-        return this.createError(
-          field,
-          options?.message || `${field} must be an array of numbers`,
-          value,
-        );
+        if (error) return error;
       }
     }
 

@@ -12,7 +12,7 @@ export interface DateRuleOptions extends RuleOptions {
  *
  * Validates that a value represents a valid date.
  */
-export class DateRule extends BaseValidationRule {
+export class DateRule extends BaseValidationRule<Date> {
   constructor() {
     super("date");
   }

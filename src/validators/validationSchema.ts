@@ -86,8 +86,8 @@ class Validator {
    * @example
    * validator.array({ minLength: 1 }).string()
    */
-  array(options?: ArrayRuleOptions): ArrayRule {
-    const arrayRule = new ArrayRule();
+  array(typeValid?: BaseValidationRule, options?: ArrayRuleOptions): ArrayRule {
+    const arrayRule = new ArrayRule(typeValid);
     arrayRule.rules.push({ rule: arrayRule, options });
     return arrayRule;
   }
@@ -109,34 +109,6 @@ class Validator {
       options: { message },
     });
     return literalRule;
-  }
-
-  /**
-   * Creates a validation schema from a field definition object
-   *
-   * @param schemaDefinition - Object mapping field names to validators
-   * @returns ValidationSchema instance
-   *
-   * @example
-   * const userSchema = validator.schema({
-   *   name: validator.string({ maxLength: 60 }),
-   *   email: validator.email().required(),
-   *   age: validator.number({ min: 18 })
-   * })
-   */
-  schema(
-    schemaDefinition: Record<string, BaseValidationRule>,
-  ): Map<string, FieldDefinition> {
-    const schema = new ValidationSchema();
-
-    for (const [fieldName, validator] of Object.entries(schemaDefinition)) {
-      schema.addField(fieldName, {
-        rules: validator.rules,
-        optional: validator._optional,
-      });
-    }
-
-    return schema.build();
   }
 }
 
@@ -169,26 +141,36 @@ class ValidationSchema {
   build(): Map<string, FieldDefinition> {
     return this.fields;
   }
-
-  /**
-   * Gets a specific field definition
-   *
-   * @param name - Field name
-   * @returns Field definition or undefined
-   */
-  getField(name: string): FieldDefinition | undefined {
-    return this.fields.get(name);
-  }
-
-  /**
-   * Gets all field names in the schema
-   *
-   * @returns Array of field names
-   */
-  getFieldNames(): string[] {
-    return Array.from(this.fields.keys());
-  }
 }
 
+/**
+ * Creates a validation schema from a field definition object
+ *
+ * @param schemaDefinition - Object mapping field names to validators
+ * @returns ValidationSchema instance
+ *
+ * @example
+ * const userSchema = validator.schema({
+ *   name: validator.string({ maxLength: 60 }),
+ *   email: validator.email().required(),
+ *   age: validator.number({ min: 18 })
+ * })
+ */
+export const schema = (
+  schemaDefinition: Record<string, BaseValidationRule>,
+): Map<string, FieldDefinition> => {
+  const schema = new ValidationSchema();
+
+  for (const [fieldName, validator] of Object.entries(schemaDefinition)) {
+    schema.addField(fieldName, {
+      rules: validator.rules,
+      optional: validator.hasOptional,
+      defaultValue: validator.defaultValue,
+    });
+  }
+
+  return schema.build();
+};
+
 // Export a singleton instance for convenience
-export const validator = new Validator();
+export const v = new Validator();

@@ -6,7 +6,7 @@ import { BaseValidationRule } from "../validationRule";
  *
  * Validates that a value is a boolean (`true` or `false`).
  */
-export class BooleanRule extends BaseValidationRule {
+export class BooleanRule extends BaseValidationRule<boolean> {
   constructor() {
     super("boolean");
   }

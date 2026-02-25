@@ -51,15 +51,21 @@ export class Validator {
     const errors: ValidationError[] = [];
 
     for (const [fieldName, fieldDef] of schema.entries()) {
-      const value = data[fieldName];
-
       const context: ValidationContext = {
         field: fieldName,
-        value,
-        data,
+        value: data[fieldName],
       };
 
-      if (fieldDef.optional && value === undefined) continue;
+      if (fieldDef.optional && data[fieldName] === undefined) continue;
+
+      if (data[fieldName] === undefined || data[fieldName] === null) {
+        errors.push({
+          field: fieldName,
+          message: `${fieldName} is required`,
+          rule: "required",
+        });
+        continue;
+      }
 
       for (const { rule, options } of fieldDef.rules) {
         const error = rule.validate(context, options);
@@ -72,7 +78,6 @@ export class Validator {
     }
 
     return {
-      valid: errors.length === 0,
       errors,
       data: errors.length === 0 ? data : undefined,
     };
@@ -87,9 +92,9 @@ export class Validator {
    * @throws {ValidationException} When validation fails
    *
    * @example
-   * const schema = ValidationSchema.create()
-   *   .field("email").required().string().email()
-   *   .build();
+   * const schema = schema({
+   *   email: validator.string().emaiil().required()
+   * })
    *
    * const data = Validator.validateOrFail({ email: "a@b.com" }, schema);
    * // `data` is the original input when valid
@@ -100,7 +105,13 @@ export class Validator {
   ): unknown {
     const result = this.validate(data, schema);
 
-    if (!result.valid) throw new ValidationException(result.errors);
+    if (result.errors.length !== 0)
+      throw new ValidationException(result.errors);
+
+    for (const [fieldName, fieldDef] of schema.entries()) {
+      if (!(fieldName in result) && fieldDef.defaultValue)
+        result.data[fieldName] = fieldDef.defaultValue;
+    }
 
     return result.data!;
   }

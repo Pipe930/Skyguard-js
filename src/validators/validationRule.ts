@@ -1,4 +1,3 @@
-import { RequiredRule } from "./rules";
 import type { RuleOptions, ValidationContext, ValidationError } from "./types";
 
 /**
@@ -10,11 +9,6 @@ import type { RuleOptions, ValidationContext, ValidationError } from "./types";
  * A rule must only evaluate the value and return an error when validation fails.
  */
 export interface ValidationRule {
-  /**
-   * Unique rule name.
-   */
-  readonly name: string;
-
   /**
    * Executes the rule validation.
    *
@@ -33,11 +27,12 @@ export interface ValidationRule {
 /**
  * Abstract base class for implementing validation rules.
  */
-export abstract class BaseValidationRule implements ValidationRule {
-  public _optional = false;
+export abstract class BaseValidationRule<T = any> implements ValidationRule {
+  public hasOptional = false;
+  public defaultValue?: T = undefined;
 
   constructor(
-    public readonly name: string,
+    private readonly name: string,
     public readonly rules: Array<{
       rule: ValidationRule;
       options?: RuleOptions;
@@ -50,24 +45,18 @@ export abstract class BaseValidationRule implements ValidationRule {
   ): ValidationError | null;
 
   /**
-   * Marks the field as required.
-   *
-   * @param message - Optional custom error message
-   * @returns This rule instance for chaining
-   */
-  public required(message?: string): this {
-    this._optional = false;
-    this.rules.push({ rule: new RequiredRule(), options: { message } });
-    return this;
-  }
-
-  /**
    * Marks the field as optional.
    *
    * @returns This rule instance for chaining
    */
   public optional(): this {
-    this._optional = true;
+    this.hasOptional = true;
+    return this;
+  }
+
+  public default(value: T): this {
+    this.defaultValue = value;
+    this.hasOptional = true;
     return this;
   }
 

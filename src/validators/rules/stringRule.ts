@@ -5,7 +5,7 @@ export interface StringRuleOptions extends RuleOptions {
   isEmpty?: boolean;
   minLength?: number;
   maxLength?: number;
-  pattern?: RegExp;
+  length?: number;
 }
 
 /**
@@ -13,7 +13,7 @@ export interface StringRuleOptions extends RuleOptions {
  *
  * Validates that a value is a string.
  */
-export class StringRule extends BaseValidationRule {
+export class StringRule extends BaseValidationRule<string> {
   constructor() {
     super("string");
   }
@@ -50,10 +50,10 @@ export class StringRule extends BaseValidationRule {
         value,
       );
 
-    if (options?.pattern && !options.pattern.test(str))
+    if (options?.length && str.length === options.length)
       return this.createError(
         field,
-        options?.message || `${field} format is invalid`,
+        `${field} must be at exact length ${options.length} characters`,
         value,
       );
 
@@ -108,6 +108,14 @@ export class StringRule extends BaseValidationRule {
   uuid(message?: string): this {
     this.rules.push({
       rule: new UuidRule(),
+      options: { message },
+    });
+    return this;
+  }
+
+  regex(pattern: RegExp, message?: string): this {
+    this.rules.push({
+      rule: new RegExRule(pattern),
       options: { message },
     });
     return this;
@@ -191,6 +199,35 @@ export class UuidRule extends BaseValidationRule {
       return this.createError(
         field,
         options?.message || `${field} must be a valid UUID`,
+        value,
+      );
+    }
+
+    return null;
+  }
+}
+
+/**
+ * UUID validation rule
+ */
+export class RegExRule extends BaseValidationRule {
+  private readonly regex: RegExp;
+
+  constructor(pattern: RegExp) {
+    super("regex");
+    this.regex = pattern;
+  }
+
+  validate(
+    context: ValidationContext,
+    options?: RuleOptions,
+  ): ValidationError | null {
+    const { field, value } = context;
+
+    if (!this.regex.test(value as string)) {
+      return this.createError(
+        field,
+        options?.message || `${field} format is invalid`,
         value,
       );
     }
