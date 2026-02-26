@@ -12,7 +12,12 @@ interface JWTHeader {
 }
 
 /**
- * Codifica en Base64URL (sin padding)
+ * Encodes a string using Base64URL encoding (RFC 7515).
+ *
+ * This format is required by JWT to ensure the token is URL-safe.
+ *
+ * @param str - UTF-8 string to encode.
+ * @returns Base64URL encoded string without padding.
  */
 function base64UrlEncode(str: string): string {
   return Buffer.from(str)
@@ -23,7 +28,13 @@ function base64UrlEncode(str: string): string {
 }
 
 /**
- * Decodifica desde Base64URL
+ * Decodes a Base64URL string back to a UTF-8 string.
+ *
+ * The function restores the standard Base64 alphabet and padding
+ * before performing the decoding.
+ *
+ * @param str - Base64URL encoded string.
+ * @returns Decoded UTF-8 string.
  */
 function base64UrlDecode(str: string): string {
   let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -34,11 +45,17 @@ function base64UrlDecode(str: string): string {
 }
 
 /**
- * Crea un JSON Web Token
- * @param payload - Datos a incluir en el token
- * @param secret - Clave secreta para firmar
- * @param expiresIn - Tiempo de expiración en segundos (opcional)
- * @returns JWT string
+ * Creates a JSON Web Token (JWT) signed using HMAC-SHA256 (HS256).
+ *
+ * Note:
+ * This implementation produces **stateless signed tokens** and does not
+ * encrypt the payload. Anyone can decode the payload, but only holders of
+ * the secret can generate a valid signature.
+ *
+ * @param payload - Custom claims to include in the token.
+ * @param secret - Secret key used to sign the token.
+ * @param expiresIn - Optional expiration time in seconds.
+ * @returns Signed JWT string.
  */
 export const createJWT = (
   payload: JWTPayload,
@@ -69,15 +86,17 @@ export const createJWT = (
     .replace(/\//g, "_")
     .replace(/=/g, "");
 
-  // Retornar JWT completo
   return `${data}.${signature}`;
 };
 
 /**
- * Verifica y decodifica un JSON Web Token
- * @param token - JWT a verificar
- * @param secret - Clave secreta usada para firmar
- * @returns Payload decodificado o null si es inválido
+ * Verifies the integrity and validity of a JSON Web Token.
+ *
+ * If any validation step fails, the function returns `null`.
+ *
+ * @param token - JWT string to verify.
+ * @param secret - Secret used to sign the token.
+ * @returns Decoded payload if the token is valid, otherwise `null`.
  */
 export const verifyJWT = (token: string, secret: string): JWTPayload | null => {
   try {
@@ -114,9 +133,14 @@ export const verifyJWT = (token: string, secret: string): JWTPayload | null => {
 };
 
 /**
- * Decodifica un JWT sin verificar la firma (útil para debugging)
- * @param token - JWT a decodificar
- * @returns Objeto con header y payload decodificados
+ * Decodes a JWT without verifying its signature.
+ *
+ * ⚠️ Security warning:
+ * This function MUST NOT be used for authentication or authorization.
+ * It is intended only for debugging, logging, or inspecting token contents.
+ *
+ * @param token - JWT string to decode.
+ * @returns Object containing decoded header and payload, or `null` if malformed.
  */
 export const decodeJWT = (
   token: string,

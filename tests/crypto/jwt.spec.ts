@@ -73,4 +73,9 @@ describe("JWT core behaviour", () => {
     expect(decoded).not.toBeNull();
     expect(decoded.payload.sub).toBe("user_123");
   });
+
+  it("verifyJWT() returns null (and does not throw) when signature length is invalid", () => {
+    expect(() => verifyJWT("a.b.short", "secret")).not.toThrow();
+    expect(verifyJWT("a.b.short", "secret")).toBeNull();
+  });
 });

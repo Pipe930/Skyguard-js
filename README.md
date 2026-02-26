@@ -313,10 +313,25 @@ app.post("/login", async (request: Request) => {
     throw new UnauthorizedError("Invalid credentials");
   }
 
-  const token = createJWT({ sub: user.id, role: user.role }, "1h");
+  const token = createJWT(
+    { sub: user.id, role: user.role },
+    "secret-key",
+    3600,
+  );
 
   return Response.json({ token });
 });
+
+app.get(
+  "/verify-jwt",
+  (request: Request) => {
+    // The request stores a user state; the middleware creates and assigns this state to the request.state object.
+    const user = request.state.user;
+
+    return json({ user });
+  },
+  [authJWT("secret-key")],
+);
 ```
 
 ---

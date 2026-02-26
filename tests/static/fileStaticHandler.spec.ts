@@ -1,6 +1,14 @@
-import { stat, readFile } from "node:fs/promises";
-import { normalize } from "node:path";
+import {
+  stat,
+  readFile,
+  mkdtemp,
+  mkdir,
+  writeFile,
+  rm,
+} from "node:fs/promises";
+import { join, normalize } from "node:path";
 import { StaticFileHandler } from "../../src/static/fileStaticHandler";
+import { tmpdir } from "node:os";
 
 jest.mock("fs/promises", () => ({
   stat: jest.fn(),
@@ -97,5 +105,25 @@ describe("StaticFileHandlerTest", () => {
     const response = await handler.tryServeFile("/public/file.unknown");
 
     expect(response).not.toBeNull();
+  });
+
+  it("serves files when configured with a relative directory", async () => {
+    const baseDir = await mkdtemp(join(tmpdir(), "skyguard-static-"));
+    const previousCwd = process.cwd();
+
+    try {
+      process.chdir(baseDir);
+      await mkdir("public", { recursive: true });
+      await writeFile(join("public", "a.txt"), "ok");
+
+      const handler = new StaticFileHandler("./public");
+      const response = await handler.tryServeFile("/public/a.txt");
+
+      expect(response).not.toBeNull();
+      expect(response?.statusCode).toBe(200);
+    } finally {
+      process.chdir(previousCwd);
+      await rm(baseDir, { recursive: true, force: true });
+    }
   });
 });
