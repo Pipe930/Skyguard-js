@@ -244,7 +244,6 @@ import { FileSessionStorage } from "skyguard-js";
 
 app.middlewares([
   sessions(FileSessionStorage, {
-    // express-session style API
     name: "connect.sid",
     rolling: true,
     saveUninitialized: false,
@@ -280,23 +279,6 @@ app.get("/me", (request: Request) => {
   if (!user) throw new UnauthorizedError("Not authenticated");
   return json({ user });
 });
-```
-
-
-
-The middleware API is inspired by **express-session** (`name`, `rolling`, `saveUninitialized`, and nested `cookie` options), while keeping compatibility with Skyguard storage adapters.
-
-> Backward compatibility: you can still pass the legacy flat cookie options as the second argument.
-
-You now also have an API inspired by express-session on `request.session`:
-
-```ts
-await request.session.set("userId", 1);
-await request.session.touch();
-await request.session.save();
-await request.session.reload();
-await request.session.regenerate();
-await request.session.destroy();
 ```
 
 ---
@@ -349,7 +331,9 @@ import { createUploader, StorageType } from "skyguard-js";
 const uploader = createUploader({
   storageType: StorageType.DISK,
   storageOptions: {
-    destination: "./uploads",
+    disk: {
+      destination: "./uploads",
+    },
   },
 });
 
@@ -364,6 +348,8 @@ app.post(
   [uploader.single("file")],
 );
 ```
+
+Depending on the `Storage Type` you have selected, the storage options will contain two properties: `disk` and `memory`
 
 ---
 
