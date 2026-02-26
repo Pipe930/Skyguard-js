@@ -1,94 +1,56 @@
 /**
- * Contract for synchronous session storage implementations.
+ * Contract for session storage implementations.
  *
- * Defines the basic operations required to manage a session
- * during the lifecycle of an HTTP request.
- *
- * Intended for synchronous drivers (e.g. in-memory storage).
+ * Inspired by express-session store capabilities, adapted to Skyguard.
  */
 export interface SessionStorage {
-  /**
-   * Loads an existing session by its identifier.
-   *
-   * If the session does not exist or is invalid, implementations
-   * may throw an exception or ignore the load according to
-   * their internal policy.
-   *
-   * @param id - Unique session identifier
-   */
+  /** Load an existing session by id. */
   load(id: string): void | Promise<void>;
 
-  /**
-   * Starts a new session.
-   *
-   * If the session is already active, implementations
-   * must avoid recreating it.
-   */
+  /** Start a new session if none is active. */
   start(): void | Promise<void>;
 
-  /**
-   * Returns the identifier of the current session.
-   *
-   * @returns Active session ID
-   */
+  /** Return the active session id, or `null`. */
   id(): string | null;
 
-  /**
-   * Retrieves a value from the session.
-   *
-   * @param key - Value key
-   * @param defaultValue - Value returned if the key does not exist
-   * @returns Stored value or the default value
-   */
+  /** Get a value from session data. */
   get<T = unknown>(key: string, defaultValue?: T): T | undefined;
 
-  /**
-   * Stores a value in the session.
-   *
-   * If the session has not been started yet, implementations
-   * must start it automatically.
-   *
-   * @param key - Value key
-   * @param value - Value to store
-   */
+  /** Set a value in session data. */
   set(key: string, value: unknown): void | Promise<void>;
 
-  /**
-   * Checks whether a key exists in the session.
-   *
-   * @param key - Key to check
-   * @returns `true` if the key exists
-   */
+  /** Check if a key exists in session data. */
   has(key: string): boolean;
 
-  /**
-   * Removes a value from the session.
-   *
-   * @param key - Key to remove
-   */
+  /** Remove a key from session data. */
   remove(key: string): void | Promise<void>;
 
-  /**
-   * Completely destroys the session.
-   *
-   * Removes all associated data and invalidates the session
-   * for subsequent requests.
-   */
+  /** Return a shallow copy of session data. */
+  all(): Record<string, unknown>;
+
+  /** Remove every key in current session data. */
+  clear(): void | Promise<void>;
+
+  /** Persist current in-memory session state. */
+  save(): void | Promise<void>;
+
+  /** Refresh session expiration without changing data. */
+  touch(): void | Promise<void>;
+
+  /** Reload current session from backing storage. */
+  reload(): void | Promise<void>;
+
+  /** Destroy current session and invalidate id. */
   destroy(): void | Promise<void>;
+
+  /** Regenerate a brand-new session id preserving API expectations. */
+  regenerate(): void | Promise<void>;
 }
 
 /**
  * Internal representation of persisted session data.
- *
- * Used by {@link SessionStorage} implementations to store
- * session state on the server.
- *
- * @internal
  */
 export interface SessionData {
-  /** Data stored in the session. */
   data: Record<string, unknown>;
-
-  /** Expiration timestamp in milliseconds. */
   expiresAt: number;
 }

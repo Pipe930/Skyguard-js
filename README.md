@@ -242,7 +242,21 @@ To handle sessions, you must use the framework’s built-in middleware. Dependin
 import { sessions } from "skyguard-js/middlewares";
 import { FileSessionStorage } from "skyguard-js";
 
-app.middlewares([sessions(FileSessionStorage)]);
+app.middlewares([
+  sessions(FileSessionStorage, {
+    // express-session style API
+    name: "connect.sid",
+    rolling: true,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 60 * 60 * 24,
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: false,
+      path: "/",
+    },
+  }),
+]);
 
 app.post("/login", (request: Request) => {
   const { username, password } = request.data;
@@ -266,6 +280,23 @@ app.get("/me", (request: Request) => {
   if (!user) throw new UnauthorizedError("Not authenticated");
   return json({ user });
 });
+```
+
+
+
+The middleware API is inspired by **express-session** (`name`, `rolling`, `saveUninitialized`, and nested `cookie` options), while keeping compatibility with Skyguard storage adapters.
+
+> Backward compatibility: you can still pass the legacy flat cookie options as the second argument.
+
+You now also have an API inspired by express-session on `request.session`:
+
+```ts
+await request.session.set("userId", 1);
+await request.session.touch();
+await request.session.save();
+await request.session.reload();
+await request.session.regenerate();
+await request.session.destroy();
 ```
 
 ---

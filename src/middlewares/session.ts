@@ -1,108 +1,172 @@
-import { type SessionStorage, type CookieOptions, Session } from "../sessions";
+import { type CookieOptions, Session, type SessionStorage } from "../sessions";
+import { UnauthorizedError } from "../exceptions/httpExceptions";
 import type { Middleware } from "../types";
 
 /**
  * Constructor type for `SessionStorage` implementations.
- *
- * Allows injecting different session storage strategies
- * (memory, file, redis, etc.).
  */
 type SessionStorageConstructor<T extends SessionStorage = SessionStorage> =
   new (...args: any[]) => T;
 
 /**
- * Parses the `Cookie` header into a key/value object.
- *
- * @param cookieHeader - Raw `Cookie` header value
- * @returns Parsed cookies
- *
- * @example
- * parseCookies("foo=bar; session_id=abc123");
- * // { foo: "bar", session_id: "abc123" }
+ * Options inspired by express-session and adapted to Skyguard.
+ */
+export interface SessionMiddlewareOptions {
+  /**
+   * Name of the cookie that carries the session id.
+   * @default "connect.sid"
+   */
+  name?: string;
+
+  /**
+   * Enables issuing a fresh session cookie on every response.
+   * @default false
+   */
+  rolling?: boolean;
+
+  /**
+   * Save a cookie even if the session was never initialized with data.
+   * @default false
+   */
+  saveUninitialized?: boolean;
+
+  /**
+   * Session cookie attributes.
+   */
+  cookie?: CookieOptions;
+}
+
+interface ResolvedSessionOptions {
+  name: string;
+  rolling: boolean;
+  saveUninitialized: boolean;
+  cookie: Required<CookieOptions>;
+}
+
+/**
+ * Parses a Cookie header into a key/value map.
  */
 function parseCookies(cookieHeader: string | null): Record<string, string> {
   if (!cookieHeader) return {};
+
   return Object.fromEntries(
-    cookieHeader.split(";").map(cookie => {
-      const [key, ...value] = cookie.trim().split("=");
-      return [key, decodeURIComponent(value.join("="))];
-    }),
+    cookieHeader
+      .split(";")
+      .map(cookie => cookie.trim())
+      .filter(Boolean)
+      .map(cookie => {
+        const [rawKey, ...rawValue] = cookie.split("=");
+        return [rawKey, decodeURIComponent(rawValue.join("="))];
+      }),
   );
 }
 
 /**
- * Builds the `Set-Cookie` header value for the session.
- *
- * @param sessionId - Session identifier
- * @param config - Fully resolved cookie configuration
- * @returns Value ready to be used in `Set-Cookie`
- *
- * @example
- * buildSessionCookie("abc123", config);
- * // "session_id=abc123; Max-Age=86400; Path=/; SameSite=Lax; HttpOnly"
+ * Builds a Set-Cookie value for the session id.
  */
 function buildSessionCookie(
   sessionId: string,
-  config: Required<CookieOptions>,
+  options: ResolvedSessionOptions,
 ): string {
+  const { cookie, name } = options;
   const parts: string[] = [
-    `${config.cookieName}=${encodeURIComponent(sessionId)}`,
-    `Max-Age=${config.maxAge}`,
-    `Path=${config.path}`,
-    `SameSite=${config.sameSite}`,
+    `${name}=${encodeURIComponent(sessionId)}`,
+    `Max-Age=${cookie.maxAge}`,
+    `Path=${cookie.path}`,
+    `SameSite=${cookie.sameSite}`,
   ];
 
-  if (config.httpOnly) parts.push("HttpOnly");
-  if (config.secure) parts.push("Secure");
+  if (cookie.httpOnly) parts.push("HttpOnly");
+  if (cookie.secure) parts.push("Secure");
 
   return parts.join("; ");
 }
 
+function isLegacyCookieOptions(
+  options: SessionMiddlewareOptions | CookieOptions,
+): options is CookieOptions {
+  return "cookieName" in options || "maxAge" in options;
+}
+
+function resolveOptions(
+  rawOptions: SessionMiddlewareOptions | CookieOptions = {},
+): ResolvedSessionOptions {
+  const options = isLegacyCookieOptions(rawOptions)
+    ? { name: rawOptions.cookieName, cookie: rawOptions }
+    : rawOptions;
+
+  const maxAge = options.cookie?.maxAge ?? 86400;
+
+  return {
+    name: options.name ?? "connect.sid",
+    rolling: options.rolling ?? false,
+    saveUninitialized: options.saveUninitialized ?? false,
+    cookie: {
+      cookieName: options.name ?? "connect.sid",
+      maxAge,
+      httpOnly: options.cookie?.httpOnly ?? true,
+      secure: options.cookie?.secure ?? false,
+      sameSite: options.cookie?.sameSite ?? "Lax",
+      path: options.cookie?.path ?? "/",
+    },
+  };
+}
+
+async function loadSessionFromCookie(
+  storage: SessionStorage,
+  cookieValue: string | undefined,
+): Promise<void> {
+  if (!cookieValue) return;
+
+  try {
+    await storage.load(cookieValue);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) return;
+    throw error;
+  }
+}
+
 /**
- * Session lifecycle middleware implementation.
+ * Session lifecycle middleware.
  *
- * @param StorageClass - `SessionStorage` implementation
- * @param options - Session cookie configuration
- * @returns Session middleware
- *
- * @example
- * app.middlewares([
- *   sessionMiddleware(MemorySessionStorage, {
- *     cookieName: "sid",
- *     maxAge: 86400,
- *   }),
- * ]);
+ * API inspired by express-session, adapted to Skyguard architecture.
  */
 export const sessions = (
   StorageClass: SessionStorageConstructor,
-  options: CookieOptions = {},
+  options: SessionMiddlewareOptions | CookieOptions = {},
 ): Middleware => {
-  const timeMaxAge = 86400;
-  const config: Required<CookieOptions> = {
-    cookieName: options.cookieName ?? "session_id",
-    maxAge: options.maxAge ?? timeMaxAge,
-    httpOnly: options.httpOnly ?? true,
-    secure: options.secure ?? false,
-    sameSite: options.sameSite ?? "Lax",
-    path: options.path ?? "/",
-  };
+  const config = resolveOptions(options);
 
   return async (request, next) => {
-    const cookies = parseCookies(request.headers.cookie || "");
-    const sessionId = cookies[config.cookieName];
+    const cookies = parseCookies(request.headers.cookie ?? "");
+    const sessionIdFromCookie = cookies[config.name];
 
-    const storage = new StorageClass(options.maxAge || timeMaxAge);
-
-    if (sessionId) await storage.load(sessionId);
+    const storage = new StorageClass(config.cookie.maxAge);
+    await loadSessionFromCookie(storage, sessionIdFromCookie);
 
     const session = new Session(storage);
     request.setSession(session);
 
-    const response = await next(request);
+    const sessionIdBefore = storage.id();
 
-    if (storage.id()) {
-      const cookieValue = buildSessionCookie(storage.id(), config);
-      response.setHeader("Set-Cookie", cookieValue);
+    if (!sessionIdBefore && config.saveUninitialized) {
+      await storage.start();
+    }
+
+    const response = await next(request);
+    const sessionIdAfter = storage.id();
+
+    if (sessionIdAfter && config.rolling) {
+      await storage.touch();
+    }
+
+    const sessionWasCreated = !sessionIdBefore && Boolean(sessionIdAfter);
+    const shouldSetCookie =
+      Boolean(sessionIdAfter) &&
+      (config.rolling || config.saveUninitialized || sessionWasCreated);
+
+    if (shouldSetCookie && sessionIdAfter) {
+      response.setHeader("Set-Cookie", buildSessionCookie(sessionIdAfter, config));
     }
 
     return response;

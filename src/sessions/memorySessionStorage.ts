@@ -1,179 +1,138 @@
+import { randomBytes } from "node:crypto";
 import { UnauthorizedError } from "../exceptions/httpExceptions";
 import type { SessionData, SessionStorage } from "./sessionStorage";
-import { randomBytes } from "node:crypto";
+
+const SESSION_ID_REGEX = /^[a-f0-9]{64}$/;
 
 /**
- * In-memory {@link SessionStorage} implementation.
+ * In-memory session store.
  *
- * Stores all sessions in a static `Map` shared at the Node.js process level.
- *
- * ⚠️ Important:
- * - Sessions are lost when the process restarts
- * - Not safe for multi-instance or clustered environments
- * - Recommended only for development, testing, or prototyping
- *
- * Session lifecycle:
- * 1) `start()` → creates a new session
- * 2) `load(id)` → loads an existing session
- * 3) Read/write session data
- * 4) `destroy()` → removes the session
+ * Good for development/testing only.
  */
 export class MemorySessionStorage implements SessionStorage {
-  /**
-   * Global in-memory session storage.
-   *
-   * Key: session ID
-   * Value: session data and expiration timestamp
-   */
   private static storageSessions = new Map<string, SessionData>();
 
-  /** Currently loaded session ID */
   private sessionId: string | null = null;
-
-  /** Session data */
   private data: Record<string, unknown> = {};
 
-  /** Strict validation for session ID format */
-  private regexSessionId = /^[a-f0-9]{64}$/;
+  constructor(private readonly ttlSeconds: number = 86_400) {}
 
-  /**
-   * Creates a new `MemorySessionStorage` instance.
-   *
-   * @param expiredSession - Session lifetime in milliseconds
-   */
-  constructor(private readonly expiredSession?: number) {}
-
-  /**
-   * Loads an existing session by its ID.
-   *
-   * @param id - Session identifier
-   * @throws {UnauthorizedError}
-   * Thrown if the ID is invalid, does not exist, or the session is expired
-   */
   public load(id: string): void {
-    if (!this.regexSessionId.test(id))
-      throw new UnauthorizedError("Invalid session");
+    this.assertValidId(id);
 
-    const sessionData = MemorySessionStorage.storageSessions.get(id);
-    if (!sessionData) throw new UnauthorizedError("Invalid session");
+    const payload = MemorySessionStorage.storageSessions.get(id);
+    if (!payload) throw new UnauthorizedError("Invalid session");
 
-    if (sessionData.expiresAt > Date.now()) {
-      this.sessionId = id;
-      this.data = sessionData.data;
-      sessionData.expiresAt = this.createExpiredSession();
+    if (payload.expiresAt <= Date.now()) {
+      MemorySessionStorage.storageSessions.delete(id);
+      throw new UnauthorizedError("Session expired");
     }
+
+    this.sessionId = id;
+    this.data = { ...payload.data };
+    this.touch();
   }
 
-  /**
-   * Computes the next session expiration timestamp.
-   *
-   * @returns Expiration timestamp
-   */
-  private createExpiredSession(): number {
-    return Date.now() + this.expiredSession;
-  }
-
-  /**
-   * Starts a new session if none is active.
-   */
   public start(): void {
     if (this.sessionId) return;
 
     this.sessionId = this.generateId();
     this.data = {};
-
-    MemorySessionStorage.storageSessions.set(this.sessionId, {
-      data: this.data,
-      expiresAt: this.createExpiredSession(),
-    });
+    this.save();
   }
 
-  /**
-   * Returns the current session ID.
-   *
-   * @returns Session ID or `null` if no session is active
-   */
   public id(): string | null {
     return this.sessionId;
   }
 
-  /**
-   * Retrieves a value from the session.
-   *
-   * @param key - Value key
-   * @param defaultValue - Optional default value
-   * @returns Stored value or the default value
-   */
-  public get<T>(key: string, defaultValue?: T): T | undefined {
+  public get<T = unknown>(key: string, defaultValue?: T): T | undefined {
     return (this.data[key] as T) ?? defaultValue;
   }
 
-  /**
-   * Stores a value in the session.
-   *
-   * Automatically starts a session if none exists.
-   *
-   * @param key - Value key
-   * @param value - Value to store
-   */
-  public set<T>(key: string, value: T): void {
+  public set(key: string, value: unknown): void {
     if (!this.sessionId) this.start();
+
     this.data[key] = value;
+    this.save();
   }
 
-  /**
-   * Checks whether a key exists in the session.
-   *
-   * @param key - Key to check
-   * @returns `true` if the key exists
-   */
   public has(key: string): boolean {
     return key in this.data;
   }
 
-  /**
-   * Removes a key from the session.
-   *
-   * Does nothing if no session is active.
-   *
-   * @param key - Key to remove
-   */
   public remove(key: string): void {
     if (!this.sessionId) return;
+
     delete this.data[key];
+    this.save();
   }
 
-  /**
-   * Completely destroys the current session.
-   */
+  public all(): Record<string, unknown> {
+    return { ...this.data };
+  }
+
+  public clear(): void {
+    if (!this.sessionId) return;
+
+    this.data = {};
+    this.save();
+  }
+
+  public save(): void {
+    if (!this.sessionId) return;
+
+    MemorySessionStorage.storageSessions.set(this.sessionId, {
+      data: { ...this.data },
+      expiresAt: this.nextExpiry(),
+    });
+  }
+
+  public touch(): void {
+    if (!this.sessionId) return;
+
+    const payload = MemorySessionStorage.storageSessions.get(this.sessionId);
+    if (!payload) return;
+
+    payload.expiresAt = this.nextExpiry();
+  }
+
+  public reload(): void {
+    if (!this.sessionId) return;
+    this.load(this.sessionId);
+  }
+
   public destroy(): void {
-    if (this.sessionId)
+    if (this.sessionId) {
       MemorySessionStorage.storageSessions.delete(this.sessionId);
+    }
 
     this.sessionId = null;
     this.data = {};
   }
 
-  /**
-   * Removes all expired sessions from memory.
-   *
-   * This method should be executed periodically
-   * (e.g. via a cron job or interval).
-   */
+  public regenerate(): void {
+    this.destroy();
+    this.start();
+  }
+
   public static cleanExpiredSessions(): void {
     const now = Date.now();
 
     for (const [id, session] of MemorySessionStorage.storageSessions) {
-      if (session.expiresAt < now)
-        MemorySessionStorage.storageSessions.delete(id);
+      if (session.expiresAt < now) MemorySessionStorage.storageSessions.delete(id);
     }
   }
 
-  /**
-   * Generates a cryptographically secure session identifier.
-   *
-   * @returns Hex-encoded session ID (64 characters)
-   */
+  private nextExpiry(): number {
+    return Date.now() + this.ttlSeconds * 1000;
+  }
+
+  private assertValidId(id: string): void {
+    if (!SESSION_ID_REGEX.test(id)) {
+      throw new UnauthorizedError("Invalid session");
+    }
+  }
+
   private generateId(): string {
     return randomBytes(32).toString("hex");
   }
