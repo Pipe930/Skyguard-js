@@ -35,9 +35,9 @@ describe("Memory Session Storage Test", () => {
     expect(id).toMatch(/^[a-f0-9]{64}$/);
 
     const map = getStaticMap();
-    expect(map.has(id!)).toBe(true);
+    expect(map.has(id)).toBe(true);
 
-    const entry = map.get(id!);
+    const entry = map.get(id);
     expect(entry.data).toEqual({});
     expect(typeof entry.expiresAt).toBe("number");
     expect(entry.expiresAt).toBe(Date.now() + 10_000);
@@ -99,7 +99,7 @@ describe("Memory Session Storage Test", () => {
     const storage = new MemorySessionStorage(10_000);
     storage.start();
 
-    const id = storage.id()!;
+    const id = storage.id();
     storage.set("a", 1);
 
     expect(getStaticMap().has(id)).toBe(true);

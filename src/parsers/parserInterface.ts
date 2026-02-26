@@ -1,17 +1,3 @@
-export const contentTypes = {
-  "application-json": "application/json",
-  "application-x-www-form-urlencoded": "application/x-www-form-urlencoded",
-  "application-xml": "application/xml",
-  "application-octet-stream": "application/octet-stream",
-  "application-xhtml": "application/xhtml",
-  "text-plain": "text/plain",
-  "text-xml": "text/xml",
-  "text-html": "text/html",
-  "text-css": "text/css",
-  "text-javascript": "text/javascript",
-  "multipart-form-data": "multipart/form-data",
-} as const;
-
 /**
  * Represents the final result of parsing a `multipart/form-data` request.
  *

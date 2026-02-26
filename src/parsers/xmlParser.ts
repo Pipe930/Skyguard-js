@@ -1,6 +1,5 @@
 import { UnprocessableContentError } from "../exceptions/httpExceptions";
 import type { ContentParser } from "./contentParser";
-import { contentTypes } from "./parserInterface";
 
 /**
  * XML content parser.
@@ -32,8 +31,8 @@ export class XmlParser implements ContentParser {
    */
   public canParse(contentType: string): boolean {
     return (
-      contentType.includes(contentTypes["application-xml"]) ||
-      contentType.includes(contentTypes["text-xml"])
+      contentType.includes("application/xml") ||
+      contentType.includes("text/xml")
     );
   }
 

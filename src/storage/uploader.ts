@@ -12,7 +12,6 @@ import { UploadException } from "../exceptions/uploadException";
 import { DiskStorage, MemoryStorage } from "./storage";
 import type { Middleware, RouteHandler } from "../types";
 import {
-  contentTypes,
   type MultipartData,
   type UploadedFile,
 } from "../parsers/parserInterface";
@@ -351,9 +350,7 @@ class Uploader {
   private getMultipartData(request: Request): MultipartData | null {
     if (
       request.headers["content-type"] &&
-      request.headers["content-type"].startsWith(
-        contentTypes["multipart-form-data"],
-      )
+      request.headers["content-type"].startsWith("multipart/form-data")
     )
       return request.data as unknown as MultipartData;
 
