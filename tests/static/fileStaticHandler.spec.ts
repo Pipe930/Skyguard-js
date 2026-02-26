@@ -1,11 +1,4 @@
-import {
-  stat,
-  readFile,
-  mkdtemp,
-  mkdir,
-  writeFile,
-  rm,
-} from "node:fs/promises";
+import { stat, readFile } from "node:fs/promises";
 import { join, normalize } from "node:path";
 import { StaticFileHandler } from "../../src/static/fileStaticHandler";
 import { tmpdir } from "node:os";
@@ -30,6 +23,10 @@ jest.mock("../../src/static/mimeTypes", () => ({
     default: "application/octet-stream",
   },
 }));
+
+const fsPromises =
+  jest.requireActual<typeof import("node:fs/promises")>("node:fs/promises");
+const { mkdtemp, mkdir, writeFile, rm } = fsPromises;
 
 const mockStat = (overrides: Partial<any> = {}) => ({
   isFile: () => true,
