@@ -1,4 +1,4 @@
-import { normalize, extname, basename, sep, resolve } from "node:path";
+import { extname, basename, sep, resolve } from "node:path";
 import { readFile, stat } from "node:fs/promises";
 import { mimeTypesObject } from "./mimeTypes";
 import { Response } from "../http/response";
@@ -24,7 +24,7 @@ export class StaticFileHandler {
   private mimeTypes: Record<string, string>;
 
   constructor(publicPath: string) {
-    this.publicPath = normalize(publicPath);
+    this.publicPath = resolve(publicPath);
     this.urlPrefix = "/" + basename(this.publicPath);
     this.mimeTypes = mimeTypesObject;
   }
