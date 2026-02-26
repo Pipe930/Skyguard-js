@@ -1,4 +1,5 @@
-import { join } from "path";
+import { InternalServerError } from "../exceptions/httpExceptions";
+import { join } from "node:path";
 
 /**
  * Defines the contract for a template engine function.
@@ -71,7 +72,7 @@ export class ViewEngine {
 
       return await this.templateEngine(templatePath, data);
     } catch (error) {
-      throw new Error(
+      throw new InternalServerError(
         `Error rendering template "${viewName}": ${error instanceof Error ? error.message : String(error)}`,
       );
     }

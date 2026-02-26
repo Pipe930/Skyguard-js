@@ -6,6 +6,7 @@ import {
   type Storage,
   UploadErrorCode,
   type FieldConfig,
+  type StorageOptions,
 } from "./types";
 import { Request } from "../http/request";
 import { UploadException } from "../exceptions/uploadException";
@@ -369,7 +370,7 @@ class Uploader {
    * @throws UploadException when the filter rejects the file
    * @throws Error when the filter throws or returns an error
    */
-  private async applyFileFilter(
+  private applyFileFilter(
     request: Request,
     fileData: MultipartData["files"][0],
   ): Promise<void> {
@@ -394,6 +395,7 @@ class Uploader {
             ),
           );
         }
+
         resolve();
       });
     });
@@ -459,12 +461,15 @@ class Uploader {
    * @param options Storage options forwarded to the implementation.
    * @returns A concrete {@link Storage} engine.
    */
-  private createStorage(type: StorageType, options: any = {}): Storage {
+  private createStorage(
+    type: StorageType,
+    options: StorageOptions = {},
+  ): Storage {
     switch (type) {
       case StorageType.DISK:
         return new DiskStorage(options);
       case StorageType.MEMORY:
-        return new MemoryStorage();
+        return new MemoryStorage(options);
       default:
         return new DiskStorage(options);
     }

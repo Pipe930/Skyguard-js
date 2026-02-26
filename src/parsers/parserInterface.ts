@@ -42,6 +42,8 @@ export interface UploadedFile {
 
   /** Raw file buffer when using MemoryStorage */
   data: Buffer;
+  /** Optional checksum (e.g. sha256) computed by storage engines */
+  checksum?: string;
 }
 
 /**

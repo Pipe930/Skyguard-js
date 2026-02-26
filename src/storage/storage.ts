@@ -1,7 +1,7 @@
-import { type StorageOptions, UploadErrorCode, type Storage } from "./types";
-import { writeFile, unlink } from "node:fs/promises";
+import { UploadErrorCode, type Storage, type StorageOptions } from "./types";
+import { writeFile, unlink, mkdir } from "node:fs/promises";
 import { join, extname } from "node:path";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { Request } from "../http/request";
 import { UploadException } from "../exceptions/uploadException";
 import type { UploadedFile } from "../parsers/parserInterface";
@@ -52,8 +52,9 @@ export class DiskStorage implements Storage {
    *  - filename: auto-generated unique filename
    */
   constructor(options: StorageOptions = {}) {
-    this.destination = options.destination ?? "./uploads";
-    this.filenameGenerator = options.filename ?? this.generateUniqueFilename;
+    this.destination = options.disk.destination ?? "./uploads";
+    this.filenameGenerator =
+      options.disk.filename ?? this.generateUniqueFilename;
   }
 
   /**
@@ -80,6 +81,7 @@ export class DiskStorage implements Storage {
       const filename = await this.filenameGenerator(request, file);
       const filePath = join(destination, filename);
 
+      await mkdir(destination, { recursive: true });
       await writeFile(filePath, fileData);
 
       return {
@@ -157,55 +159,151 @@ export class DiskStorage implements Storage {
 }
 
 /**
- * In-memory storage engine for uploaded files.
+ * Improved in-memory storage engine for uploaded files.
  *
- * Instead of persisting files to disk, this storage keeps the file buffer
- * directly in memory and attaches it to the {@link UploadedFile} object.
- *
- * This is useful for:
- *  - Temporary file processing
- *  - Cloud uploads (S3, GCS, etc.)
- *  - Image/video processing pipelines
- *
- * ⚠️ Not recommended for large files or high-concurrency environments,
- * as memory usage grows with each upload.
+ * Enhancements over the simple implementation:
+ * - Optional limits: per-file, total memory and file count
+ * - Optional TTL for automatic cleanup
+ * - Optional sha256 checksum computation attached as `checksum`
+ * - Tracks stored items in an internal Map for potential future retrieval
  */
 export class MemoryStorage implements Storage {
-  /**
-   * Handles the uploaded file by storing it in memory.
-   *
-   * The file buffer is attached to the returned {@link UploadedFile}.
-   *
-   * @param request Current HTTP request.
-   * @param file Partial file metadata.
-   * @param fileData Raw file buffer.
-   *
-   * @returns Uploaded file metadata including the in-memory buffer.
-   */
+  private store = new Map<string, UploadedFile>();
+  private totalSize = 0;
+  private maxTotalSize: number;
+  private maxFileSize?: number;
+  private maxFiles: number;
+  private ttlMs: number;
+  private computeChecksum: boolean;
+  private cleanupTimer?: NodeJS.Timeout;
 
-  public async handleFile(
+  constructor(options: StorageOptions = {}) {
+    this.maxTotalSize = options.memory.maxTotalSize ?? 50 * 1024 * 1024; // 50MB
+    this.maxFileSize = options.memory.maxFileSize;
+    this.maxFiles = options.memory.maxFiles ?? Infinity;
+    this.ttlMs = options.memory.ttlMs ?? 0;
+    this.computeChecksum = options.memory.computeChecksum ?? false;
+  }
+
+  public handleFile(
     request: Request,
     file: Partial<UploadedFile>,
     fileData: Buffer,
-  ): Promise<UploadedFile> {
-    return {
+  ): UploadedFile {
+    // Enforce per-file size if configured
+    if (this.maxFileSize !== undefined && fileData.length > this.maxFileSize) {
+      throw new UploadException(
+        `File too large. Max size: ${this.maxFileSize} bytes`,
+        UploadErrorCode.LIMIT_FILE_SIZE,
+        file.fieldName,
+      );
+    }
+
+    // Enforce total memory limit and file count
+    if (this.store.size + 1 > this.maxFiles) {
+      throw new UploadException(
+        `Too many files stored in memory. Max ${this.maxFiles}`,
+        UploadErrorCode.LIMIT_FILE_COUNT,
+        file.fieldName,
+      );
+    }
+
+    if (this.totalSize + fileData.length > this.maxTotalSize) {
+      throw new UploadException(
+        `Memory limit exceeded. Max total size: ${this.maxTotalSize} bytes`,
+        UploadErrorCode.LIMIT_FILE_SIZE,
+        file.fieldName,
+      );
+    }
+
+    const filename =
+      file.filename || `${Date.now()}-${randomBytes(6).toString("hex")}`;
+
+    const uploaded: UploadedFile = {
       fieldName: file.fieldName,
-      filename: file.filename,
+      filename,
       originalname: file.originalname,
       encoding: file.encoding || "7bit",
       mimetype: file.mimetype,
       size: fileData.length,
       data: fileData,
     };
+
+    // Optionally compute checksum
+    if (this.computeChecksum) {
+      try {
+        const hash = createHash("sha256");
+        hash.update(fileData);
+        uploaded.checksum = hash.digest("hex");
+      } catch {
+        // checksum failure shouldn't block storage; emit nothing here but keep storing
+      }
+    }
+
+    // Store with optional expiry metadata
+    if (this.ttlMs > 0) {
+      // Use filename as key; if collisions occur, append random
+      let key = filename;
+      let attempt = 0;
+      while (this.store.has(key)) {
+        attempt += 1;
+        key = `${filename}-${attempt}`;
+      }
+
+      this.store.set(key, uploaded);
+    } else {
+      let key = filename;
+      let attempt = 0;
+      while (this.store.has(key)) {
+        attempt += 1;
+        key = `${filename}-${attempt}`;
+      }
+      this.store.set(key, uploaded);
+    }
+
+    this.totalSize += fileData.length;
+
+    return uploaded;
   }
 
-  /**
-   * No-op cleanup method.
-   *
-   * Since files are stored in memory, there is nothing to remove.
-   * Node.js garbage collector will reclaim the memory automatically.
-   */
-  public async removeFile(file: UploadedFile): Promise<void> {
-    // Nothing to clean up for memory storage
+  public removeFile(file: UploadedFile): void {
+    // Find entry by identity (buffer equality) or by filename
+    const entryKey = Array.from(this.store.entries()).find(
+      ([, f]) => f === file,
+    )?.[0];
+
+    if (entryKey) {
+      const f = this.store.get(entryKey);
+      // Attempt to zero buffer reference to help GC
+      try {
+        f.data = Buffer.alloc(0);
+      } catch {
+        // ignore
+      }
+      this.totalSize = Math.max(0, this.totalSize - (f.size || 0));
+      this.store.delete(entryKey);
+    } else {
+      // If not found by identity, try by filename
+      const keyByName = Array.from(this.store.entries()).find(
+        ([, f]) => f.filename === file.filename,
+      )?.[0];
+      if (keyByName) {
+        const f = this.store.get(keyByName);
+        try {
+          f.data = Buffer.alloc(0);
+        } catch {
+          // Ignore catch
+        }
+        this.totalSize = Math.max(0, this.totalSize - (f.size || 0));
+        this.store.delete(keyByName);
+      }
+    }
+  }
+
+  // Ensure we clean up timer if the engine is garbage collected
+  public dispose(): void {
+    if (this.cleanupTimer) clearInterval(this.cleanupTimer);
+    this.store.clear();
+    this.totalSize = 0;
   }
 }

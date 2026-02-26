@@ -1,9 +1,6 @@
 import { UnprocessableContentError } from "../exceptions/httpExceptions";
 import type { ContentParser } from "./contentParser";
-import {
-  type MultipartData,
-  type ParsedPart,
-} from "./parserInterface";
+import type { MultipartData, ParsedPart } from "./parserInterface";
 
 /**
  * `multipart/form-data` content parser.
@@ -103,8 +100,7 @@ export class MultipartParser implements ContentParser {
         result.files.push({
           fieldName: parsed.name,
           filename: parsed.filename,
-          mimetype:
-            parsed.contentType ?? "application/octet-stream",
+          mimetype: parsed.contentType ?? "application/octet-stream",
           data: parsed.data,
           size,
         });
@@ -127,7 +123,7 @@ export class MultipartParser implements ContentParser {
   private splitBuffer(buffer: Buffer, delimiter: Buffer): Buffer[] {
     const parts: Buffer[] = [];
     let start = 0;
-    let pos = 0;
+    let pos: number;
 
     while ((pos = buffer.indexOf(delimiter, start)) !== -1) {
       if (pos > start) {

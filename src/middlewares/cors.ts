@@ -2,24 +2,6 @@ import { HttpMethods, Request, Response } from "../http";
 import type { Middleware, RouteHandler } from "../types";
 
 /**
- * CORS origin matcher type.
- *
- * Controls how the middleware determines the value of
- * `Access-Control-Allow-Origin` for a given request.
- *
- * Supported forms:
- * - `string`: a single allowed origin (e.g. `"https://example.com"`) or `"*"` for public access
- * - `string[]`: a whitelist of allowed origins
- * - `function`: a custom resolver that receives the request Origin and decides what to allow
- *
- * Notes:
- * - If `credentials: true` is enabled, `"*"` cannot be used as the final
- *   `Access-Control-Allow-Origin` value. In that case this middleware will
- *   reflect the request origin when allowed.
- */
-type CorsOrigin = string | string[] | ((origin: string | undefined) => string);
-
-/**
  * CORS middleware configuration options.
  *
  * These options map to standard CORS response headers and preflight behavior.
@@ -35,7 +17,7 @@ interface CorsOptions {
    *
    * Affects: `Access-Control-Allow-Origin`.
    */
-  origin?: CorsOrigin;
+  origin?: string | string[] | ((origin: string | undefined) => string);
 
   /**
    * HTTP methods allowed for cross-origin requests.

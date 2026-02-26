@@ -1,6 +1,7 @@
 import { BadRequestError } from "../../src/exceptions/httpExceptions";
 import { FileDownloadHelper } from "../../src/static/fileDownload";
 import { stat, readFile } from "node:fs/promises";
+import { Stats } from "node:fs";
 import { resolve, extname, basename } from "node:path";
 
 jest.mock("node:fs/promises");
@@ -21,7 +22,11 @@ describe("FileDownloadHelper", () => {
     jest.mocked(resolve).mockReturnValue(mockFilePath);
     jest.mocked(basename).mockReturnValue("test.txt");
     jest.mocked(extname).mockReturnValue(".txt");
-    jest.mocked(stat).mockResolvedValue({ isFile: () => true } as any);
+    jest
+      .mocked(stat)
+      .mockResolvedValue({
+        isFile: () => true,
+      } satisfies Partial<Stats> as Stats);
     jest.mocked(readFile).mockResolvedValue(mockContent);
 
     const response = await fileDownloadHelper.download(mockFilePath);
@@ -41,7 +46,11 @@ describe("FileDownloadHelper", () => {
 
     jest.mocked(resolve).mockReturnValue("/path/to/file.pdf");
     jest.mocked(extname).mockReturnValue(".pdf");
-    jest.mocked(stat).mockResolvedValue({ isFile: () => true } as any);
+    jest
+      .mocked(stat)
+      .mockResolvedValue({
+        isFile: () => true,
+      } satisfies Partial<Stats> as Stats);
     jest.mocked(readFile).mockResolvedValue(mockContent);
 
     const response = await fileDownloadHelper.download(
@@ -64,7 +73,11 @@ describe("FileDownloadHelper", () => {
     jest.mocked(resolve).mockReturnValue("/test.txt");
     jest.mocked(basename).mockReturnValue("test.txt");
     jest.mocked(extname).mockReturnValue(".txt");
-    jest.mocked(stat).mockResolvedValue({ isFile: () => true } as any);
+    jest
+      .mocked(stat)
+      .mockResolvedValue({
+        isFile: () => true,
+      } satisfies Partial<Stats> as Stats);
     jest.mocked(readFile).mockResolvedValue(mockContent);
 
     const response = await fileDownloadHelper.download(
@@ -84,7 +97,11 @@ describe("FileDownloadHelper", () => {
     jest.mocked(resolve).mockReturnValue("/test.txt");
     jest.mocked(basename).mockReturnValue("test.txt");
     jest.mocked(extname).mockReturnValue(".txt");
-    jest.mocked(stat).mockResolvedValue({ isFile: () => true } as any);
+    jest
+      .mocked(stat)
+      .mockResolvedValue({
+        isFile: () => true,
+      } satisfies Partial<Stats> as Stats);
     jest.mocked(readFile).mockResolvedValue(mockContent);
 
     const response = await fileDownloadHelper.download(
@@ -100,7 +117,11 @@ describe("FileDownloadHelper", () => {
 
   it("should throw exception when path is not a file", async () => {
     jest.mocked(resolve).mockReturnValue("/path/to/directory");
-    jest.mocked(stat).mockResolvedValue({ isFile: () => false } as any);
+    jest
+      .mocked(stat)
+      .mockResolvedValue({
+        isFile: () => false,
+      } satisfies Partial<Stats> as Stats);
 
     await expect(
       fileDownloadHelper.download("/path/to/directory"),
@@ -122,7 +143,11 @@ describe("FileDownloadHelper", () => {
     jest.mocked(resolve).mockReturnValue("/test.pdf");
     jest.mocked(basename).mockReturnValue("test.pdf");
     jest.mocked(extname).mockReturnValue(".pdf");
-    jest.mocked(stat).mockResolvedValue({ isFile: () => true } as any);
+    jest
+      .mocked(stat)
+      .mockResolvedValue({
+        isFile: () => true,
+      } satisfies Partial<Stats> as Stats);
     jest.mocked(readFile).mockResolvedValue(mockContent);
 
     const response = await fileDownloadHelper.download("/test.pdf");
@@ -136,7 +161,11 @@ describe("FileDownloadHelper", () => {
     jest.mocked(resolve).mockReturnValue("/test.xyz");
     jest.mocked(basename).mockReturnValue("test.xyz");
     jest.mocked(extname).mockReturnValue(".xyz");
-    jest.mocked(stat).mockResolvedValue({ isFile: () => true } as any);
+    jest
+      .mocked(stat)
+      .mockResolvedValue({
+        isFile: () => true,
+      } satisfies Partial<Stats> as Stats);
     jest.mocked(readFile).mockResolvedValue(mockContent);
 
     const response = await fileDownloadHelper.download("/test.xyz");

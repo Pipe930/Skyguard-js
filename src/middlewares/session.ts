@@ -16,7 +16,7 @@ type SessionStorageConstructor<T extends SessionStorage = SessionStorage> =
 /**
  * Options inspired by express-session and adapted to Skyguard.
  */
-export interface SessionMiddlewareOptions {
+export interface SessionOptions {
   /**
    * Name of the cookie that carries the session id.
    * @default "connect.sid"
@@ -39,68 +39,6 @@ export interface SessionMiddlewareOptions {
    * Session cookie attributes.
    */
   cookie?: CookieOptions;
-}
-
-/**
- * Fully-resolved session middleware configuration.
- *
- * This is the normalized configuration used internally by the middleware after
- * applying defaults and coercing optional values into a complete shape.
- *
- * Notes:
- * - `cookie` is `Required<CookieOptions>` to guarantee all attributes are present.
- * - `name` is the cookie name that stores the session id (e.g., "connect.sid").
- * - `rolling` refreshes the session TTL (and re-sets the cookie) on every request
- *   when a session exists.
- * - `saveUninitialized` creates a session (and sets a cookie) even if the user
- *   has not stored any data yet.
- */
-interface ResolvedSessionOptions {
-  /** Cookie name used to store the session id (default: "connect.sid"). */
-  name: string;
-
-  /**
-   * When true, refreshes session expiration on every response (when a session exists).
-   * This typically implies calling `touch()` and re-sending `Set-Cookie`.
-   */
-  rolling: boolean;
-
-  /**
-   * When true, creates a new session for requests without an existing session id,
-   * even if no session data is written.
-   */
-  saveUninitialized: boolean;
-
-  /**
-   * Normalized cookie attributes used when serializing the `Set-Cookie` header.
-   */
-  cookie: Required<CookieOptions>;
-}
-
-/**
- * Normalizes raw middleware options by applying defaults and producing a fully
- * resolved configuration object.
- *
- * @param rawOptions - User-provided middleware options (possibly partial/undefined).
- * @returns A fully-resolved configuration suitable for internal use.
- */
-function resolveOptions(
-  rawOptions: SessionMiddlewareOptions = {},
-): ResolvedSessionOptions {
-  const maxAge = rawOptions.cookie?.maxAge ?? 86400;
-
-  return {
-    name: rawOptions.name ?? "connect.sid",
-    rolling: rawOptions.rolling ?? false,
-    saveUninitialized: rawOptions.saveUninitialized ?? false,
-    cookie: {
-      maxAge,
-      httpOnly: rawOptions.cookie?.httpOnly ?? true,
-      secure: rawOptions.cookie?.secure ?? false,
-      sameSite: rawOptions.cookie?.sameSite ?? "Lax",
-      path: rawOptions.cookie?.path ?? "/",
-    },
-  };
 }
 
 /**
@@ -148,9 +86,20 @@ async function loadSessionFromCookie(
  */
 export const sessions = (
   StorageClass: SessionStorageConstructor,
-  options: SessionMiddlewareOptions = {},
+  options: SessionOptions = {},
 ): Middleware => {
-  const config = resolveOptions(options);
+  const config = {
+    name: options.name ?? "connect.sid",
+    rolling: options.rolling ?? false,
+    saveUninitialized: options.saveUninitialized ?? false,
+    cookie: {
+      maxAge: options.cookie?.maxAge ?? 86400,
+      httpOnly: options.cookie?.httpOnly ?? true,
+      secure: options.cookie?.secure ?? false,
+      sameSite: options.cookie?.sameSite ?? "Lax",
+      path: options.cookie?.path ?? "/",
+    },
+  };
 
   return async (request, next) => {
     const cookies = parseCookies(request.headers.cookie);
@@ -164,16 +113,12 @@ export const sessions = (
 
     const sessionIdBefore = storage.id();
 
-    if (!sessionIdBefore && config.saveUninitialized) {
-      await storage.start();
-    }
+    if (!sessionIdBefore && config.saveUninitialized) await storage.start();
 
     const response = await next(request);
     const sessionIdAfter = storage.id();
 
-    if (sessionIdAfter && config.rolling) {
-      await storage.touch();
-    }
+    if (sessionIdAfter && config.rolling) await storage.touch();
 
     const sessionWasCreated = !sessionIdBefore && Boolean(sessionIdAfter);
     const shouldSetCookie =

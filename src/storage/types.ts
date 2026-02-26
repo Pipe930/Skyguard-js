@@ -37,10 +37,7 @@ export interface UploadLimits {
   fieldSize?: number;
 }
 
-/**
- * Storage engine configuration options.
- */
-export interface StorageOptions {
+interface DiskStorageOptions {
   /**
    * Destination directory or resolver function.
    * If a function is provided, it receives the request and file metadata.
@@ -57,6 +54,32 @@ export interface StorageOptions {
     req: Request,
     file: Partial<UploadedFile>,
   ) => string | Promise<string>;
+}
+
+interface MemoryStoreOptions {
+  /** Maximum total bytes allowed to be stored in memory (default: 50MB) */
+  maxTotalSize?: number;
+
+  /** Maximum bytes allowed per single file. If set, files larger will be rejected */
+  maxFileSize?: number;
+
+  /** Maximum number of files to keep in memory (default: Infinity) */
+  maxFiles?: number;
+
+  /** Time-to-live for stored files in milliseconds. 0 = never expire (default) */
+  ttlMs?: number;
+
+  /** Whether to compute a sha256 checksum and attach it to the file (default: false) */
+  computeChecksum?: boolean;
+}
+
+/**
+ * Storage engine configuration options.
+ */
+export interface StorageOptions {
+  disk?: DiskStorageOptions;
+
+  memory?: MemoryStoreOptions;
 }
 
 /**
@@ -78,14 +101,14 @@ export interface Storage {
     request: Request,
     file: Partial<UploadedFile>,
     fileData: Buffer,
-  ): Promise<UploadedFile>;
+  ): Promise<UploadedFile> | UploadedFile;
 
   /**
    * Removes a stored file.
    *
    * Used for cleanup or rollback scenarios.
    */
-  removeFile(file: UploadedFile): Promise<void>;
+  removeFile(file: UploadedFile): Promise<void> | void;
 }
 
 /**

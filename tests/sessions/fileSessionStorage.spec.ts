@@ -93,8 +93,16 @@ describe("FileSessionStorage", () => {
     await storage.load(mockSessionId);
 
     expect(writeFile).toHaveBeenCalled();
+    const [[, writtenContent]] = (
+      writeFile as jest.MockedFunction<typeof writeFile>
+    ).mock.calls;
+
     const savedData = JSON.parse(
-      (writeFile as jest.Mock).mock.calls[0]?.[1] as string,
+      typeof writtenContent === "string"
+        ? writtenContent
+        : Buffer.isBuffer(writtenContent)
+          ? writtenContent.toString()
+          : JSON.stringify(writtenContent),
     ) as SessionData;
     expect(savedData.expiresAt).toBe(Date.now() + mockExpiredSession * 1000);
   });
@@ -291,12 +299,15 @@ describe("FileSessionStorage", () => {
 
     await storage.set("key", "value");
 
-    const writeFileCalls = (writeFile as jest.Mock).mock.calls;
-    const renameCalls = (rename as jest.Mock).mock.calls;
+    const writeFileMock = writeFile as jest.MockedFunction<typeof writeFile>;
+    const renameMock = rename as jest.MockedFunction<typeof rename>;
 
-    expect(writeFileCalls[0][0]).toContain(".tmp");
-    expect(renameCalls[0][0]).toContain(".tmp");
-    expect(renameCalls[0][1]).not.toContain(".tmp");
+    const [[tmpPath]] = writeFileMock.mock.calls; // writeFile(path, data, ...)
+    const [[fromTmp, toFinal]] = renameMock.mock.calls; // rename(oldPath, newPath)
+
+    expect(JSON.stringify(tmpPath)).toContain(".tmp");
+    expect(String(fromTmp)).toContain(".tmp");
+    expect(String(toFinal)).not.toContain(".tmp");
   });
 
   it("should throw InternalServerError on persistence failure", async () => {
