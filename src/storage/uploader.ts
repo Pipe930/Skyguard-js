@@ -374,7 +374,7 @@ class Uploader {
     request: Request,
     fileData: MultipartData["files"][0],
   ): Promise<void> {
-    if (!this.fileFilter) return;
+    if (!this.fileFilter) return Promise.resolve();
 
     const partialFile: Partial<UploadedFile> = {
       fieldName: fileData.fieldName,
@@ -383,10 +383,9 @@ class Uploader {
     };
 
     return new Promise<void>((resolve, reject) => {
-      this.fileFilter(request, partialFile, (error, acceptFile) => {
+      const finish = (error: Error | null, accept?: boolean) => {
         if (error) return reject(error);
-
-        if (!acceptFile) {
+        if (!accept) {
           return reject(
             new UploadException(
               `File type not allowed: ${fileData.mimetype}`,
@@ -395,9 +394,30 @@ class Uploader {
             ),
           );
         }
-
         resolve();
-      });
+      };
+
+      // Call the filter; it may use the callback or return a Promise.
+      try {
+        const result = this.fileFilter(
+          request,
+          partialFile,
+          (error, acceptFile) => {
+            finish(error, acceptFile);
+          },
+        );
+
+        // If the filter returned a Promise and didn't use the callback,
+        // wire its resolution to our finish function to avoid unhandled
+        // (floating) promises.
+        if (result && typeof result.then === "function") {
+          result
+            .then(() => finish(null, true))
+            .catch(err => finish(err as Error));
+        }
+      } catch (err) {
+        finish(err as Error);
+      }
     });
   }
 

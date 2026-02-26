@@ -175,7 +175,6 @@ export class MemoryStorage implements Storage {
   private maxFiles: number;
   private ttlMs: number;
   private computeChecksum: boolean;
-  private cleanupTimer?: NodeJS.Timeout;
 
   constructor(options: StorageOptions = {}) {
     this.maxTotalSize = options.memory.maxTotalSize ?? 50 * 1024 * 1024; // 50MB
@@ -298,12 +297,5 @@ export class MemoryStorage implements Storage {
         this.store.delete(keyByName);
       }
     }
-  }
-
-  // Ensure we clean up timer if the engine is garbage collected
-  public dispose(): void {
-    if (this.cleanupTimer) clearInterval(this.cleanupTimer);
-    this.store.clear();
-    this.totalSize = 0;
   }
 }

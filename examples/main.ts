@@ -18,8 +18,11 @@ const app = createApp();
 
 const uploader = createUploader({
   storageType: StorageType.DISK,
+
   storageOptions: {
-    destination: "./uploads",
+    disk: {
+      destination: "./uploads",
+    },
   },
   limits: {
     fileSize: 5 * 1024 * 1024,
@@ -74,7 +77,7 @@ app.post(
 );
 
 app.get("/home", () => {
-  return render("<>h1>Hola mundo</h1><p>Esta es una vista renderizada</p>");
+  return render("<h1>Hola mundo</h1><p>Esta es una vista renderizada</p>");
 });
 
 app.get("/test", () => {

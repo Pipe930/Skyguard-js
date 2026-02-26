@@ -63,8 +63,8 @@ export class App {
    */
   public static bootstrap(): App {
     const app = Container.singleton(App);
-    app.router = new Router();
-    app.logger = new Logger();
+    app.router = Container.singleton(Router);
+    app.logger = Container.singleton(Logger);
     app.viewEngine = Container.singleton(ViewEngine);
 
     return app;
@@ -295,6 +295,8 @@ export class App {
         message: "Internal Server Error",
       }).setStatusCode(500),
     );
+
+    // eslint-disable-next-line no-console
     console.error(error);
   }
 }
