@@ -1,5 +1,9 @@
 import type { Middleware, RouteHandler } from "../types";
 
+const escapeRegex = (value: string): string => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
 /**
  * Represents a single route layer in the routing system.
  *
@@ -40,7 +44,8 @@ export class Layer {
    */
   constructor(url: string, action: RouteHandler) {
     const paramRegex = /\{([a-zA-Z]+)\}/g;
-    const regexSource = url.replace(paramRegex, "([a-zA-Z0-9]+)");
+    const escapedUrl = escapeRegex(url);
+    const regexSource = escapedUrl.replace(/\\{([a-zA-Z]+)\\}/g, "([a-zA-Z0-9]+)");
 
     this.url = url;
     this.regex = new RegExp(`^${regexSource}/?$`);

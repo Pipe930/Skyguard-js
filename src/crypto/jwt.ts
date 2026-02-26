@@ -80,25 +80,26 @@ export const createJWT = (
  * @returns Payload decodificado o null si es inválido
  */
 export const verifyJWT = (token: string, secret: string): JWTPayload | null => {
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-
-  const [encodedHeader, encodedPayload, signature] = parts;
-
-  const data = `${encodedHeader}.${encodedPayload}`;
-  const expectedSignature = createHmac("sha256", secret)
-    .update(data)
-    .digest("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
-
-  const signatureBuffer = Buffer.from(signature);
-  const computedBuffer = Buffer.from(expectedSignature);
-
-  if (!timingSafeEqual(signatureBuffer, computedBuffer)) return null;
-
   try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    const [encodedHeader, encodedPayload, signature] = parts;
+
+    const data = `${encodedHeader}.${encodedPayload}`;
+    const expectedSignature = createHmac("sha256", secret)
+      .update(data)
+      .digest("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
+
+    const signatureBuffer = Buffer.from(signature);
+    const computedBuffer = Buffer.from(expectedSignature);
+
+    if (signatureBuffer.length !== computedBuffer.length) return null;
+    if (!timingSafeEqual(signatureBuffer, computedBuffer)) return null;
+
     const payload = JSON.parse(base64UrlDecode(encodedPayload)) as JWTPayload;
 
     if (!payload.exp) return null;

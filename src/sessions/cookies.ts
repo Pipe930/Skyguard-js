@@ -105,7 +105,12 @@ export function parseCookies(
       .filter(Boolean)
       .map(cookie => {
         const [key, ...value] = cookie.split("=");
-        return [key, decodeURIComponent(value.join("="))];
+
+        try {
+          return [key, decodeURIComponent(value.join("="))] as const;
+        } catch {
+          return [key, value.join("=")] as const;
+        }
       }),
   );
 }

@@ -51,4 +51,12 @@ describe("LayerTest", () => {
     const params2 = layerWithParams.parseParameters("/product/books/456");
     expect(params2).toEqual({ category: "books", id: "456" });
   });
+
+  it("should escape regex-special characters in static segments", () => {
+    const layerWithSpecialChars = new Layer("/v1.0/users+active/{id}", jest.fn());
+
+    expect(layerWithSpecialChars.matches("/v1.0/users+active/123")).toBe(true);
+    expect(layerWithSpecialChars.matches("/v10/usersactive/123")).toBe(false);
+  });
+
 });
