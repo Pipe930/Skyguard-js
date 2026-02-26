@@ -5,7 +5,7 @@ import { json, redirect, text, download, render } from "../src/helpers/http";
 import { v, schema } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
-import { FileSessionStorage } from "../src/sessions";
+import { MemorySessionStorage } from "../src/sessions";
 import { hash, verify, createJWT } from "../src/crypto";
 import { UnauthorizedError } from "../src/exceptions/httpExceptions";
 import { authJWT } from "../src/middlewares/auth";
@@ -49,7 +49,11 @@ app.middlewares([
   cors({
     origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
   }),
-  sessions(FileSessionStorage),
+  sessions(MemorySessionStorage, {
+    name: "holamundo",
+    rolling: false,
+    saveUninitialized: false,
+  }),
 ]);
 
 app.get("/test/{id}/nel/{param}", (request: Request) => {
@@ -179,8 +183,13 @@ app.get(
 );
 
 app.post("/logout", (request: Request) => {
+  const cookies = request.cookies;
+
+  if (!cookies) throw new UnauthorizedError("No estas autenticado");
+
   request.session.destroy();
-  return json({ message: "Logged out" });
+
+  return json({ message: "Logged out" }).removeCookie("holamundo");
 });
 
 app.run(PORT, () => {

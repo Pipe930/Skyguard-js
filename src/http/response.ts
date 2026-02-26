@@ -4,6 +4,7 @@ import { InvalidHttpStatusException } from "../exceptions/invalidHttpStatusExcep
 import { FileDownloadHelper } from "../static/fileDownload";
 import { ViewEngine } from "../views/engineTemplate";
 import { Container } from "../container/container";
+import { type CookieOptions, serializeCookie } from "../sessions/cookies";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -68,6 +69,41 @@ export class Response {
 
   public removeHeader(header: string): void {
     delete this._headers[header];
+  }
+
+  /**
+   * Sets a cookie in the `Set-Cookie` response header.
+   */
+  public setCookie(
+    name: string,
+    value: string,
+    options: CookieOptions = {},
+  ): this {
+    const cookie = serializeCookie(name, value, options);
+    const current = this._headers["Set-Cookie"];
+
+    if (!current) {
+      this._headers["Set-Cookie"] = cookie;
+      return this;
+    }
+
+    if (Array.isArray(current)) {
+      this._headers["Set-Cookie"] = [...current, cookie];
+      return this;
+    }
+
+    this._headers["Set-Cookie"] = [current, cookie];
+    return this;
+  }
+
+  /**
+   * Clears a cookie by setting an empty value and immediate expiration.
+   */
+  public removeCookie(name: string, options: CookieOptions = {}): this {
+    return this.setCookie(name, "", {
+      ...options,
+      maxAge: 0,
+    });
   }
 
   /**

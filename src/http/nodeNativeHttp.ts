@@ -68,7 +68,7 @@ export class NodeHttpAdapter implements HttpAdapter {
     const headers = response.headers;
 
     for (const [header, value] of Object.entries(headers)) {
-      this.res.setHeader(header, value as string);
+      this.res.setHeader(header, value);
     }
 
     if (!response.content) this.res.removeHeader("Content-Type");

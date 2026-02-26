@@ -1,3 +1,6 @@
+/** Regex valid session id */
+export const SESSION_ID_REGEX = /^[a-f0-9]{64}$/;
+
 /**
  * Contract for session storage implementations.
  *

@@ -4,7 +4,10 @@ import { MemorySessionStorage } from "../../src/sessions/memorySessionStorage";
 describe("Memory Session Storage Test", () => {
   const STORAGE_KEY = "storageSessions";
 
-  const getStaticMap = (): Map<string, { data: Record<string, unknown>; expiresAt: number }> =>
+  const getStaticMap = (): Map<
+    string,
+    { data: Record<string, unknown>; expiresAt: number }
+  > =>
     (MemorySessionStorage as unknown as Record<string, unknown>)[
       STORAGE_KEY
     ] as Map<string, { data: Record<string, unknown>; expiresAt: number }>;
@@ -34,7 +37,7 @@ describe("Memory Session Storage Test", () => {
     const id = storage.id();
     expect(id).toMatch(/^[a-f0-9]{64}$/);
 
-    const entry = getStaticMap().get(id as string);
+    const entry = getStaticMap().get(id);
     expect(entry?.data).toEqual({});
     expect(entry?.expiresAt).toBe(Date.now() + 10_000);
   });

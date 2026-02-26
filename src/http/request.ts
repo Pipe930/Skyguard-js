@@ -3,6 +3,7 @@ import type { Headers } from "../types";
 import { Validator, type FieldDefinition } from "../validators";
 import { Session } from "../sessions";
 import type { UploadedFile } from "../parsers/parserInterface";
+import { parseCookies } from "../sessions/cookies";
 
 /**
  * Represents an incoming client request within the framework.
@@ -111,6 +112,27 @@ export class Request {
 
   public setSession(session: Session) {
     this._session = session;
+  }
+
+  /**
+   * Returns all request cookies as a key-value object.
+   */
+  get cookies(): Record<string, string> {
+    return parseCookies(this._headers?.cookie);
+  }
+
+  /**
+   * Returns a cookie value by name.
+   */
+  public getCookie(name: string): string | undefined {
+    return this.cookies[name];
+  }
+
+  /**
+   * Checks whether a cookie exists.
+   */
+  public hasCookie(name: string): boolean {
+    return name in this.cookies;
   }
 
   /**
