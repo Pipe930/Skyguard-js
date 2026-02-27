@@ -30,9 +30,6 @@ export class ContentParserManager {
    * Parsers registered later take priority over existing ones.
    *
    * @param parser - Content parser implementation
-   *
-   * @example
-   * contentParserManager.registerParser(new CustomParser());
    */
   public registerParser(parser: ContentParser): void {
     // Insert at the beginning to give higher priority
@@ -47,9 +44,6 @@ export class ContentParserManager {
    *
    * @param req - Native incoming HTTP request
    * @returns Parsed body content or raw body
-   *
-   * @example
-   * const data = await contentParserManager.parse(req);
    */
   public async parse(req: IncomingMessage): Promise<unknown> {
     const body = await this.readBody(req);

@@ -55,12 +55,14 @@ import { createApp, Response } from "skyguard-js";
 
 const app = createApp();
 
+const PORT = 3000;
+
 app.get("/health", () => {
   return Response.json({ status: "ok" });
 });
 
-app.run(3000, () => {
-  console.log(`Server running in port: http://localhost:${3000}`);
+app.run(PORT, () => {
+  console.log(`Server running in port: http://localhost:${PORT}`);
 });
 ```
 
@@ -136,11 +138,12 @@ To enable CORS, use the built-in `cors` middleware.
 
 ```ts
 import { cors } from "skyguard-js/middlewares";
+import { HttpMethods } from "skyguard-js";
 
 app.middlewares([
   cors({
     origin: ["http://localhost:3000", "https://myapp.com"],
-    methods: ["GET", "POST"],
+    methods: [HttpMethods.get, HttpMethods.post],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
@@ -289,7 +292,6 @@ The framework includes some password hashing and JWT token generation functions,
 
 ```ts
 import { hash, verify, createJWT } from "skyguard-js/security";
-import { authJWT } from "skyguard-js/middlewares";
 
 app.post("/register", async (request: Request) => {
   const { username, password } = request.data;
@@ -313,25 +315,13 @@ app.post("/login", async (request: Request) => {
     throw new UnauthorizedError("Invalid credentials");
   }
 
-  const token = createJWT(
-    { sub: user.id, role: user.role },
-    "secret-key",
-    3600,
-  );
+  const token = createJWT({ sub: "123" }, "secret-key", {
+    algorithm: "HS256",
+    expiresIn: "1h",
+  });
 
   return Response.json({ token });
 });
-
-app.get(
-  "/verify-jwt",
-  (request: Request) => {
-    // The request stores a user state; the middleware creates and assigns this state to the request.state object.
-    const user = request.state.user;
-
-    return json({ user });
-  },
-  [authJWT("secret-key")],
-);
 ```
 
 ---

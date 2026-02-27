@@ -501,6 +501,27 @@ class Uploader {
  *
  * @param config Optional uploader configuration.
  * @returns A configured {@link Uploader}.
+ *
+ * @example
+ *
+ * // Create uploader
+ * const uploader = createUploader({
+      storageType: StorageType.DISK,
+
+      storageOptions: {
+        disk: {
+          destination: "./uploads",
+        },
+      },
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+    });
+
+    // Asign middleware a route
+    app.post("/file", (request) => {
+      return json({ file: request.file });
+    }, [uploader.single()])
  */
 export function createUploader(config?: UploaderConfig): Uploader {
   return new Uploader(config);

@@ -104,18 +104,22 @@ const resolveOrigin = (
 };
 
 /**
- * Native CORS middleware.
- *
- * Behavior overview:
- * - Resolves the allowed origin from the request `Origin` header using `resolveOrigin`.
- * - Sets `Access-Control-Allow-Origin` (and `Vary: Origin` when not `"*"`).
- * - Optionally sets `Access-Control-Allow-Credentials` and `Access-Control-Expose-Headers`.
- * - For OPTIONS requests, returns a 204 response (unless `preflightContinue` is enabled),
- *   including `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, and
- *   `Access-Control-Max-Age`.
+ * Native CORS middleware, generates a CORS configuration for the server.
  *
  * @param options - CORS configuration.
  * @returns A `Middleware` function that applies CORS headers to the response.
+ *
+ * @example
+ * import { HttpMethods } from "skyguard-js"
+ *
+ * app.middleware([
+ *   cors({
+ *      origin: "http://localhost:3000/",
+ *      methods: [HttpMethods.get, HttpMethods.post],
+ *      credentials: true,
+ *      maxAge: 85000
+ *   })
+ * ])
  */
 export const cors = (options: CorsOptions = {}): Middleware => {
   const config = {

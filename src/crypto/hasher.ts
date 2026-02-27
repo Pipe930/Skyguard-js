@@ -116,6 +116,9 @@ const parseHash = (hash: string): ParsedHash | null => {
  * @param params - Scrypt work-factor params. Defaults to `DEFAULT_PARAMS`.
  * @param pepper - Optional server secret mixed into the password (e.g., from env var).
  * @returns A compact encoded hash string containing algorithm parameters + salt + derived key.
+ *
+ * @example
+ * const passwordHash = await hash("password", 16);
  */
 export const hash = async (
   password: string,
@@ -149,6 +152,9 @@ export const hash = async (
  * @param storedHash - Stored hash string in the compact format.
  * @param pepper - Optional server secret; must match the one used when hashing.
  * @returns `true` if the password matches, otherwise `false`.
+ *
+ * @example
+ * const validPassword = await verify("password", "passwordHashed");
  */
 export const verify = async (
   password: string,
@@ -193,6 +199,9 @@ export const verify = async (
  * @param storedHash - Stored hash string in compact format.
  * @param params - Desired/current scrypt params. Defaults to `DEFAULT_PARAMS`.
  * @returns `true` if the hash is missing/invalid or was produced with different parameters.
+ *
+ * @example
+ * const passwordRehash = needsRehash("passwordHashed");
  */
 export const needsRehash = (
   storedHash: string,
@@ -250,23 +259,21 @@ const mapLimit = async <T, R>(
  *   - pepper: optional server secret
  *   - concurrency: max simultaneous operations (default 4)
  * @returns Array of compact hash strings in the same order as input.
+ *
+ * @example
+ *
+ * const listPasswords = ["password1", "password2", "password3"];
+ * const passwordsHasherList = await hashBatch(listPasswords, 16);
  */
 export const hashBatch = async (
   passwords: string[],
-  options?: {
-    saltLength?: number;
-    params?: ScryptOptions;
-    pepper?: string;
-    concurrency?: number; // default: 4
-  },
+  saltLength = 16,
+  params: ScryptOptions = DEFAULT_PARAMS,
+  pepper?: string,
+  concurrency = 4,
 ): Promise<string[]> => {
-  const saltLength = options?.saltLength ?? 16;
-  const params = options?.params ?? DEFAULT_PARAMS;
-  const pepper = options?.pepper;
-  const concurrency = options?.concurrency ?? 4;
-
-  return mapLimit(passwords, concurrency, p =>
-    hash(p, saltLength, params, pepper),
+  return mapLimit(passwords, concurrency, password =>
+    hash(password, saltLength, params, pepper),
   );
 };
 
@@ -281,18 +288,16 @@ export const hashBatch = async (
  *   - pepper: optional server secret
  *   - concurrency: max simultaneous operations (default 8)
  * @returns Array of booleans in the same order as input.
+ *
+ * @example
+ * const verifyPasswords = await verifyBatch([{ password: "test", hash: "testHash" }, { password: "test2", hash: "testHash2" }]);
  */
 export const verifyBatch = async (
   credentials: Array<{ password: string; hash: string }>,
-  options?: {
-    pepper?: string;
-    concurrency?: number; // default: 8
-  },
+  pepper?: string,
+  concurrency = 8,
 ): Promise<boolean[]> => {
-  const pepper = options?.pepper;
-  const concurrency = options?.concurrency ?? 8;
-
-  return mapLimit(credentials, concurrency, c =>
-    verify(c.password, c.hash, pepper),
+  return mapLimit(credentials, concurrency, credential =>
+    verify(credential.password, credential.hash, pepper),
   );
 };

@@ -10,17 +10,6 @@ import { buildFullPath } from "./buildFullPath";
  *
  * Registers routes by HTTP method, resolves the matching {@link Layer},
  * and executes the route handler with middleware support (onion model).
- *
- * @example
- * const router = new Router();
- *
- * router.setPrefix("/api");
- * router.middlewares([LoggerMiddleware]);
- *
- * router.get("/users/{id}", (req) => {
- *   const id = req.getParams("id");
- *   return Response.json({ id });
- * }, [AuthMiddleware]);
  */
 export class Router {
   /** Routes organized by HTTP method */
@@ -47,10 +36,6 @@ export class Router {
    * @param request - Incoming framework request
    * @returns The matching {@link Layer}
    * @throws {HttpNotFoundException} If no route matches
-   *
-   * @example
-   * // assuming: router.get("/users/{id}", handler)
-   * const layer = router.resolveLayer(request);
    */
   public resolveLayer(request: Request): Layer {
     const routes = this.routes[request.method];
@@ -73,9 +58,6 @@ export class Router {
    *
    * @param request - Request to process
    * @returns The handler/middleware response (sync or async)
-   *
-   * @example
-   * const response = await router.resolve(request);
    */
   public resolve(request: Request): Promise<Response> | Response {
     const executeLayer = (req: Request): Promise<Response> | Response => {
@@ -112,8 +94,6 @@ export class Router {
    * @param middlewares - Remaining middlewares to execute
    * @param target - Final route handler
    * @returns The response returned by a middleware or the final handler
-   *
-   * @internal
    */
   private runMiddlewares(
     request: Request,
@@ -135,8 +115,6 @@ export class Router {
    * @param action - Route handler
    * @param middlewares - Optional middlewares applied only to this route
    * @returns The created {@link Layer}
-   *
-   * @internal
    */
   private registerRoute(
     method: HttpMethods,
@@ -158,10 +136,6 @@ export class Router {
    *
    * @param prefix - Prefix to apply (e.g. "api", "/v1")
    * @returns The router instance (for chaining)
-   *
-   * @example
-   * router.setPrefix("api");
-   * router.get("/users", handler); // -> /api/users
    */
   public setPrefix(prefix: string): this {
     this.globalPrefix = prefix;
@@ -176,13 +150,6 @@ export class Router {
    *
    * @param prefix - Base prefix for the group
    * @param callback - Function used to register group routes
-   *
-   * @example
-   * router.group("/api", (api) => {
-   *   api.use(AuthMiddleware);
-   *   api.get("/users", listUsers);
-   *   api.post("/users", createUser);
-   * });
    */
   public group(prefix: string, callback: (group: RouterGroup) => void): void {
     const group = new RouterGroup(prefix, this);
@@ -194,9 +161,6 @@ export class Router {
    *
    * @param middlewares - Middleware list
    * @returns The router instance (for chaining)
-   *
-   * @example
-   * router.middlewares([LoggerMiddleware, CorsMiddleware]);
    */
   public middlewares(middlewares: Middleware[]): this {
     this.globalMiddlewares.push(...middlewares);

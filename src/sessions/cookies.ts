@@ -3,16 +3,6 @@
  *
  * Defines attributes that control the behavior and security
  * of the session cookie sent to the client.
- *
- * @example
- * const options: CookieOptions = {
- *   cookieName: "session_id",
- *   maxAge: 60 * 60 * 24, // 1 day
- *   httpOnly: true,
- *   secure: true,
- *   sameSite: "Lax",
- *   path: "/",
- * };
  */
 export interface CookieOptions {
   /**
@@ -81,14 +71,6 @@ export interface CookieOptions {
  *
  * @returns A record where each key is the cookie name and each value
  * is the decoded cookie value.
- *
- * @example
- * parseCookies("sessionId=abc123; theme=dark");
- * // => { sessionId: "abc123", theme: "dark" }
- *
- * @example
- * parseCookies(undefined);
- * // => {}
  */
 export function parseCookies(
   cookieHeader?: string | string[],
@@ -134,17 +116,6 @@ export function parseCookies(
  * @param options - Optional cookie configuration.
  *
  * @returns A properly formatted `Set-Cookie` header string.
- *
- * @example
- * serializeCookie("sessionId", "abc123", {
- *   httpOnly: true,
- *   secure: true,
- *   path: "/",
- *   maxAge: 3600,
- *   sameSite: "Strict"
- * });
- *
- * // => "sessionId=abc123; Max-Age=3600; Path=/; SameSite=Strict; HttpOnly; Secure"
  */
 export function serializeCookie(
   name: string,

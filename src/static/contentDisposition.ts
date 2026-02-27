@@ -21,18 +21,6 @@ export interface ContentDispositionOptions {
  *
  * Implements RFC 6266 and RFC 8187 for broad browser compatibility.
  * Prevents header injection and handles non-ASCII filenames correctly.
- *
- * @example
- * const cd = new ContentDisposition();
- *
- * cd.attachment("report.pdf");
- * // => 'attachment; filename="report.pdf"'
- *
- * cd.attachment("reporte año 2024.pdf");
- * // => 'attachment; filename="reporte ano 2024.pdf"; filename*=UTF-8\'\'reporte%20a%C3%B1o%202024.pdf'
- *
- * cd.inline("image.jpg");
- * // => 'inline; filename="image.jpg"'
  */
 export class ContentDisposition {
   /**
@@ -55,6 +43,20 @@ export class ContentDisposition {
     return this.create("inline", filename);
   }
 
+  /**
+   * Creates a `Content-Disposition` header value with a sanitized filename.
+   *
+   * If the filename contains non-ASCII characters, the value includes:
+   * - `filename="..."` as an ASCII fallback (quoted-string)
+   * - `filename*=UTF-8''...` using RFC 8187 percent-encoding
+   *
+   * This mirrors common browser-compatible behavior for international filenames.
+   *
+   * @param type - Disposition type (`attachment` or `inline`).
+   * @param filename - Original file name provided by the caller.
+   * @returns Fully formatted `Content-Disposition` header value.
+   * @throws ContentDispositionException if `filename` is missing or not a string.
+   */
   private create(type: "attachment" | "inline", filename: string): string {
     if (!filename || typeof filename !== "string") {
       throw new ContentDispositionException();
@@ -76,6 +78,18 @@ export class ContentDisposition {
     return disposition;
   }
 
+  /**
+   * Sanitizes a filename for safe inclusion in HTTP headers.
+   *
+   * This method:
+   * - Removes ASCII control characters (0x00–0x1F) and C1 controls (0x7F–0x9F)
+   * - Strips double quotes and CR/LF to prevent header injection
+   * - Removes path separators (`/` and `\`) to prevent path-like values
+   * - Collapses consecutive whitespace into single spaces and trims edges
+   *
+   * @param filename - Raw file name input.
+   * @returns A sanitized filename safe to embed in `Content-Disposition`.
+   */
   private sanitizeFilename(filename: string): string {
     return filename
       .split("")
@@ -90,10 +104,32 @@ export class ContentDisposition {
       .trim();
   }
 
+  /**
+   * Checks whether a filename contains non-ASCII characters.
+   *
+   * If true, the value should include an RFC 8187 `filename*=` parameter
+   * for correct UTF-8 handling across clients.
+   *
+   * @param filename - Sanitized filename.
+   * @returns `true` if the filename contains characters outside the visible ASCII range.
+   */
   private needsEncoding(filename: string): boolean {
     return /[^\x20-\x7E]/.test(filename);
   }
 
+  /**
+   * Creates an ASCII-only fallback filename.
+   *
+   * Some clients do not support RFC 8187 (`filename*=`). In those cases,
+   * providing a conservative ASCII `filename="..."` improves compatibility.
+   *
+   * The algorithm:
+   * - Performs a small transliteration for common Latin characters
+   * - Removes any remaining non-ASCII characters
+   *
+   * @param filename - Sanitized filename that may contain non-ASCII characters.
+   * @returns An ASCII-only fallback filename.
+   */
   private createAsciiFallback(filename: string): string {
     const charMap: Record<string, string> = {
       á: "a",
@@ -128,10 +164,32 @@ export class ContentDisposition {
     return result;
   }
 
+  /**
+   * Escapes double quotes for inclusion inside a quoted-string parameter.
+   *
+   * Example:
+   * - `my"file.txt` -> `my\"file.txt`
+   *
+   * @param filename - Filename to escape.
+   * @returns Escaped string safe for `filename="..."`.
+   */
   private escapeQuotes(filename: string): string {
     return filename.replace(/"/g, '\\"');
   }
 
+  /**
+   * Encodes a string for RFC 8187 `filename*=` parameters.
+   *
+   * RFC 8187 uses:
+   * - UTF-8 byte encoding
+   * - Percent-encoding for bytes outside the allowed attribute-char set
+   *
+   * This method percent-encodes any character that is not an `attr-char`
+   * as defined by the RFC.
+   *
+   * @param filename - UTF-8 filename to encode.
+   * @returns RFC 8187 percent-encoded string (without the `UTF-8''` prefix).
+   */
   private encodeRFC8187(filename: string): string {
     const attrChar = /[a-zA-Z0-9!#$&+.^_`|~-]/;
     let encoded = "";
@@ -155,15 +213,16 @@ export class ContentDisposition {
   /**
    * Parses an existing `Content-Disposition` header value.
    *
-   * Supports both `filename=` and `filename*=` (RFC 8187).
+   * Supports both:
+   * - `filename="..."` (quoted-string, with `\"` unescaping)
+   * - `filename*=UTF-8''...` (RFC 8187 encoded form, decoded via `decodeURIComponent`)
    *
-   * @param header - Raw `Content-Disposition` header value
-   * @returns Parsed disposition type and filename (if present)
+   * If both are present, `filename*=` takes precedence.
    *
-   * @example
-   * const cd = new ContentDisposition();
-   * cd.parse('attachment; filename="report.pdf"');
-   * // => { type: "attachment", filename: "report.pdf" }
+   * @param header - Raw `Content-Disposition` header value (e.g. `"attachment; filename=\"a.txt\""`).
+   * @returns An object containing:
+   * - `type`: the disposition type (e.g. `"attachment"` or `"inline"`)
+   * - `filename`: the extracted filename, or `null` if none is present
    */
   public parse(header: string): { type: string; filename: string | null } {
     const parts = header.split(";").map(p => p.trim());

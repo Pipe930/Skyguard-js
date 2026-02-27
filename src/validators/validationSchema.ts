@@ -19,7 +19,7 @@ import {
 /**
  * Main validator class - provides factory methods for creating validators
  */
-class Validator {
+class ValidatorRules {
   /**
    * Creates a string validator
    *
@@ -211,10 +211,11 @@ class ValidationSchema {
  * @returns ValidationSchema instance
  *
  * @example
- * const userSchema = validator.schema({
- *   name: validator.string({ maxLength: 60 }),
- *   email: validator.email(),
- *   age: validator.number({ min: 18 })
+ * const userSchema = schema({
+ *   name: v.string({ maxLength: 60 }),
+ *   email: v.string().email(),
+ *   age: v.number({ min: 18 }),
+ *   active: v.boolean().default(true),
  * })
  */
 export const schema = (
@@ -234,4 +235,4 @@ export const schema = (
 };
 
 // Export a singleton instance for convenience
-export const v = new Validator();
+export const v = new ValidatorRules();

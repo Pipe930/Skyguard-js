@@ -70,19 +70,29 @@ async function loadSessionFromCookie(
 }
 
 /**
- * Session lifecycle middleware.
- *
- * API inspired by `express-session`, adapted to the Skyguard architecture.
- *
- * Cookie emission rules:
- * - A cookie is set when a session id exists AND at least one of the following is true:
- *   - `rolling` is enabled (refresh cookie every request),
- *   - `saveUninitialized` is enabled (always create/set cookie when no prior session),
- *   - the session was created during this request.
+ * Session lifecycle middleware, the middleware configures the server to work with sessions and cookies..
  *
  * @param StorageClass - Session storage constructor used per request.
  * @param options - Raw session middleware options.
  * @returns A Skyguard `Middleware` that manages session load/save and cookie IO.
+ *
+ * @example
+ * import { FileSessionStorage } from "skyguard-js";
+ *
+ * app.middlewares([
+ *    sessions(FileSessionStorage, {
+        name: "connect.sid",
+        rolling: true,
+        saveUninitialized: false,
+        cookie: {
+          maxAge: 60 * 60 * 24,
+          httpOnly: true,
+          sameSite: "Lax",
+          secure: false,
+          path: "/",
+        },
+      }),
+    ]);
  */
 export const sessions = (
   StorageClass: SessionStorageConstructor,

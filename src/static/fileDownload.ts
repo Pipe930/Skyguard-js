@@ -38,20 +38,6 @@ export class FileDownloadHelper {
    * @throws {FileDownloadException}
    * Thrown if the file does not exist, is not a file,
    * or cannot be read.
-   *
-   * @example
-   * const helper = new FileDownloadHelper();
-   *
-   * app.get("/download", async () => {
-   *   return helper.download("./files/report.pdf");
-   * });
-   *
-   * // Custom filename and headers
-   * return helper.download(
-   *   "./files/data.csv",
-   *   "export.csv",
-   *   { "Cache-Control": "no-store" }
-   * );
    */
   public async download(
     filePath: string,

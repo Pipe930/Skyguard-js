@@ -10,13 +10,6 @@ import { Response } from "../http/response";
  * derived from the directory name (e.g. `/public`).
  *
  * Includes basic path traversal protection and sets cache-related headers.
- *
- * @example
- * const staticFiles = new StaticFileHandler("./public");
- *
- * // In your request pipeline:
- * const response = await staticFiles.tryServeFile(request.getUrl);
- * if (response) return response;
  */
 export class StaticFileHandler {
   private publicPath = "";
@@ -59,10 +52,6 @@ export class StaticFileHandler {
    *
    * @param requestPath - Requested path (e.g. `"/public/css/style.css"`)
    * @returns A {@link Response} containing the file, or `null` if not found
-   *
-   * @example
-   * const response = await staticFiles.tryServeFile("/public/app.js");
-   * if (response) return response;
    */
   public async tryServeFile(requestPath: string): Promise<Response | null> {
     try {

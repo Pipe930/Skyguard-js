@@ -10,23 +10,10 @@ type Methods = "get" | "post" | "put" | "patch" | "delete";
  * Allows registering routes under a shared prefix and shared middlewares.
  * Similar to `express.Router()` or Laravel `Route::group()`, but routes are
  * fully resolved at registration time.
- *
- * @example
- * router.group("/api", (api) => {
- *   api.middlewares([AuthMiddleware]);
- *
- *   api.get("/users", listUsers);
- *   api.post("/users", createUser, [AdminMiddleware]);
- * });
  */
 export class RouterGroup {
   /**
    * Base prefix applied to all group routes.
-   *
-   * @example
-   * prefix = "/api"
-   * path   = "/users"
-   * result = "/api/users"
    */
   private prefix = "";
 
@@ -76,8 +63,6 @@ export class RouterGroup {
    * @param action - Final route handler
    * @param middlewares - Route-specific middlewares
    * @returns The created {@link Layer}
-   *
-   * @internal
    */
   private addRoute(
     method: keyof Pick<Router, Methods>,

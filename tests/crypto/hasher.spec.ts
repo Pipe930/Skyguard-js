@@ -191,7 +191,7 @@ describe("Hasher Test", () => {
       jest
         .spyOn(hasher, "hash")
         .mockImplementation(async p => Promise.resolve(`H(${p})`));
-      const out = await hashBatch(["a", "b", "c"], { concurrency: 2 });
+      const out = await hashBatch(["a", "b", "c"]);
       expect(out).toEqual(["H(a)", "H(b)", "H(c)"]);
     });
 

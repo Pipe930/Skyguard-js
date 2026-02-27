@@ -28,21 +28,6 @@ export class Validator {
    * - `valid`: whether the data passed validation
    * - `errors`: list of validation errors
    * - `data`: original data when validation succeeds
-   *
-   * @example
-   * const schema = ValidationSchema.create()
-   *   .field("email").required().string().email()
-   *   .field("age").optional().number({ min: 18 })
-   *   .build();
-   *
-   * const result = Validator.validate(
-   *   { email: "a@b.com", age: 20 },
-   *   schema
-   * );
-   *
-   * if (!result.valid) {
-   *   console.log(result.errors);
-   * }
    */
   public static validate(
     data: Record<string, unknown>,
@@ -90,14 +75,6 @@ export class Validator {
    * @param schema - Validation schema definition
    * @returns The original data when validation succeeds
    * @throws {ValidationException} When validation fails
-   *
-   * @example
-   * const schema = schema({
-   *   email: validator.string().emaiil().required()
-   * })
-   *
-   * const data = Validator.validateOrFail({ email: "a@b.com" }, schema);
-   * // `data` is the original input when valid
    */
   public static validateOrFail(
     data: Record<string, unknown>,

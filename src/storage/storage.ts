@@ -277,7 +277,7 @@ export class MemoryStorage implements Storage {
       try {
         f.data = Buffer.alloc(0);
       } catch {
-        // ignore
+        // ignore catch
       }
       this.totalSize = Math.max(0, this.totalSize - (f.size || 0));
       this.store.delete(entryKey);

@@ -9,11 +9,6 @@ const escapeRegex = (value: string): string => {
  *
  * A layer compiles a route template (e.g. `/users/{id}`) into a regex,
  * can match incoming URLs, and can extract path parameters.
- *
- * @example
- * const layer = new Layer("/users/{id}", userController);
- * layer.matches("/users/42"); // true
- * layer.parseParameters("/users/42"); // { id: "42" }
  */
 export class Layer {
   /** Original route template using `{param}` syntax. */
@@ -45,7 +40,10 @@ export class Layer {
   constructor(url: string, action: RouteHandler) {
     const paramRegex = /\{([a-zA-Z]+)\}/g;
     const escapedUrl = escapeRegex(url);
-    const regexSource = escapedUrl.replace(/\\{([a-zA-Z]+)\\}/g, "([a-zA-Z0-9]+)");
+    const regexSource = escapedUrl.replace(
+      /\\{([a-zA-Z]+)\\}/g,
+      "([a-zA-Z0-9]+)",
+    );
 
     this.url = url;
     this.regex = new RegExp(`^${regexSource}/?$`);
@@ -70,9 +68,6 @@ export class Layer {
    *
    * @param middlewares - Middleware list executed before the handler
    * @returns The current {@link Layer} instance (for chaining)
-   *
-   * @example
-   * layer.setMiddlewares([AuthMiddleware, LoggerMiddleware]);
    */
   public setMiddlewares(middlewares: Middleware[]): this {
     this.middlewares = middlewares;
@@ -84,12 +79,6 @@ export class Layer {
    *
    * @param url - Incoming request URL (path only)
    * @returns `true` if the URL matches this layer
-   *
-   * @example
-   * const layer = new Layer("/users/{id}", handler);
-   * layer.matches("/users/42");   // true
-   * layer.matches("/users/42/");  // true (optional trailing slash)
-   * layer.matches("/posts/1");    // false
    */
   public matches(url: string): boolean {
     return this.regex.test(url);
@@ -111,14 +100,6 @@ export class Layer {
    *
    * @param url - Incoming request URL (path only)
    * @returns Extracted parameters mapped by name
-   *
-   * @example
-   * const layer = new Layer("/users/{id}", handler);
-   * layer.parseParameters("/users/42"); // { id: "42" }
-   *
-   * const layer = new Layer("/posts/{postId}/comments/{commentId}", handler);
-   * layer.parseParameters("/posts/10/comments/5");
-   * // { postId: "10", commentId: "5" }
    */
   public parseParameters(url: string): Record<string, string> {
     const match = this.regex.exec(url);

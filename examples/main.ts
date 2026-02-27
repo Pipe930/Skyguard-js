@@ -8,7 +8,6 @@ import { cors, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
 import { hash, verify, createJWT } from "../src/crypto";
 import { UnauthorizedError } from "../src/exceptions/httpExceptions";
-import { authJWT } from "../src/middlewares/auth";
 import { createUploader } from "../src/storage/uploader";
 import { StorageType } from "../src/storage/types";
 
@@ -53,7 +52,7 @@ app.middlewares([
     origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
   }),
   sessions(MemorySessionStorage, {
-    name: "holamundo",
+    name: "test",
     rolling: false,
     saveUninitialized: false,
   }),
@@ -164,35 +163,22 @@ app.post("/password-hashed", async (request: Request) => {
 });
 
 app.get("/generate-jwt", () => {
-  const token = createJWT(
-    { id: 1, name: "Juan Pérez", role: "admin" },
-    "secret-key",
-    3600,
-  );
+  const token = createJWT({ sub: "123" }, "secret-key", {
+    algorithm: "HS256",
+    expiresIn: "1h",
+  });
 
   return json({
     token,
   });
 });
 
-app.get(
-  "/verify-jwt",
-  (request: Request) => {
-    const user = request.state.user;
-
-    return json({ user });
-  },
-  [authJWT("secret-key")],
-);
-
 app.post("/logout", (request: Request) => {
-  const cookies = request.cookies;
-
-  if (!cookies) throw new UnauthorizedError("No estas autenticado");
+  if (!request.cookies) throw new UnauthorizedError("Its not autenticate");
 
   request.session.destroy();
 
-  return json({ message: "Logged out" }).removeCookie("holamundo");
+  return json({ message: "Logged out" }).removeCookie("test");
 });
 
 app.run(PORT, () => {

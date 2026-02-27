@@ -113,6 +113,7 @@ export class App {
    *
    * @example
    * app.staticFiles("public");
+   * app.staticFiles(join(__dirname, "..", "public"));
    * // /public/css/style.css → /css/style.css
    */
   public staticFiles(publicPath: string): void {
@@ -249,6 +250,14 @@ export class App {
    * Registers global middlewares.
    *
    * These are executed for every route.
+   *
+   * @example
+   * const auth = async (request, next) => {
+   *    console.log(request.header);
+   *    return await next(request);
+   * }
+   *
+   * app.middlewares(auth);
    */
   public middlewares(middlewares: Middleware[]): void {
     this.router.middlewares(middlewares);
