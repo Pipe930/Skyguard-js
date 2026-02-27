@@ -268,9 +268,9 @@ const mapLimit = async <T, R>(
 export const hashBatch = async (
   passwords: string[],
   saltLength = 16,
+  concurrency = 4,
   params: ScryptOptions = DEFAULT_PARAMS,
   pepper?: string,
-  concurrency = 4,
 ): Promise<string[]> => {
   return mapLimit(passwords, concurrency, password =>
     hash(password, saltLength, params, pepper),
@@ -294,8 +294,8 @@ export const hashBatch = async (
  */
 export const verifyBatch = async (
   credentials: Array<{ password: string; hash: string }>,
-  pepper?: string,
   concurrency = 8,
+  pepper?: string,
 ): Promise<boolean[]> => {
   return mapLimit(credentials, concurrency, credential =>
     verify(credential.password, credential.hash, pepper),
