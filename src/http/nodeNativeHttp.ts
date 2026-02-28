@@ -4,6 +4,7 @@ import type { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
 import { ContentParserManager } from "../parsers/contentParserManager";
+import { Logger } from "./logger";
 
 /**
  * Node.js HTTP adapter.
@@ -16,6 +17,12 @@ import { ContentParserManager } from "../parsers/contentParserManager";
 export class NodeHttpAdapter implements HttpAdapter {
   private contentParser: ContentParserManager;
 
+  /** Logger instance for request logging */
+  private logger: Logger;
+
+  /** Timestamp marking the start of request processing (for logging) */
+  private startTime: bigint;
+
   /**
    * @param req - Native Node.js incoming request
    * @param res - Native Node.js server response
@@ -24,6 +31,8 @@ export class NodeHttpAdapter implements HttpAdapter {
     private readonly req: IncomingMessage,
     private readonly res: ServerResponse,
   ) {
+    this.startTime = process.hrtime.bigint();
+    this.logger = new Logger();
     this.contentParser = new ContentParserManager();
   }
 
@@ -73,6 +82,7 @@ export class NodeHttpAdapter implements HttpAdapter {
 
     if (!response.content) this.res.removeHeader("Content-Type");
 
+    this.logger.log(this.req, this.res, this.startTime);
     this.res.end(response.content);
   }
 }

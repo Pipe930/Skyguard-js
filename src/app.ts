@@ -2,7 +2,6 @@ import { Router, RouterGroup } from "./routing";
 import {
   type HttpAdapter,
   HttpMethods,
-  Logger,
   NodeHttpAdapter,
   Response,
 } from "./http";
@@ -43,12 +42,6 @@ export class App {
   /** Static file handler (optional) */
   private staticFileHandler: StaticFileHandler | null = null;
 
-  /** Logger instance for request logging */
-  private logger: Logger;
-
-  /** Timestamp marking the start of request processing (for logging) */
-  private startTime: bigint;
-
   /** View engine for rendering templates (optional) */
   private viewEngine: ViewEngine;
 
@@ -64,7 +57,6 @@ export class App {
   public static bootstrap(): App {
     const app = Container.singleton(App);
     app.router = Container.singleton(Router);
-    app.logger = Container.singleton(Logger);
     app.viewEngine = Container.singleton(ViewEngine);
 
     return app;
@@ -179,10 +171,8 @@ export class App {
     hostname: string = "127.0.0.1",
   ): void {
     createServer((req, res) => {
-      this.startTime = process.hrtime.bigint();
       const adapter = new NodeHttpAdapter(req, res);
       void this.handle(adapter);
-      this.logger.log(req, res, this.startTime);
     }).listen(port, hostname, () => {
       callback();
     });

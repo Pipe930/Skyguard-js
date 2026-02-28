@@ -75,7 +75,7 @@ app.post(
   [uploader.single("file")],
 );
 
-app.get("/home", () => {
+app.get("/home", async () => {
   return render("<h1>Hola mundo</h1><p>Esta es una vista renderizada</p>");
 });
 

@@ -28,7 +28,7 @@ export class Request {
   private _method: HttpMethods;
 
   /** Parsed request body payload */
-  private _data: Record<string, any> = {};
+  private _data: Record<string, unknown> = {};
 
   /** Query string parameters */
   private _query: Record<string, string> = {};
@@ -45,7 +45,7 @@ export class Request {
    * This object can be freely used by middlewares and route handlers to store
    * arbitrary data during the request lifecycle.
    */
-  public state: Record<string, any> = {};
+  public state: Record<string, unknown> = {};
 
   /** Single uploaded file metadata. */
   public file?: UploadedFile;

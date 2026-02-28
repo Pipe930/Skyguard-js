@@ -91,16 +91,26 @@ const resolveOrigin = (
 ): string | null => {
   if (!requestOrigin) return null;
 
+  const cleanOrigin = (origin: string) =>
+    origin.endsWith("/") ? origin.slice(0, -1) : origin;
+
   if (typeof config.origin === "function") {
-    const out = config.origin(requestOrigin);
-    return out ? requestOrigin : null;
+    return config.origin(requestOrigin) ? requestOrigin : null;
   }
 
-  if (Array.isArray(config.origin))
-    return config.origin.includes(requestOrigin) ? requestOrigin : null;
-  if (config.origin === "*") return config.credentials ? requestOrigin : "*";
+  if (Array.isArray(config.origin)) {
+    return config.origin.map(cleanOrigin).includes(cleanOrigin(requestOrigin))
+      ? requestOrigin
+      : null;
+  }
 
-  return config.origin;
+  if (config.origin === "*") {
+    return config.credentials ? requestOrigin : "*";
+  }
+
+  return cleanOrigin(config.origin) === cleanOrigin(requestOrigin)
+    ? requestOrigin
+    : null;
 };
 
 /**
