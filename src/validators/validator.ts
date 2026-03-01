@@ -79,14 +79,14 @@ export class Validator {
   public static validateOrFail(
     data: Record<string, unknown>,
     schema: Map<string, FieldDefinition>,
-  ): unknown {
+  ): Record<string, unknown> {
     const result = this.validate(data, schema);
 
     if (result.errors.length !== 0)
       throw new ValidationException(result.errors);
 
     for (const [fieldName, fieldDef] of schema.entries()) {
-      if (!(fieldName in result) && fieldDef.defaultValue !== undefined)
+      if (!(fieldName in result.data) && fieldDef.defaultValue)
         result.data[fieldName] = fieldDef.defaultValue;
     }
 

@@ -174,7 +174,7 @@ export class Response {
    *   return Response.json([{ id: 1 }, { id: 2 }]);
    * });
    */
-  public static json<T>(data: T): Response {
+  public static json(data: unknown): Response {
     return new this()
       .setContentType("application/json")
       .setContent(JSON.stringify(data));

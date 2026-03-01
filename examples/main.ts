@@ -2,7 +2,7 @@ import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
 import { json, redirect, text, download, render } from "../src/helpers/http";
-import { v, schema } from "../src/validators/validationSchema";
+import { v, schema, validateData } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
@@ -17,7 +17,6 @@ const app = createApp();
 
 const uploader = createUploader({
   storageType: StorageType.DISK,
-
   storageOptions: {
     disk: {
       destination: "./uploads",
@@ -34,17 +33,7 @@ const userSchema = schema({
   name: v.string({ maxLength: 60 }),
   email: v.string().email(),
   age: v.number({ min: 18 }),
-  url: v.string().url(),
-  active: v.union([v.number(), v.boolean()]),
-  birthdate: v.date({ max: new Date() }),
-  admin: v.literal(true).optional(),
-  pi: v.bigint().gt(5n),
-  test: v.array(),
-  roles: v.array(
-    v.object({
-      name: v.string().regex(/^[a-z]+$/),
-    }),
-  ),
+  active: v.boolean(),
 });
 
 app.middlewares([
@@ -69,8 +58,11 @@ app.get("/test/{id}/nel/{param}", (request: Request) => {
 app.post(
   "/upload",
   (request: Request) => {
-    console.log("Archivo subido:", request.file);
-    return json({ message: "Archivo subido exitosamente", file: request.file });
+    console.log("Archivo subido:", request.files);
+    return json({
+      message: "Archivo subido exitosamente",
+      file: request.files,
+    });
   },
   [uploader.single("file")],
 );
@@ -87,10 +79,21 @@ app.get("/nueva-ruta", () => {
   return text("holamundo");
 });
 
-app.post("/test", (request: Request) => {
-  const validData = request.validateData(userSchema);
-  return json(validData).setStatusCode(201);
-});
+interface User {
+  name: string;
+  email: string;
+  age: number;
+  active: boolean;
+}
+
+app.post(
+  "/test",
+  (request: Request) => {
+    const data = request.getData<User>();
+    return json(data).setStatusCode(201);
+  },
+  [validateData(userSchema)],
+);
 
 app.post("/xml", (request: Request) => {
   return json({ message: request.data });

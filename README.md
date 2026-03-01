@@ -168,11 +168,12 @@ app.staticFiles(join(__dirname, "..", "static"));
 
 ## ⛔ Data Validation
 
-To validate data in the body of client requests, the framework provides the creation of validation schemas, which are created as follows:
+To validate the data in the body of client requests, the framework provides the creation of validation schemes and a middleware function to validate the body of HTTP requests, used as follows:
 
 ```ts
-import { v, schema } from "skyguard-js";
+import { v, schema, validateData } from "skyguard-js";
 
+// Created Schema
 const userSchema = schema({
   name: v.string({ maxLength: 60 }),
   email: v.email(),
@@ -181,17 +182,26 @@ const userSchema = schema({
   birthdate: v.date({ max: new Date() }),
 });
 
-app.post("/users", (request: Request) => {
-  const validatedData = request.validateData(userSchema);
+// Typing Interface
+interface User {
+  name: string;
+  email: string;
+  age: number;
+  active: boolean;
+  birthdate: Date;
+}
 
-  return Response.json({
-    success: true,
-    data: validatedData,
-  });
-});
+app.post(
+  "/test",
+  (request: Request) => {
+    const data = request.getData<User>();
+    return json(data).setStatusCode(201);
+  },
+  [validateData(userSchema)],
+);
 ```
 
-By default each property you define in the schema is required, to define it optional you use the `.optional()` or `.default(value)` function
+To type the request body, an interface is used and the .getData() method is used, which allows returning the typed bodym. By default each property you define in the schema is required, to define it optional you use the `.optional()` or `.default(value)` function
 
 Validation is:
 

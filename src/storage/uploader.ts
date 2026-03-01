@@ -111,7 +111,7 @@ class Uploader {
 
       const file = await this.processFile(request, fileData);
 
-      request.file = file;
+      request.files = file;
       this.attachFieldsToRequest(request, multipartData);
 
       return await next(request);

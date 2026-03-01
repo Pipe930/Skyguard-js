@@ -15,6 +15,8 @@ import {
   BigIntRule,
   UnionRule,
 } from "./rules";
+import { Validator } from "./validator";
+import { Middleware } from "types";
 
 /**
  * Main validator class - provides factory methods for creating validators
@@ -236,3 +238,20 @@ export const schema = (
 
 // Export a singleton instance for convenience
 export const v = new ValidatorRules();
+
+/**
+ * Validates the request payload against a validation schema.
+ *
+ * Throws if validation fails.
+ *
+ * @param schema - Validation rules mapped by field name
+ */
+export const validateData = (
+  schema: Map<string, FieldDefinition>,
+): Middleware => {
+  return (request, next) => {
+    const validData = Validator.validateOrFail(request.data, schema);
+    request.setData(validData);
+    return next(request);
+  };
+};

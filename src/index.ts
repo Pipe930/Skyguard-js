@@ -6,4 +6,4 @@ export { FileSessionStorage, MemorySessionStorage } from "./sessions";
 export { HttpMethods } from "./http/httpMethods";
 export { createUploader } from "./storage/uploader";
 export { StorageType } from "./storage/types";
-export { v, schema } from "./validators/validationSchema";
+export { v, schema, validateData } from "./validators/validationSchema";
