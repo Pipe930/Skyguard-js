@@ -59,6 +59,8 @@ app.post(
   "/upload",
   (request: Request) => {
     console.log("Archivo subido:", request.files);
+
+    request.files;
     return json({
       message: "Archivo subido exitosamente",
       file: request.files,

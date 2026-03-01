@@ -9,11 +9,11 @@ describe("RequestTest", () => {
     const headers = { "content-type": "application/json" };
     const data = { search: "gemini" };
 
-    const request = new Request(url)
-      .setMethod(method)
-      .setQuery(params)
-      .setHeaders(headers)
-      .setData(data);
+    const request = new Request(url);
+    request.setMethod(method);
+    request.setQuery(params);
+    request.setHeaders(headers);
+    request.setData(data);
 
     expect(request.url).toBe(url);
     expect(request.method).toBe(method);
@@ -28,7 +28,8 @@ describe("RequestTest", () => {
       num: 2,
     };
 
-    const request = new Request("").setData(data);
+    const request = new Request("");
+    request.setData(data);
 
     expect(request.data).toEqual(data);
   });
@@ -39,7 +40,8 @@ describe("RequestTest", () => {
       num: "2",
     };
 
-    const request = new Request("").setQuery(params);
+    const request = new Request("");
+    request.setQuery(params);
 
     expect(params["test"]).toBe(request.query["test"]);
     expect(params["num"]).toBe(request.query["num"]);
@@ -50,9 +52,8 @@ describe("RequestTest", () => {
     const layer = new Layer("/test/{param}/param/{bar}", () =>
       Response.text("holamundo"),
     );
-    const request = new Request("/test/2/param/1").setParams(
-      layer.parseParameters("/test/2/param/1"),
-    );
+    const request = new Request("/test/2/param/1");
+    request.setParams(layer.parseParameters("/test/2/param/1"));
 
     expect(request.params["param"]).toBe("2");
     expect(request.params["bar"]).toBe("1");

@@ -61,45 +61,40 @@ export class Request {
     return this._method;
   }
 
-  public setMethod(method: HttpMethods): this {
+  public setMethod(method: HttpMethods) {
     this._method = method;
-    return this;
   }
 
   get headers(): Headers {
     return this._headers;
   }
 
-  public setHeaders(headers: Headers): this {
+  public setHeaders(headers: Headers) {
     this._headers = headers;
-    return this;
   }
 
   get query(): Record<string, string> {
     return this._query;
   }
 
-  public setQuery(query: Record<string, string>): this {
+  public setQuery(query: Record<string, string>) {
     this._query = query;
-    return this;
   }
 
   get params(): Record<string, string> {
     return this._params;
   }
 
-  public setParams(params: Record<string, string>): this {
+  public setParams(params: Record<string, string>) {
     this._params = params;
-    return this;
   }
 
   get data(): Record<string, any> {
     return this._data;
   }
 
-  public setData(data: Record<string, any>): this {
+  public setData(data: Record<string, any>) {
     this._data = data;
-    return this;
   }
 
   public getData<T>(): Partial<T> {
