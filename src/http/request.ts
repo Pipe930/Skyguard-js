@@ -27,7 +27,7 @@ export class Request {
   private _method: HttpMethods;
 
   /** Parsed request body payload */
-  private _data: Record<string, unknown> = {};
+  private _data: Record<string, any> = {};
 
   /** Query string parameters */
   private _query: Record<string, string> = {};
@@ -93,11 +93,11 @@ export class Request {
     return this;
   }
 
-  get data(): Record<string, unknown> {
+  get data(): Record<string, any> {
     return this._data;
   }
 
-  public setData(data: Record<string, unknown>): this {
+  public setData(data: Record<string, any>): this {
     this._data = data;
     return this;
   }

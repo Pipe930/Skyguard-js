@@ -1,6 +1,7 @@
 import { createUploader } from "../../src/storage/uploader";
 import { StorageType, UploadErrorCode } from "../../src/storage/types";
 import { Request } from "../../src/http/request";
+import { UploadedFile } from "../../src/parsers/parserInterface";
 
 describe("Uploader", () => {
   const makeFile = (fieldName: string, filename: string, content = "ok") => ({
@@ -30,8 +31,10 @@ describe("Uploader", () => {
 
     await mw(request, next);
 
-    expect(request.file).toBeDefined();
-    expect(request.file.originalname).toBe("a.txt");
+    request.files = request.files as UploadedFile;
+
+    expect(request.files).toBeDefined();
+    expect(request.files.originalname).toBe("a.txt");
     expect(request.data.name).toBe("juan");
   });
 
@@ -51,7 +54,7 @@ describe("Uploader", () => {
 
     await mw(request, next);
 
-    expect(request.file).toBeUndefined();
+    expect(request.files).toBeUndefined();
     expect(request.data.hello).toBe("world");
   });
 
@@ -71,6 +74,8 @@ describe("Uploader", () => {
     const mw = uploader.array("photos", 2);
 
     await mw(request, next);
+
+    request.files = request.files as UploadedFile[];
 
     expect(Array.isArray(request.files)).toBe(true);
     expect(request.files.length).toBe(2);
