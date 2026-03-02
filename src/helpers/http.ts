@@ -10,7 +10,7 @@ import { Response } from "../http/response";
  * @example
  * return json({ ok: true, userId: 1 });
  */
-export function json<T>(data: T): Response {
+export function json(data: unknown): Response {
   return Response.json(data);
 }
 

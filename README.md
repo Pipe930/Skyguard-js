@@ -142,8 +142,7 @@ app.get("/secure", () => Response.json({ secure: true }), [authMiddleware]);
 To enable CORS, use the built-in `cors` middleware.
 
 ```ts
-import { cors } from "skyguard-js/middlewares";
-import { HttpMethods } from "skyguard-js";
+import { cors, HttpMethods } from "skyguard-js";
 
 app.middlewares([
   cors({
@@ -222,7 +221,7 @@ Validation is:
 The framework provides a set of built-in HTTP exceptions that can be thrown from route handlers or middleware. When an exception is thrown, the framework detects it and sends an appropriate HTTP response with the status code and message you specified in the class.
 
 ```ts
-import { NotFoundError, InternalServerError } from "skyguard-js/exceptions";
+import { NotFoundError, InternalServerError } from "skyguard-js";
 
 const listResources = ["1", "2", "3"];
 
@@ -257,8 +256,7 @@ app.get("/divide", (request: Request) => {
 To handle sessions, you must use the framework’s built-in middleware. Depending on where you want to store them (in memory, in files, or in a database), you need to use the corresponding storage class.
 
 ```ts
-import { sessions } from "skyguard-js/middlewares";
-import { FileSessionStorage } from "skyguard-js";
+import { sessions, FileSessionStorage } from "skyguard-js";
 
 app.middlewares([
   sessions(FileSessionStorage, {
@@ -306,7 +304,7 @@ app.get("/me", (request: Request) => {
 The framework includes some password hashing and JWT token generation functions, and also includes JWT authentication middleware.
 
 ```ts
-import { Hasher, JWT } from "skyguard-js/security";
+import { Hasher, JWT } from "skyguard-js";
 
 app.post("/register", async (request: Request) => {
   const { username, password } = request.data;
