@@ -1,6 +1,6 @@
 # 🛡️✈️ Skyguard.js — TypeScript Web Framework
 
-Skyguard.js is a **lightweight and experimental web framework**, inspired by **Express**, written entirely in **TypeScript**.
+Skyguard.js is a **lightweight and experimental web framework**, written entirely in **TypeScript**.
 
 The main goal of this project is to **learn, experiment, and build a solid foundation** for a more complete backend framework in the future.
 
@@ -194,7 +194,7 @@ interface User {
 app.post(
   "/test",
   (request: Request) => {
-    const data = request.getData<User>();
+    const data = request.getData<User>(); // The .getData() method returns the typed data with the interface you created
     return json(data).setStatusCode(201);
   },
   [validateData(userSchema)],
@@ -419,17 +419,3 @@ Currently, it works with third-party template engines such as **Express Handleba
 - Database & ORM integration
 - Authentication & authorization
 - WebSockets
-
----
-
-## 🧠 Motivation
-
-This project was created to deeply understand how frameworks like **Express**, **Fastify**, and **Koa** work internally, by reimplementing their core ideas with a **modern TypeScript-first approach**.
-
----
-
-## 📄 License
-
-MIT License
-
----
