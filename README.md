@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/Pipe930/Skyguard-js/blob/main/logo/Skyguard-JS_logo.png" width="500px"/>  
+  <img src="https://github.com/Pipe930/Skyguard-js/blob/main/logo/Skyguard-JS_logo.png" width="350px"/>  
 </div>
 
 ---
