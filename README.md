@@ -1,10 +1,12 @@
 <div align="center">
-  <img src="https://github.com/Pipe930/Skyguard-js/blob/main/logo/Skyguard-JS_logo.png" width="350px"/>  
+  <img src="https://github.com/Pipe930/Skyguard-js/blob/main/logo/Skyguard-JS_logo.png" width="350px"/>
 </div>
 
----
-
+[![NPM Version][npm-version-image]][npm-url]
 [![Deployment Pipeline](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml)
+
+[npm-url]: https://www.npmjs.com/package/skyguard-js
+[npm-version-image]: https://img.shields.io/npm/v/skyguard-js
 
 Skyguard.js is a **lightweight and experimental web framework**, written entirely in **TypeScript**.
 
