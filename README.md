@@ -1,18 +1,17 @@
 <div align="center">
   <img src="https://github.com/Pipe930/Skyguard-js/blob/main/logo/Skyguard-JS_logo.png" width="350px"/>
+  <br/>
+  <br/>
 </div>
 
-[![NPM Version][npm-version-image]][npm-url]
+[![NPM Version](https://img.shields.io/npm/v/skyguard-js)](https://www.npmjs.com/package/skyguard-js)
 [![Deployment Pipeline](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml)
 
-[npm-url]: https://www.npmjs.com/package/skyguard-js
-[npm-version-image]: https://img.shields.io/npm/v/skyguard-js
+**Skyguard.js** is a **lightweight, dependency-free web framework** built entirely with **TypeScript**.
 
-Skyguard.js is a **lightweight and experimental web framework**, written entirely in **TypeScript**.
+The project aims to provide a **clean, strongly-typed foundation for building web APIs and backend applications**, with a strong emphasis on simplicity, performance, and long-term maintainability.
 
-The main goal of this project is to **learn, experiment, and build a solid foundation** for a more complete backend framework in the future.
-
-At its current stage, the framework focuses on **routing**, **internal architecture**, **type safety**, and **core HTTP abstractions**, leaving advanced features for later iterations.
+Skyguard.js currently delivers a solid core that includes **routing**, **type-safe HTTP abstractions**, and a carefully designed **internal architecture**, establishing a reliable base for future expansion and advanced features.
 
 ---
 
@@ -43,11 +42,6 @@ At its current stage, the framework focuses on **routing**, **internal architect
 
 ---
 
-> [!NOTE]
-> It is recommended to develop with `TypeScript` for a more secure and efficient development process; the framework already has native support for `TypeScript` and includes the necessary types.
-
----
-
 ## 📦 Installation
 
 ```bash
@@ -73,6 +67,9 @@ app.run(PORT, () => {
   console.log(`Server running in port: http://localhost:${PORT}`);
 });
 ```
+
+> [!NOTE]
+> It is recommended to develop with `TypeScript` for a more secure and efficient development process; the framework already has native support for `TypeScript` and includes the necessary types.
 
 ---
 
@@ -309,11 +306,11 @@ app.get("/me", (request: Request) => {
 The framework includes some password hashing and JWT token generation functions, and also includes JWT authentication middleware.
 
 ```ts
-import { hash, verify, createJWT } from "skyguard-js/security";
+import { Hasher, JWT } from "skyguard-js/security";
 
 app.post("/register", async (request: Request) => {
   const { username, password } = request.data;
-  const hashedPassword = await hash(password);
+  const hashedPassword = await Hasher.hash(password);
 
   // Save username and hashedPassword to database
   // ...
@@ -327,13 +324,13 @@ app.post("/login", async (request: Request) => {
   // Retrieve user from database by username
   // ...
 
-  const isValid = await verify(password, user.hashedPassword);
+  const isValid = await Hasher.verify(password, user.hashedPassword);
 
   if (!isValid) {
     throw new UnauthorizedError("Invalid credentials");
   }
 
-  const token = createJWT({ sub: "123" }, "secret-key", {
+  const token = JWT.create({ sub: "123" }, "secret-key", {
     algorithm: "HS256",
     expiresIn: "1h",
   });
