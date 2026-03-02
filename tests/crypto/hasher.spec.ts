@@ -10,15 +10,7 @@ jest.mock("node:crypto", () => {
 });
 
 import { randomBytes, scrypt } from "node:crypto";
-import {
-  hash,
-  verify,
-  verifyBatch,
-  hashBatch,
-  needsRehash,
-} from "../../src/crypto/hasher";
-
-import * as hasher from "../../src/crypto/hasher";
+import { Hasher } from "../../src/crypto/hasher";
 
 const randomBytesMock = randomBytes as jest.Mock;
 const scryptMock = scrypt as jest.Mock;
@@ -74,7 +66,7 @@ describe("Hasher Test", () => {
       randomBytesMock.mockReturnValue(salt);
       mockScryptOk(derived);
 
-      const out = await hash(
+      const out = await Hasher.hash(
         "password",
         16,
         { cost: 1, blockSize: 2, parallelization: 3 },
@@ -109,7 +101,7 @@ describe("Hasher Test", () => {
 
       mockScryptOk(Buffer.from(hashHex, "hex"));
 
-      const ok = await verify("pass", stored);
+      const ok = await Hasher.verify("pass", stored);
       expect(ok).toBe(true);
     });
 
@@ -120,12 +112,12 @@ describe("Hasher Test", () => {
 
       mockScryptOk(Buffer.from("cc".repeat(32), "hex"));
 
-      const ok = await verify("pass", stored);
+      const ok = await Hasher.verify("pass", stored);
       expect(ok).toBe(false);
     });
 
     it("fails safely when hash is invalid", async () => {
-      const ok = await verify("pass", "invalid-hash");
+      const ok = await Hasher.verify("pass", "invalid-hash");
       expect(ok).toBe(false);
       expect(scryptMock).not.toHaveBeenCalled();
     });
@@ -137,14 +129,14 @@ describe("Hasher Test", () => {
 
       mockScryptFail();
 
-      const ok = await verify("pass", stored);
+      const ok = await Hasher.verify("pass", stored);
       expect(ok).toBe(false);
     });
   });
 
   describe("needsRehash()", () => {
     it("returns TRUE for invalid hash", () => {
-      expect(needsRehash("invalid")).toBe(true);
+      expect(Hasher.needsRehash("invalid")).toBe(true);
     });
 
     it("returns TRUE when params changed", () => {
@@ -158,7 +150,7 @@ describe("Hasher Test", () => {
       });
 
       expect(
-        needsRehash(stored, {
+        Hasher.needsRehash(stored, {
           cost: 9,
           blockSize: 2,
           parallelization: 3,
@@ -182,24 +174,24 @@ describe("Hasher Test", () => {
         parallelization: params.parallelization,
       });
 
-      expect(needsRehash(stored, params)).toBe(false);
+      expect(Hasher.needsRehash(stored, params)).toBe(false);
     });
   });
 
   describe("batch helpers", () => {
     it("hashBatch preserves order", async () => {
       jest
-        .spyOn(hasher, "hash")
+        .spyOn(Hasher, "hash")
         .mockImplementation(async p => Promise.resolve(`H(${p})`));
-      const out = await hashBatch(["a", "b", "c"]);
+      const out = await Hasher.hashBatch(["a", "b", "c"]);
       expect(out).toEqual(["H(a)", "H(b)", "H(c)"]);
     });
 
     it("verifyBatch preserves order", async () => {
       jest
-        .spyOn(hasher, "verify")
+        .spyOn(Hasher, "verify")
         .mockImplementation(async p => Promise.resolve(p === "ok"));
-      const out = await verifyBatch([
+      const out = await Hasher.verifyBatch([
         { password: "ok", hash: "h" },
         { password: "no", hash: "h" },
       ]);

@@ -6,7 +6,7 @@ import { v, schema, validateData } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
-import { hash, verify, createJWT } from "../src/crypto";
+import { Hasher, JWT } from "../src/crypto";
 import { UnauthorizedError } from "../src/exceptions/httpExceptions";
 import { createUploader } from "../src/storage/uploader";
 import { StorageType } from "../src/storage/types";
@@ -161,14 +161,14 @@ app.get("/me", (request: Request) => {
 
 app.post("/password-hashed", async (request: Request) => {
   const { password } = request.data;
-  const passwordHash = await hash(password as string);
-  const verifyHash = await verify(password as string, passwordHash);
+  const passwordHash = await Hasher.hash(password as string);
+  const verifyHash = await Hasher.verify(password as string, passwordHash);
 
   return json({ data: passwordHash, verified: verifyHash }).setStatusCode(200);
 });
 
 app.get("/generate-jwt", () => {
-  const token = createJWT({ sub: "123" }, "secret-key", {
+  const token = JWT.create({ sub: "123" }, "secret-key", {
     algorithm: "HS256",
     expiresIn: "1h",
   });

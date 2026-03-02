@@ -57,247 +57,283 @@ interface ParsedHash {
 const isHex = (s: string): boolean => /^[0-9a-f]+$/i.test(s);
 const isPositiveInt = (n: number): boolean => Number.isInteger(n) && n > 0;
 
-/**
- * Parses a compact scrypt password hash string into its components.
- *
- * Expected format:
- *   `scrypt$<cost>$<blockSize>$<parallelization>$<saltHex>$<hashHex>`
- *
- * @param hash - Stored hash string in compact format.
- * @returns Parsed fields or `null` if the string is invalid.
- */
-const parseHash = (hash: string): ParsedHash | null => {
-  try {
-    const parts = hash.split("$");
-    if (parts.length !== 6) return null;
-
-    const [algo, costStr, blockSizeStr, parallelStr, saltHex, hashHex] = parts;
-    if (algo !== "scrypt") return null;
-
-    const cost = Number(costStr);
-    const blockSize = Number(blockSizeStr);
-    const parallelization = Number(parallelStr);
-
-    if (
-      !isPositiveInt(cost) ||
-      !isPositiveInt(blockSize) ||
-      !isPositiveInt(parallelization)
-    )
-      return null;
-    if (!saltHex || !hashHex) return null;
-    if (!isHex(saltHex) || !isHex(hashHex)) return null;
-    if (saltHex.length % 2 !== 0 || hashHex.length % 2 !== 0) return null;
-    if (saltHex.length < 32) return null;
-
-    const hashBuffer = Buffer.from(hashHex, "hex");
-    if (hashBuffer.length === 0) return null;
-
-    return {
-      cost,
-      blockSize,
-      parallelization,
-      salt: saltHex,
-      hash: hashHex,
-      keyLength: hashBuffer.length,
-    };
-  } catch {
-    return null;
-  }
-};
-
-/**
- * Hashes a plaintext password using scrypt with an unique random salt.
- *
- * Output format:
- *   `scrypt$<cost>$<blockSize>$<parallelization>$<saltHex>$<hashHex>`
- *
- * @param password - Plaintext password.
- * @param saltLength - Salt length in bytes. Default `16` (recommended minimum).
- * @param params - Scrypt work-factor params. Defaults to `DEFAULT_PARAMS`.
- * @param pepper - Optional server secret mixed into the password (e.g., from env var).
- * @returns A compact encoded hash string containing algorithm parameters + salt + derived key.
- *
- * @example
- * const passwordHash = await hash("password", 16);
- */
-export const hash = async (
-  password: string,
-  saltLength = 16,
-  params: ScryptOptions = DEFAULT_PARAMS,
-  pepper?: string,
-): Promise<string> => {
-  const salt = randomBytes(saltLength);
-  const pwd = pepper ? password + pepper : password;
-
-  const derived = await scryptAsync(pwd, salt, KEY_LENGTH, {
-    cost: params.cost,
-    blockSize: params.blockSize,
-    parallelization: params.parallelization,
-    ...(params.maxmem ? { maxmem: params.maxmem } : {}),
-  });
-
-  return `scrypt$${params.cost}$${params.blockSize}$${params.parallelization}$${salt.toString(
-    "hex",
-  )}$${derived.toString("hex")}`;
-};
-
-/**
- * Verifies a plaintext password against a stored scrypt hash string.
- *
- * Safe failure behavior:
- * - Returns `false` for any parsing error, invalid encoding, mismatched lengths,
- *   or scrypt errors. This avoids leaking details about why verification failed.
- *
- * @param password - Plaintext password to verify.
- * @param storedHash - Stored hash string in the compact format.
- * @param pepper - Optional server secret; must match the one used when hashing.
- * @returns `true` if the password matches, otherwise `false`.
- *
- * @example
- * const validPassword = await verify("password", "passwordHashed");
- */
-export const verify = async (
-  password: string,
-  storedHash: string,
-  pepper?: string,
-): Promise<boolean> => {
-  const parsed = parseHash(storedHash);
-  if (!parsed) return false;
-
-  try {
+class HasherCrypto {
+  /**
+   * Hashes a plaintext password using scrypt with an unique random salt.
+   *
+   * Output format:
+   *   `scrypt$<cost>$<blockSize>$<parallelization>$<saltHex>$<hashHex>`
+   *
+   * @param password - Plaintext password.
+   * @param saltLength - Salt length in bytes. Default `16` (recommended minimum).
+   * @param params - Scrypt work-factor params. Defaults to `DEFAULT_PARAMS`.
+   * @param pepper - Optional server secret mixed into the password (e.g., from env var).
+   * @returns A compact encoded hash string containing algorithm parameters + salt + derived key.
+   *
+   * @example
+   * const passwordHash = await Hasher.hash("password", 16);
+   */
+  public async hash(
+    password: string,
+    saltLength = 16,
+    params: ScryptOptions = DEFAULT_PARAMS,
+    pepper?: string,
+  ): Promise<string> {
+    const salt = randomBytes(saltLength);
     const pwd = pepper ? password + pepper : password;
 
-    const derived = await scryptAsync(
-      pwd,
-      Buffer.from(parsed.salt, "hex"),
-      parsed.keyLength,
-      {
-        cost: parsed.cost,
-        blockSize: parsed.blockSize,
-        parallelization: parsed.parallelization,
-      },
-    );
+    const derived = await scryptAsync(pwd, salt, KEY_LENGTH, {
+      cost: params.cost,
+      blockSize: params.blockSize,
+      parallelization: params.parallelization,
+      ...(params.maxmem ? { maxmem: params.maxmem } : {}),
+    });
 
-    const storedBuffer = Buffer.from(parsed.hash, "hex");
-    if (storedBuffer.length !== derived.length) return false;
-
-    return timingSafeEqual(derived, storedBuffer);
-  } catch {
-    return false;
+    return `scrypt$${params.cost}$${params.blockSize}$${params.parallelization}$${salt.toString(
+      "hex",
+    )}$${derived.toString("hex")}`;
   }
-};
 
-/**
- * Indicates whether a stored hash should be regenerated using the current parameters.
- *
- * Use this after successful login:
- * - If `needsRehash(...) === true`, compute a new hash using `hash(...)` with
- *   the latest parameters and store it back to the DB.
- *
- * This enables gradual upgrades of the work factor without forcing password resets.
- *
- * @param storedHash - Stored hash string in compact format.
- * @param params - Desired/current scrypt params. Defaults to `DEFAULT_PARAMS`.
- * @returns `true` if the hash is missing/invalid or was produced with different parameters.
- *
- * @example
- * const passwordRehash = needsRehash("passwordHashed");
- */
-export const needsRehash = (
-  storedHash: string,
-  params: ScryptOptions = DEFAULT_PARAMS,
-): boolean => {
-  const parsed = parseHash(storedHash);
-  if (!parsed) return true;
+  /**
+   * Verifies a plaintext password against a stored scrypt hash string.
+   *
+   * Safe failure behavior:
+   * - Returns `false` for any parsing error, invalid encoding, mismatched lengths,
+   *   or scrypt errors. This avoids leaking details about why verification failed.
+   *
+   * @param password - Plaintext password to verify.
+   * @param storedHash - Stored hash string in the compact format.
+   * @param pepper - Optional server secret; must match the one used when hashing.
+   * @returns `true` if the password matches, otherwise `false`.
+   *
+   * @example
+   * const validPassword = await Hasher.verify("password", "passwordHashed");
+   */
+  public async verify(
+    password: string,
+    storedHash: string,
+    pepper?: string,
+  ): Promise<boolean> {
+    const parsed = this.parseHash(storedHash);
+    if (!parsed) return false;
 
-  return (
-    parsed.keyLength !== KEY_LENGTH ||
-    parsed.cost !== params.cost ||
-    parsed.blockSize !== params.blockSize ||
-    parsed.parallelization !== params.parallelization
-  );
-};
+    try {
+      const pwd = pepper ? password + pepper : password;
 
-/**
- * Simple concurrency limiter for CPU-heavy hashing/verifying.
- */
-const mapLimit = async <T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T, index: number) => Promise<R>,
-): Promise<R[]> => {
-  const results = new Array(items.length) as R[];
-  let idx = 0;
+      const derived = await scryptAsync(
+        pwd,
+        Buffer.from(parsed.salt, "hex"),
+        parsed.keyLength,
+        {
+          cost: parsed.cost,
+          blockSize: parsed.blockSize,
+          parallelization: parsed.parallelization,
+        },
+      );
 
-  const workers = Array.from({ length: Math.max(1, limit) }, async () => {
-    while (true) {
-      const i = idx++;
-      if (i >= items.length) break;
-      results[i] = await fn(items[i], i);
+      const storedBuffer = Buffer.from(parsed.hash, "hex");
+      if (storedBuffer.length !== derived.length) return false;
+
+      return timingSafeEqual(derived, storedBuffer);
+    } catch {
+      return false;
     }
-  });
+  }
 
-  await Promise.all(workers);
-  return results;
-};
+  /**
+   * Indicates whether a stored hash should be regenerated using the current parameters.
+   *
+   * Use this after successful login:
+   * - If `needsRehash(...) === true`, compute a new hash using `hash(...)` with
+   *   the latest parameters and store it back to the DB.
+   *
+   * This enables gradual upgrades of the work factor without forcing password resets.
+   *
+   * @param storedHash - Stored hash string in compact format.
+   * @param params - Desired/current scrypt params. Defaults to `DEFAULT_PARAMS`.
+   * @returns `true` if the hash is missing/invalid or was produced with different parameters.
+   *
+   * @example
+   * const passwordRehash = Hasher.needsRehash("passwordHashed");
+   */
+  public needsRehash(
+    storedHash: string,
+    params: ScryptOptions = DEFAULT_PARAMS,
+  ): boolean {
+    const parsed = this.parseHash(storedHash);
+    if (!parsed) return true;
+
+    return (
+      parsed.keyLength !== KEY_LENGTH ||
+      parsed.cost !== params.cost ||
+      parsed.blockSize !== params.blockSize ||
+      parsed.parallelization !== params.parallelization
+    );
+  }
+
+  /**
+   * Hashes multiple passwords using controlled concurrency.
+   *
+   * Why limit concurrency?
+   * scrypt is intentionally CPU + memory intensive. Running too many in parallel can:
+   * - saturate the libuv threadpool,
+   * - exceed memory limits (especially in containers),
+   * - increase latency for the rest of the application.
+   *
+   * The `concurrency` option caps the number of simultaneous scrypt operations.
+   *
+   * @param passwords - List of plaintext passwords.
+   * @param options - Optional hashing controls:
+   *   - saltLength: salt bytes (default 16)
+   *   - params: scrypt params (default DEFAULT_PARAMS)
+   *   - pepper: optional server secret
+   *   - concurrency: max simultaneous operations (default 4)
+   * @returns Array of compact hash strings in the same order as input.
+   *
+   * @example
+   *
+   * const listPasswords = ["password1", "password2", "password3"];
+   * const passwordsHasherList = await Hasher.hashBatch(listPasswords, 16);
+   */
+  public async hashBatch(
+    passwords: string[],
+    saltLength = 16,
+    concurrency = 4,
+    params: ScryptOptions = DEFAULT_PARAMS,
+    pepper?: string,
+  ): Promise<string[]> {
+    return this.mapLimit(passwords, concurrency, password =>
+      this.hash(password, saltLength, params, pepper),
+    );
+  }
+
+  /**
+   * Verifies multiple password/hash pairs using controlled concurrency.
+   *
+   * This is useful for bulk checks or migrations. Concurrency is typically higher
+   * than hashing, but still should be bounded to avoid saturating the threadpool.
+   *
+   * @param credentials - Array of `{ password, hash }` pairs.
+   * @param options - Optional verification controls:
+   *   - pepper: optional server secret
+   *   - concurrency: max simultaneous operations (default 8)
+   * @returns Array of booleans in the same order as input.
+   *
+   * @example
+   * const verifyPasswords = await Hasher.verifyBatch([{ password: "test", hash: "testHash" }, { password: "test2", hash: "testHash2" }]);
+   */
+  public async verifyBatch(
+    credentials: Array<{ password: string; hash: string }>,
+    concurrency = 8,
+    pepper?: string,
+  ): Promise<boolean[]> {
+    return this.mapLimit(credentials, concurrency, credential =>
+      this.verify(credential.password, credential.hash, pepper),
+    );
+  }
+
+  /**
+   * Parses a compact scrypt password hash string into its components.
+   *
+   * Expected format:
+   *   `scrypt$<cost>$<blockSize>$<parallelization>$<saltHex>$<hashHex>`
+   *
+   * @param hash - Stored hash string in compact format.
+   * @returns Parsed fields or `null` if the string is invalid.
+   */
+  private parseHash(hash: string): ParsedHash | null {
+    try {
+      const parts = hash.split("$");
+      if (parts.length !== 6) return null;
+
+      const [algo, costStr, blockSizeStr, parallelStr, saltHex, hashHex] =
+        parts;
+      if (algo !== "scrypt") return null;
+
+      const cost = Number(costStr);
+      const blockSize = Number(blockSizeStr);
+      const parallelization = Number(parallelStr);
+
+      if (
+        !isPositiveInt(cost) ||
+        !isPositiveInt(blockSize) ||
+        !isPositiveInt(parallelization)
+      )
+        return null;
+      if (!saltHex || !hashHex) return null;
+      if (!isHex(saltHex) || !isHex(hashHex)) return null;
+      if (saltHex.length % 2 !== 0 || hashHex.length % 2 !== 0) return null;
+      if (saltHex.length < 32) return null;
+
+      const hashBuffer = Buffer.from(hashHex, "hex");
+      if (hashBuffer.length === 0) return null;
+
+      return {
+        cost,
+        blockSize,
+        parallelization,
+        salt: saltHex,
+        hash: hashHex,
+        keyLength: hashBuffer.length,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Simple concurrency limiter for CPU-heavy hashing/verifying.
+   */
+  private async mapLimit<T, R>(
+    items: T[],
+    limit: number,
+    fn: (item: T, index: number) => Promise<R>,
+  ): Promise<R[]> {
+    const results = new Array(items.length) as R[];
+    let idx = 0;
+
+    const workers = Array.from({ length: Math.max(1, limit) }, async () => {
+      while (true) {
+        const i = idx++;
+        if (i >= items.length) break;
+        results[i] = await fn(items[i], i);
+      }
+    });
+
+    await Promise.all(workers);
+    return results;
+  }
+}
 
 /**
- * Hashes multiple passwords using controlled concurrency.
+ * Password hashing and verification helper built on Node.js `crypto.scrypt`.
  *
- * Why limit concurrency?
- * scrypt is intentionally CPU + memory intensive. Running too many in parallel can:
- * - saturate the libuv threadpool,
- * - exceed memory limits (especially in containers),
- * - increase latency for the rest of the application.
+ * This class provides a **self-describing scrypt hash format** that embeds the work-factor
+ * parameters and salt alongside the derived key, enabling straightforward verification and
+ * future parameter upgrades.
  *
- * The `concurrency` option caps the number of simultaneous scrypt operations.
+ * Core capabilities:
+ * - **hash()**: derives a key from a plaintext password using scrypt with a per-password random salt.
+ * - **verify()**: re-derives the key and compares it to the stored hash using constant-time comparison.
+ * - **needsRehash()**: detects whether an existing stored hash was produced with parameters different
+ *   from the currently desired ones (supports gradual work-factor migration).
+ * - **hashBatch() / verifyBatch()**: bulk operations with a built-in concurrency limiter to avoid
+ *   saturating CPU/memory and the libuv threadpool.
  *
- * @param passwords - List of plaintext passwords.
- * @param options - Optional hashing controls:
- *   - saltLength: salt bytes (default 16)
- *   - params: scrypt params (default DEFAULT_PARAMS)
- *   - pepper: optional server secret
- *   - concurrency: max simultaneous operations (default 4)
- * @returns Array of compact hash strings in the same order as input.
+ * Storage format:
+ * - Produces and consumes strings like:
+ *   `scrypt$<cost>$<blockSize>$<parallelization>$<saltHex>$<hashHex>`
+ *   This makes hashes portable and verifiable without external metadata.
  *
- * @example
+ * Security notes:
+ * - Passwords are never stored; only salt + derived key are persisted.
+ * - Verification uses `timingSafeEqual` to reduce timing side-channel leakage.
+ * - Optional **pepper** support allows mixing an application-level secret into the password
+ *   (must be provided consistently on both hash and verify).
+ * - Parsing/verification is intentionally fail-closed: malformed inputs and crypto errors yield `false`.
  *
- * const listPasswords = ["password1", "password2", "password3"];
- * const passwordsHasherList = await hashBatch(listPasswords, 16);
+ * Operational notes:
+ * - scrypt is intentionally expensive; concurrency is bounded in batch methods to help prevent
+ *   resource exhaustion (especially relevant in containers and small instances).
  */
-export const hashBatch = async (
-  passwords: string[],
-  saltLength = 16,
-  concurrency = 4,
-  params: ScryptOptions = DEFAULT_PARAMS,
-  pepper?: string,
-): Promise<string[]> => {
-  return mapLimit(passwords, concurrency, password =>
-    hash(password, saltLength, params, pepper),
-  );
-};
-
-/**
- * Verifies multiple password/hash pairs using controlled concurrency.
- *
- * This is useful for bulk checks or migrations. Concurrency is typically higher
- * than hashing, but still should be bounded to avoid saturating the threadpool.
- *
- * @param credentials - Array of `{ password, hash }` pairs.
- * @param options - Optional verification controls:
- *   - pepper: optional server secret
- *   - concurrency: max simultaneous operations (default 8)
- * @returns Array of booleans in the same order as input.
- *
- * @example
- * const verifyPasswords = await verifyBatch([{ password: "test", hash: "testHash" }, { password: "test2", hash: "testHash2" }]);
- */
-export const verifyBatch = async (
-  credentials: Array<{ password: string; hash: string }>,
-  concurrency = 8,
-  pepper?: string,
-): Promise<boolean[]> => {
-  return mapLimit(credentials, concurrency, credential =>
-    verify(credential.password, credential.hash, pepper),
-  );
-};
+export const Hasher = new HasherCrypto();
