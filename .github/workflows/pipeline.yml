@@ -16,8 +16,12 @@ jobs:
         with:
           node-version: '24'
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund --no-optional
       - name: Linter
         run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Tests
+        run: npm run test
 
 
