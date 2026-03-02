@@ -1,4 +1,10 @@
-# 🛡️✈️ Skyguard.js — TypeScript Web Framework
+<div align="center">
+  <img src="https://github.com/Pipe930/Skyguard-js/logo/Skyguard-JS_logo.png" width="220px"/>  
+  <br />
+  <br />
+</div>
+
+---
 
 [![Deployment Pipeline](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml)
 
@@ -50,7 +56,7 @@ npm install skyguard-js
 
 ---
 
-## 🏁 Basic Usage
+## 🏁 Quick Start
 
 ```ts
 import { createApp, Response } from "skyguard-js";
