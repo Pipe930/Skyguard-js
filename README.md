@@ -4,9 +4,7 @@
 
 ---
 
-# 🛡️✈️ Skyguard.js — TypeScript Web Framework
-
-## [![Deployment Pipeline](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml)
+[![Deployment Pipeline](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml)
 
 Skyguard.js is a **lightweight and experimental web framework**, written entirely in **TypeScript**.
 
