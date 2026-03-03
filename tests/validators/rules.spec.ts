@@ -403,14 +403,16 @@ describe("RulesTest", () => {
   describe("ObjectRuleTest", () => {
     it("should validate nested object schema", () => {
       const roleSchema = schema({
-        name: v.string().regex(/^[0-9a-z]+$/),
-        permission: v.object({
+        body: {
           name: v.string().regex(/^[0-9a-z]+$/),
-          action: v.literal("manager"),
-        }),
+          permission: v.object({
+            name: v.string().regex(/^[0-9a-z]+$/),
+            action: v.literal("manager"),
+          }),
+        },
       });
 
-      const rule = new ObjectRule(roleSchema);
+      const rule = new ObjectRule(roleSchema.body);
       const result = rule.validate({
         field: "role",
         value: {
@@ -427,14 +429,16 @@ describe("RulesTest", () => {
 
     it("should include nested path when nested object fails", () => {
       const roleSchema = schema({
-        name: v.string(),
-        permission: v.object({
+        body: {
           name: v.string(),
-          action: v.literal("manager"),
-        }),
+          permission: v.object({
+            name: v.string(),
+            action: v.literal("manager"),
+          }),
+        },
       });
 
-      const rule = new ObjectRule(roleSchema);
+      const rule = new ObjectRule(roleSchema.body);
       const result = rule.validate({
         field: "role",
         value: {

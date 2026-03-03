@@ -6,16 +6,20 @@ describe("ValidationSchemaTest", () => {
   it("should create a new ValidationSchema instance using create()", () => {
     const schemaTest = schema({});
 
-    expect(schemaTest).toEqual(expect.any(Map));
+    expect(schemaTest.body).toEqual(undefined);
+    expect(schemaTest.params).toEqual(undefined);
+    expect(schemaTest.query).toEqual(undefined);
   });
 
   it("should create a field definition when field() is called", () => {
     const schemaTest = schema({
-      name: v.string(),
+      body: {
+        name: v.string(),
+      },
     });
 
-    expect(schemaTest.has("name")).toBe(true);
-    expect(schemaTest.get("name")).toEqual({
+    expect(schemaTest.body.has("name")).toBe(true);
+    expect(schemaTest.body.get("name")).toEqual({
       rules: [
         {
           options: undefined,
@@ -28,25 +32,31 @@ describe("ValidationSchemaTest", () => {
 
   it("should mark a field as required by default", () => {
     const schemaTest = schema({
-      email: v.string(),
+      body: {
+        email: v.string(),
+      },
     });
 
-    expect(schemaTest.get("email")?.optional).toBe(false);
+    expect(schemaTest.body.get("email")?.optional).toBe(false);
   });
 
   it("should mark a field as optional when optional() is called", () => {
     const schemaTest = schema({
-      bio: v.string().optional(),
+      body: {
+        biography: v.string().optional(),
+      },
     });
 
-    expect(schemaTest.get("bio")?.optional).toBe(true);
+    expect(schemaTest.body.get("biography")?.optional).toBe(true);
   });
 
   it("should register a string rule with options", () => {
     const schemaTest = schema({
-      username: v.string({ minLength: 3 }),
+      body: {
+        username: v.string({ minLength: 3 }),
+      },
     });
-    const rules = schemaTest.get("username")?.rules;
+    const rules = schemaTest.body.get("username")?.rules;
 
     expect(rules).toHaveLength(1);
     expect(rules?.[0].rule).toBeInstanceOf(StringRule);
@@ -55,9 +65,11 @@ describe("ValidationSchemaTest", () => {
 
   it("should register a number rule with options", () => {
     const schemaTest = schema({
-      age: v.number({ min: 18 }),
+      body: {
+        age: v.number({ min: 18 }),
+      },
     });
-    const rules = schemaTest.get("age")?.rules;
+    const rules = schemaTest.body.get("age")?.rules;
 
     expect(rules).toHaveLength(1);
     expect(rules?.[0].rule).toBeInstanceOf(NumberRule);
@@ -66,9 +78,11 @@ describe("ValidationSchemaTest", () => {
 
   it("should register multiple rules in order for the same field", () => {
     const schemaTest = schema({
-      email: v.string().email(),
+      body: {
+        email: v.string().email(),
+      },
     });
-    const rules = schemaTest.get("email")?.rules;
+    const rules = schemaTest.body.get("email")?.rules;
 
     expect(rules).toHaveLength(2);
     expect(rules?.[0].rule).toBeInstanceOf(StringRule);
@@ -77,24 +91,32 @@ describe("ValidationSchemaTest", () => {
 
   it("should support defining multiple independent fields", () => {
     const schemaTest = schema({
-      name: v.string(),
-      age: v.number({ min: 18 }),
+      body: {
+        name: v.string(),
+        age: v.number({ min: 18 }),
+      },
     });
 
-    expect(schemaTest.has("name")).toBe(true);
-    expect(schemaTest.has("age")).toBe(true);
-    expect(schemaTest.get("name")?.rules[0].rule).toBeInstanceOf(StringRule);
-    expect(schemaTest.get("age")?.rules[0].rule).toBeInstanceOf(NumberRule);
+    expect(schemaTest.body.has("name")).toBe(true);
+    expect(schemaTest.body.has("age")).toBe(true);
+    expect(schemaTest.body.get("name")?.rules[0].rule).toBeInstanceOf(
+      StringRule,
+    );
+    expect(schemaTest.body.get("age")?.rules[0].rule).toBeInstanceOf(
+      NumberRule,
+    );
   });
 
   it("should register an object rule with nested schema", () => {
     const schemaTest = schema({
-      role: v.object({
-        name: v.string(),
-      }),
+      body: {
+        role: v.object({
+          name: v.string(),
+        }),
+      },
     });
 
-    const rules = schemaTest.get("role")?.rules;
+    const rules = schemaTest.body.get("role")?.rules;
 
     expect(rules).toHaveLength(1);
     expect(rules?.[0].rule).toBeInstanceOf(ObjectRule);
@@ -102,16 +124,20 @@ describe("ValidationSchemaTest", () => {
 
   it("should support deeply nested object definitions", () => {
     const schemaTest = schema({
-      role: v.object({
-        name: v.string(),
-        permission: v.object({
+      body: {
+        role: v.object({
           name: v.string(),
-          action: v.literal("manager"),
+          permission: v.object({
+            name: v.string(),
+            action: v.literal("manager"),
+          }),
         }),
-      }),
+      },
     });
 
-    expect(schemaTest.has("role")).toBe(true);
-    expect(schemaTest.get("role")?.rules[0].rule).toBeInstanceOf(ObjectRule);
+    expect(schemaTest.body.has("role")).toBe(true);
+    expect(schemaTest.body.get("role")?.rules[0].rule).toBeInstanceOf(
+      ObjectRule,
+    );
   });
 });

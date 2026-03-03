@@ -2,7 +2,7 @@ import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import { RouteHandler } from "../src/types";
 import { json, redirect, text, download, render } from "../src/helpers/http";
-import { v, schema, validateData } from "../src/validators/validationSchema";
+import { v, schema, validateRequest } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
@@ -30,10 +30,20 @@ const uploader = createUploader({
 app.staticFiles(join(__dirname, "..", "static"));
 
 const userSchema = schema({
-  name: v.string({ maxLength: 60 }),
-  email: v.string().email(),
-  age: v.number({ min: 18 }),
-  active: v.boolean(),
+  body: {
+    name: v.string({ maxLength: 60 }),
+    email: v.string().email(),
+    age: v.number({ min: 18 }),
+    active: v.boolean(),
+  },
+});
+
+const validParamsAndQuery = schema({
+  params: {
+    id: v.number(),
+    param: v.string(),
+  },
+  query: {},
 });
 
 app.middlewares([
@@ -47,13 +57,17 @@ app.middlewares([
   }),
 ]);
 
-app.get("/test/{id}/nel/{param}", (request: Request) => {
-  const jsonTest = json({
-    params: request.params,
-    queries: request.query,
-  });
-  return jsonTest;
-});
+app.get(
+  "/test/{id}/nel/{param}",
+  (request: Request) => {
+    const jsonTest = json({
+      params: request.params,
+      queries: request.query,
+    });
+    return jsonTest;
+  },
+  [validateRequest(validParamsAndQuery)],
+);
 
 app.post(
   "/upload",
@@ -81,20 +95,13 @@ app.get("/nueva-ruta", () => {
   return text("holamundo");
 });
 
-interface User {
-  name: string;
-  email: string;
-  age: number;
-  active: boolean;
-}
-
 app.post(
   "/test",
   (request: Request) => {
     const data = request.body;
     return json(data).setStatusCode(201);
   },
-  [validateData(userSchema)],
+  [validateRequest(userSchema)],
 );
 
 app.post("/xml", (request: Request) => {

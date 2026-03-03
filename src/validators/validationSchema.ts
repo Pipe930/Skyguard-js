@@ -1,5 +1,10 @@
-import type { FieldDefinition, RuleOptions } from "./types";
-import type { BaseValidationRule } from "./validationRule";
+import type {
+  CompiledRequestValidationSchema,
+  FieldDefinition,
+  RequestValidationSchema,
+  RuleOptions,
+} from "./types";
+import { BaseValidationRule } from "./validationRule";
 import {
   BooleanRule,
   DateRule,
@@ -16,7 +21,7 @@ import {
   UnionRule,
 } from "./rules";
 import { Validator } from "./validator";
-import { Middleware } from "types";
+import type { Middleware } from "../types";
 
 /**
  * Main validator class - provides factory methods for creating validators
@@ -129,7 +134,7 @@ class ValidatorRules {
     objectSchemaDefinition: Record<string, BaseValidationRule>,
     options?: RuleOptions,
   ): ObjectRule {
-    const objectSchema = schema(objectSchemaDefinition);
+    const objectSchema = compileFieldSchema(objectSchemaDefinition);
     const objectRule = new ObjectRule(objectSchema);
 
     objectRule.rules.push({ rule: objectRule, options });
@@ -214,13 +219,51 @@ class ValidationSchema {
  *
  * @example
  * const userSchema = schema({
- *   name: v.string({ maxLength: 60 }),
- *   email: v.string().email(),
- *   age: v.number({ min: 18 }),
- *   active: v.boolean().default(true),
+ *   body: {
+ *     name: v.string({ maxLength: 60 }),
+ *     email: v.string().email(),
+ *     age: v.number({ min: 18 }),
+ *     active: v.boolean().default(true),
+ *   },
+ *   params: {
+ *     id: v.string().uuid()
+ *   }
  * })
  */
 export const schema = (
+  schemaDefinition: RequestValidationSchema,
+): CompiledRequestValidationSchema => {
+  const compiledFields = {} as CompiledRequestValidationSchema;
+
+  if (schemaDefinition.body) {
+    compiledFields.body = compileFieldSchema(schemaDefinition.body);
+  }
+
+  if (schemaDefinition.params) {
+    compiledFields.params = compileFieldSchema(schemaDefinition.params);
+  }
+
+  if (schemaDefinition.query) {
+    compiledFields.query = compileFieldSchema(schemaDefinition.query);
+  }
+
+  return compiledFields;
+};
+
+/**
+ * Compiles a plain field validation definition into an optimized schema structure.
+ *
+ * This helper transforms a developer-defined object mapping field names to
+ * `BaseValidationRule` instances into a compiled `Map<string, FieldDefinition>`
+ * using the internal `ValidationSchema` builder.
+ *
+ * The resulting `Map` is intended for **runtime validation**, where faster lookups
+ * and a normalized structure improve performance and simplify the validation logic.
+ *
+ * @param schemaDefinition - Object mapping field names to their validation rules.
+ * @returns A compiled map of field definitions ready for validation.
+ */
+const compileFieldSchema = (
   schemaDefinition: Record<string, BaseValidationRule>,
 ): Map<string, FieldDefinition> => {
   const schema = new ValidationSchema();
@@ -246,12 +289,28 @@ export const v = new ValidatorRules();
  *
  * @param schema - Validation rules mapped by field name
  */
-export const validateData = (
-  schema: Map<string, FieldDefinition>,
+export const validateRequest = (
+  schema: CompiledRequestValidationSchema,
 ): Middleware => {
   return (request, next) => {
-    const validData = Validator.validateOrFail(request.body, schema);
-    request.setBody(validData);
+    if (schema.body) {
+      const validBody = Validator.validateOrFail(request.body, schema.body);
+      request.setBody(validBody);
+    }
+
+    if (schema.params) {
+      const validParams = Validator.validateOrFail(
+        request.params,
+        schema.params,
+      );
+      request.setParams(validParams as Record<string, string>);
+    }
+
+    if (schema.query) {
+      const validQuery = Validator.validateOrFail(request.query, schema.query);
+      request.setQuery(validQuery as Record<string, string>);
+    }
+
     return next(request);
   };
 };
