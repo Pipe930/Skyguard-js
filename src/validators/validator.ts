@@ -36,12 +36,25 @@ export class Validator {
     const errors: ValidationError[] = [];
 
     for (const [fieldName, fieldDef] of schema.entries()) {
-      const context: ValidationContext = {
-        field: fieldName,
-        value: data[fieldName],
-      };
-
       if (fieldDef.optional && data[fieldName] === undefined) continue;
+
+      if (
+        fieldDef.converter &&
+        data[fieldName] !== undefined &&
+        data[fieldName] !== null
+      ) {
+        try {
+          data[fieldName] = fieldDef.converter(data[fieldName]);
+        } catch {
+          errors.push({
+            field: fieldName,
+            message: `${fieldName} could not be converted`,
+            value: data[fieldName],
+            rule: "convert",
+          });
+          continue;
+        }
+      }
 
       if (data[fieldName] === undefined || data[fieldName] === null) {
         errors.push({
@@ -51,6 +64,11 @@ export class Validator {
         });
         continue;
       }
+
+      const context: ValidationContext = {
+        field: fieldName,
+        value: data[fieldName],
+      };
 
       for (const { rule, options } of fieldDef.rules) {
         const error = rule.validate(context, options);

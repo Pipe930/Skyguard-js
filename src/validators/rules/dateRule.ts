@@ -22,17 +22,8 @@ export class DateRule extends BaseValidationRule<Date> {
     options?: DateRuleOptions,
   ): ValidationError | null {
     const { field, value } = context;
-    let date: Date;
 
-    if (value instanceof Date) {
-      date = value;
-    } else if (typeof value === "string" || typeof value === "number") {
-      date = new Date(value);
-    } else {
-      return this.createError(field, `${field} must be a valid date`, value);
-    }
-
-    if (isNaN(date.getTime())) {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
       return this.createError(
         field,
         options?.message || `${field} must be a valid date`,
@@ -42,7 +33,7 @@ export class DateRule extends BaseValidationRule<Date> {
 
     if (options?.min) {
       const minDate = new Date(options.min);
-      if (date < minDate) {
+      if (value < minDate) {
         return this.createError(
           field,
           `${field} must be after ${minDate.toISOString()}`,
@@ -53,7 +44,7 @@ export class DateRule extends BaseValidationRule<Date> {
 
     if (options?.max) {
       const maxDate = new Date(options.max);
-      if (date > maxDate) {
+      if (value > maxDate) {
         return this.createError(
           field,
           `${field} must be before ${maxDate.toISOString()}`,

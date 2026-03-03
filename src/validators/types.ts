@@ -57,6 +57,7 @@ export interface FieldDefinition {
   rules: Array<{ rule: ValidationRule; options?: RuleOptions }>;
   optional: boolean;
   defaultValue?: unknown;
+  converter?: (value: unknown) => unknown;
 }
 
 /**

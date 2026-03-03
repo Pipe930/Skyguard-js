@@ -8,7 +8,8 @@ import {
   StringRule,
   UnionRule,
   BigIntRule,
-} from "../../src/validators/index";
+  Validator,
+} from "../../src/validators";
 
 describe("RulesTest", () => {
   describe("StringRule", () => {
@@ -323,13 +324,13 @@ describe("RulesTest", () => {
 
       const result = dateRule.validate(context);
 
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
     });
 
     it("should correctly validate a valid timestamp number", () => {
       const context = {
         field: "createdAt",
-        value: Date.now(),
+        value: new Date(),
       };
 
       const result = dateRule.validate(context);
@@ -362,11 +363,11 @@ describe("RulesTest", () => {
     it("should correctly fail when date is before min option", () => {
       const context = {
         field: "eventDate",
-        value: "2023-01-01",
+        value: new Date("2023-01-01"),
       };
 
       const result = dateRule.validate(context, {
-        min: "2024-01-01",
+        min: new Date("2024-01-01"),
       });
 
       expect(result).not.toBeNull();
@@ -375,11 +376,11 @@ describe("RulesTest", () => {
     it("should correctly fail when date is after max option", () => {
       const context = {
         field: "eventDate",
-        value: "2025-01-01",
+        value: new Date("2025-01-01"),
       };
 
       const result = dateRule.validate(context, {
-        max: "2024-12-31",
+        max: new Date("2024-12-31"),
       });
 
       expect(result).not.toBeNull();
@@ -388,12 +389,12 @@ describe("RulesTest", () => {
     it("should successfully validate date within min and max range", () => {
       const context = {
         field: "eventDate",
-        value: "2024-06-01",
+        value: new Date("2024-06-01"),
       };
 
       const result = dateRule.validate(context, {
-        min: "2024-01-01",
-        max: "2024-12-31",
+        min: new Date("2024-01-01"),
+        max: new Date("2024-12-31"),
       });
 
       expect(result).toBeNull();
@@ -535,6 +536,39 @@ describe("RulesTest", () => {
       expect(validString).toBeNull();
       expect(validNumber).toBeNull();
       expect(invalid).not.toBeNull();
+    });
+  });
+
+  describe("ConvertValidationTest", () => {
+    it("should convert params id to number before validation", () => {
+      const compiledSchema = schema({
+        params: {
+          id: v.convert.number(),
+        },
+      });
+
+      const result = Validator.validateOrFail(
+        { id: "10" } as unknown as Record<string, unknown>,
+        compiledSchema.params,
+      );
+
+      expect(result.id).toBe(10);
+      expect(typeof result.id).toBe("number");
+    });
+
+    it("should fail conversion when number is invalid", () => {
+      const compiledSchema = schema({
+        params: {
+          id: v.convert.number(),
+        },
+      });
+
+      expect(() =>
+        Validator.validateOrFail(
+          { id: "no-number" } as unknown as Record<string, unknown>,
+          compiledSchema.params,
+        ),
+      ).toThrow();
     });
   });
 });

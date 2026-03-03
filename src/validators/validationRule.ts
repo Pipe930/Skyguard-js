@@ -30,6 +30,7 @@ export interface ValidationRule {
 export abstract class BaseValidationRule<T = any> implements ValidationRule {
   public hasOptional = false;
   public defaultValue?: T = undefined;
+  public converter?: (value: unknown) => unknown;
 
   constructor(
     private readonly name: string,
@@ -43,6 +44,11 @@ export abstract class BaseValidationRule<T = any> implements ValidationRule {
     context: ValidationContext,
     options?: RuleOptions,
   ): ValidationError | null;
+
+  public setConverter(converter: (value: unknown) => unknown): this {
+    this.converter = converter;
+    return this;
+  }
 
   /**
    * Marks the field as optional.

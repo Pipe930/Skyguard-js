@@ -523,6 +523,6 @@ class Uploader {
       return json({ file: request.file });
     }, [uploader.single()])
  */
-export function createUploader(config?: UploaderConfig): Uploader {
+export const createUploader = (config?: UploaderConfig): Uploader => {
   return new Uploader(config);
-}
+};

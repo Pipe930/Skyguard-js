@@ -140,4 +140,14 @@ describe("ValidationSchemaTest", () => {
       ObjectRule,
     );
   });
+
+  it("should register number converter when convert.number() is used", () => {
+    const schemaTest = schema({
+      params: {
+        id: v.convert.number(),
+      },
+    });
+
+    expect(typeof schemaTest.params.get("id")?.converter).toBe("function");
+  });
 });

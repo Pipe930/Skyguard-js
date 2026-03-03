@@ -22,11 +22,74 @@ import {
 } from "./rules";
 import { Validator } from "./validator";
 import type { Middleware } from "../types";
+import { ConvertPrimitiveRule } from "./rules/convertPrimitiveRule";
+
+class ConvertFactory {
+  string(message?: string): BaseValidationRule<string> {
+    return new ConvertPrimitiveRule<string>(
+      "string",
+      value => String(JSON.stringify(value)),
+      value => typeof value === "string",
+      message || "must be a string",
+    );
+  }
+
+  number(message?: string): BaseValidationRule<number> {
+    return new ConvertPrimitiveRule<number>(
+      "number",
+      value => Number(value),
+      value => typeof value === "number" && !Number.isNaN(value),
+      message || "must be a number",
+    );
+  }
+
+  boolean(message?: string): BaseValidationRule<boolean> {
+    return new ConvertPrimitiveRule<boolean>(
+      "boolean",
+      value => {
+        if (typeof value === "string") {
+          const normalized = value.trim().toLowerCase();
+          if (normalized === "true" || normalized === "1") return true;
+          if (normalized === "false" || normalized === "0") return false;
+        }
+
+        if (typeof value === "number") {
+          if (value === 1) return true;
+          if (value === 0) return false;
+        }
+
+        return Boolean(value);
+      },
+      value => typeof value === "boolean",
+      message || "must be a boolean",
+    );
+  }
+
+  bigint(message?: string): BaseValidationRule<bigint> {
+    return new ConvertPrimitiveRule<bigint>(
+      "bigint",
+      value => BigInt(value as string | number | bigint | boolean),
+      value => typeof value === "bigint",
+      message || "must be a bigint",
+    );
+  }
+
+  date(message?: string): BaseValidationRule<Date> {
+    return new ConvertPrimitiveRule<Date>(
+      "date",
+      value => new Date(value as string | number | Date),
+      value => value instanceof Date && !Number.isNaN(value.getTime()),
+      message || "must be a valid date",
+    );
+  }
+}
 
 /**
  * Main validator class - provides factory methods for creating validators
  */
 class ValidatorRules {
+  readonly convert = new ConvertFactory();
+
   /**
    * Creates a string validator
    *
@@ -273,6 +336,7 @@ const compileFieldSchema = (
       rules: validator.rules,
       optional: validator.hasOptional,
       defaultValue: validator.defaultValue,
+      converter: validator.converter,
     });
   }
 
@@ -303,12 +367,12 @@ export const validateRequest = (
         request.params,
         schema.params,
       );
-      request.setParams(validParams as Record<string, string>);
+      request.setParams(validParams);
     }
 
     if (schema.query) {
       const validQuery = Validator.validateOrFail(request.query, schema.query);
-      request.setQuery(validQuery as Record<string, string>);
+      request.setQuery(validQuery);
     }
 
     return next(request);

@@ -1,6 +1,6 @@
 import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
-import { RouteHandler } from "../src/types";
+import type { RouteHandler } from "../src/types";
 import { json, redirect, text, download, render } from "../src/helpers/http";
 import { v, schema, validateRequest } from "../src/validators/validationSchema";
 import { join } from "node:path";
@@ -40,10 +40,14 @@ const userSchema = schema({
 
 const validParamsAndQuery = schema({
   params: {
-    id: v.number(),
+    id: v.convert.number(),
+
     param: v.string(),
   },
-  query: {},
+  query: {
+    test: v.string(),
+    name: v.string({ isEmpty: true }),
+  },
 });
 
 app.middlewares([

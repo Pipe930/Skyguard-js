@@ -30,10 +30,10 @@ export class Request {
   private _body: Record<string, any> = {};
 
   /** Query string parameters */
-  private _query: Record<string, string> = {};
+  private _query: Record<string, unknown> = {};
 
   /** Dynamic route parameters (path params) */
-  private _params: Record<string, string> = {};
+  private _params: Record<string, unknown> = {};
 
   /** Session associated with the request */
   private _session: Session;
@@ -73,19 +73,19 @@ export class Request {
     this._headers = headers;
   }
 
-  get query(): Record<string, string> {
+  get query(): Record<string, unknown> {
     return this._query;
   }
 
-  public setQuery(query: Record<string, string>) {
+  public setQuery(query: Record<string, unknown>) {
     this._query = query;
   }
 
-  get params(): Record<string, string> {
+  get params(): Record<string, unknown> {
     return this._params;
   }
 
-  public setParams(params: Record<string, string>) {
+  public setParams(params: Record<string, unknown>) {
     this._params = params;
   }
 

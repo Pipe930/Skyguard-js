@@ -6,7 +6,7 @@ export { FileSessionStorage, MemorySessionStorage } from "./sessions";
 export { HttpMethods } from "./http/httpMethods";
 export { createUploader } from "./storage/uploader";
 export { StorageType } from "./storage/types";
-export { v, schema, validateData } from "./validators/validationSchema";
+export { v, schema, validateRequest } from "./validators/validationSchema";
 export { Hasher, JWT } from "./crypto";
 export { sessions, cors } from "./middlewares";
 export * from "./exceptions/httpExceptions";
