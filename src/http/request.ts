@@ -27,7 +27,7 @@ export class Request {
   private _method: HttpMethods;
 
   /** Parsed request body payload */
-  private _data: Record<string, any> = {};
+  private _body: Record<string, any> = {};
 
   /** Query string parameters */
   private _query: Record<string, string> = {};
@@ -89,16 +89,12 @@ export class Request {
     this._params = params;
   }
 
-  get data(): Record<string, any> {
-    return this._data;
+  get body(): Record<string, any> {
+    return this._body;
   }
 
-  public setData(data: Record<string, any>) {
-    this._data = data;
-  }
-
-  public getData<T>(): Partial<T> {
-    return this._data as Partial<T>;
+  public setBody(body: Record<string, any>) {
+    this._body = body;
   }
 
   get session(): Session {

@@ -250,8 +250,8 @@ export const validateData = (
   schema: Map<string, FieldDefinition>,
 ): Middleware => {
   return (request, next) => {
-    const validData = Validator.validateOrFail(request.data, schema);
-    request.setData(validData);
+    const validData = Validator.validateOrFail(request.body, schema);
+    request.setBody(validData);
     return next(request);
   };
 };

@@ -353,7 +353,7 @@ class Uploader {
       request.headers["content-type"] &&
       request.headers["content-type"].startsWith("multipart/form-data")
     )
-      return request.data as unknown as MultipartData;
+      return request.body as unknown as MultipartData;
 
     return null;
   }
@@ -466,12 +466,12 @@ class Uploader {
     request: Request,
     multipartData: MultipartData,
   ): void {
-    const currentData = request.data || {};
+    const currentData = request.body || {};
     const newData = {
       ...currentData,
       ...multipartData.fields,
     };
-    request.setData(newData);
+    request.setBody(newData);
   }
 
   /**

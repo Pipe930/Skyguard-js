@@ -13,13 +13,13 @@ describe("RequestTest", () => {
     request.setMethod(method);
     request.setQuery(params);
     request.setHeaders(headers);
-    request.setData(data);
+    request.setBody(data);
 
     expect(request.url).toBe(url);
     expect(request.method).toBe(method);
     expect(request.query).toEqual(params);
     expect(request.headers).toEqual(headers);
-    expect(request.data).toEqual(data);
+    expect(request.body).toEqual(data);
   });
 
   it("should data returns value if key is given", () => {
@@ -29,9 +29,9 @@ describe("RequestTest", () => {
     };
 
     const request = new Request("");
-    request.setData(data);
+    request.setBody(data);
 
-    expect(request.data).toEqual(data);
+    expect(request.body).toEqual(data);
   });
 
   it("should queries returns value if key is given", () => {

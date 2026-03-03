@@ -91,14 +91,14 @@ interface User {
 app.post(
   "/test",
   (request: Request) => {
-    const data = request.getData<User>();
+    const data = request.body;
     return json(data).setStatusCode(201);
   },
   [validateData(userSchema)],
 );
 
 app.post("/xml", (request: Request) => {
-  return json({ message: request.data });
+  return json({ message: request.body });
 });
 
 app.get("/redirect", () => {
@@ -137,7 +137,7 @@ app.get("/download/report", async () => {
 });
 
 app.post("/login", (request: Request) => {
-  const { username, password } = request.data;
+  const { username, password } = request.body;
 
   if (username === "admin" && password === "secret") {
     request.session.set("user", {
@@ -160,7 +160,7 @@ app.get("/me", (request: Request) => {
 });
 
 app.post("/password-hashed", async (request: Request) => {
-  const { password } = request.data;
+  const { password } = request.body;
   const passwordHash = await Hasher.hash(password as string);
   const verifyHash = await Hasher.verify(password as string, passwordHash);
 

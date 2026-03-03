@@ -22,7 +22,7 @@ describe("Uploader", () => {
 
     const request = new Request("/test");
     request.setHeaders({ "content-type": "multipart/form-data" });
-    request.setData({
+    request.setBody({
       fields: { name: "juan" },
       files: [makeFile("avatar", "a.txt", "hello")],
     });
@@ -35,7 +35,7 @@ describe("Uploader", () => {
 
     expect(request.files).toBeDefined();
     expect(request.files.originalname).toBe("a.txt");
-    expect(request.data.name).toBe("juan");
+    expect(request.body.name).toBe("juan");
   });
 
   it("single() passes through when no multipart payload", async () => {
@@ -48,14 +48,14 @@ describe("Uploader", () => {
 
     // explicit non-multipart content-type to avoid header access errors
     request.setHeaders({ "content-type": "text/plain" });
-    request.setData({ hello: "world" });
+    request.setBody({ hello: "world" });
 
     const mw = uploader.single("missing");
 
     await mw(request, next);
 
     expect(request.files).toBeUndefined();
-    expect(request.data.hello).toBe("world");
+    expect(request.body.hello).toBe("world");
   });
 
   it("array() accepts multiple files and enforces maxCount", async () => {
@@ -66,7 +66,7 @@ describe("Uploader", () => {
 
     const request = new Request("/arr");
     request.setHeaders({ "content-type": "multipart/form-data" });
-    request.setData({
+    request.setBody({
       fields: {},
       files: [makeFile("photos", "1.png"), makeFile("photos", "2.png")],
     });
@@ -82,7 +82,7 @@ describe("Uploader", () => {
 
     const badReq = new Request("/arr-bad");
     badReq.setHeaders({ "content-type": "multipart/form-data" });
-    badReq.setData({
+    badReq.setBody({
       fields: {},
       files: [makeFile("photos", "a"), makeFile("photos", "b")],
     });
@@ -103,7 +103,7 @@ describe("Uploader", () => {
 
     const request = new Request("/fields");
     request.setHeaders({ "content-type": "multipart/form-data" });
-    request.setData({ fields: {}, files: [makeFile("unlisted", "x.txt")] });
+    request.setBody({ fields: {}, files: [makeFile("unlisted", "x.txt")] });
 
     const mw = uploader.fields([{ name: "avatar", maxCount: 1 }]);
 
@@ -122,7 +122,7 @@ describe("Uploader", () => {
 
     const request = new Request("/any");
     request.setHeaders({ "content-type": "multipart/form-data" });
-    request.setData({
+    request.setBody({
       fields: {},
       files: [makeFile("a", "1"), makeFile("b", "2")],
     });
@@ -143,7 +143,7 @@ describe("Uploader", () => {
 
     const reqWithFile = new Request("/none");
     reqWithFile.setHeaders({ "content-type": "multipart/form-data" });
-    reqWithFile.setData({ fields: {}, files: [makeFile("f", "1")] });
+    reqWithFile.setBody({ fields: {}, files: [makeFile("f", "1")] });
 
     const mw = uploader.none();
 
@@ -154,10 +154,10 @@ describe("Uploader", () => {
 
     const reqNoFile = new Request("/none-ok");
     reqNoFile.setHeaders({ "content-type": "multipart/form-data" });
-    reqNoFile.setData({ fields: { a: "b" }, files: [] });
+    reqNoFile.setBody({ fields: { a: "b" }, files: [] });
 
     await mw(reqNoFile, next);
-    expect(reqNoFile.data.a).toBe("b");
+    expect(reqNoFile.body.a).toBe("b");
   });
 
   it("applies fileFilter and rejects invalid types", async () => {
@@ -169,7 +169,7 @@ describe("Uploader", () => {
 
     const req = new Request("/filter");
     req.setHeaders({ "content-type": "multipart/form-data" });
-    req.setData({ fields: {}, files: [makeFile("x", "p")] });
+    req.setBody({ fields: {}, files: [makeFile("x", "p")] });
 
     const mw = uploader.single("x");
 
@@ -188,7 +188,7 @@ describe("Uploader", () => {
 
     const req = new Request("/size");
     req.setHeaders({ "content-type": "multipart/form-data" });
-    req.setData({ fields: {}, files: [makeFile("f", "big", "too big")] });
+    req.setBody({ fields: {}, files: [makeFile("f", "big", "too big")] });
 
     const mw = uploader.single("f");
 

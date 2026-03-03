@@ -15,6 +15,7 @@ import { Logger } from "./logger";
  * @implements {HttpAdapter}
  */
 export class NodeHttpAdapter implements HttpAdapter {
+  /** Content Parser instance for parsing body requests */
   private contentParser: ContentParserManager;
 
   /** Logger instance for request logging */
@@ -56,7 +57,7 @@ export class NodeHttpAdapter implements HttpAdapter {
       request.method === HttpMethods.patch
     ) {
       const parsedData = await this.contentParser.parse(this.req);
-      request.setData(parsedData);
+      request.setBody(parsedData);
     }
 
     return request;
