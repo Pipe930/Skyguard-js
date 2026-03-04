@@ -6,6 +6,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/skyguard-js)](https://www.npmjs.com/package/skyguard-js)
 [![Deployment Pipeline](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Pipe930/Skyguard-js/actions/workflows/pipeline.yml)
+[![Socket Badge](https://badge.socket.dev/npm/package/skyguard-js/1.1.8)](https://badge.socket.dev/npm/package/skyguard-js/1.1.8)
 
 **Skyguard.js** is a **lightweight, dependency-free web framework** built entirely with **TypeScript**.
 
@@ -32,7 +33,7 @@ Skyguard.js currently delivers a solid core that includes **routing**, **type-sa
 - Global, group, and route-level middlewares
 - Request / Response abstractions
 - Declarative data validation
-- Simple template engine with layouts and helpers
+- Support for template motors (handlebars, pugs, ejs, etc.)
 - Built-in HTTP exceptions
 - Password hashing and JWT token generation
 - CORS middleware
@@ -43,6 +44,24 @@ Skyguard.js currently delivers a solid core that includes **routing**, **type-sa
 ---
 
 ## 📦 Installation
+
+You need to have [NodeJS](https://nodejs.org/) version 22 or later installed.
+
+Create the `package.json` file to start a new [NodeJS](https://nodejs.org/) project using the `npm init` command.
+
+After configuring the package.json, install [Typescript](https://www.typescriptlang.org/).
+
+```bash
+npm install typescript -D
+```
+
+After installing [Typescript](https://www.typescriptlang.org/) in your project, you need to create the [Typescript](https://www.typescriptlang.org/) configuration file `tsconfig.json`.
+
+```bash
+npx tsc --init
+```
+
+Now that [Typescript](https://www.typescriptlang.org/) is configured, we can install the library. Since it's a module that's in the [NPM Registry](https://www.npmjs.com/), we use the npm package manager.
 
 ```bash
 npm install skyguard-js
@@ -67,9 +86,6 @@ app.run(PORT, () => {
   console.log(`Server running in port: http://localhost:${PORT}`);
 });
 ```
-
-> [!NOTE]
-> It is recommended to develop with `TypeScript` for a more secure and efficient development process; the framework already has native support for `TypeScript` and includes the necessary types.
 
 ---
 
@@ -175,33 +191,26 @@ app.staticFiles(join(__dirname, "..", "static"));
 To validate the data in the body of client requests, the framework provides the creation of validation schemes and a middleware function to validate the body of HTTP requests, used as follows:
 
 ```ts
-import { v, schema, validateData } from "skyguard-js";
+import { v, schema, validateRequest } from "skyguard-js";
 
 // Created Schema
 const userSchema = schema({
-  name: v.string({ maxLength: 60 }),
-  email: v.email(),
-  age: v.number({ min: 18 }),
-  active: v.boolean().default(false),
-  birthdate: v.date({ max: new Date() }),
+  body: {
+    name: v.string({ maxLength: 60 }),
+    email: v.email(),
+    age: v.number({ min: 18 }),
+    active: v.boolean().default(false),
+    birthdate: v.date({ max: new Date() }),
+  },
 });
-
-// Typing Interface
-interface User {
-  name: string;
-  email: string;
-  age: number;
-  active: boolean;
-  birthdate: Date;
-}
 
 app.post(
   "/test",
   (request: Request) => {
-    const data = request.getData<User>(); // The .getData() method returns the typed data with the interface you created
+    const data = request.body;
     return json(data).setStatusCode(201);
   },
-  [validateData(userSchema)],
+  [validateRequest(userSchema)],
 );
 ```
 

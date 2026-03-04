@@ -1,8 +1,8 @@
 import { HttpMethods } from "./httpMethods";
-import type { Headers } from "../types";
 import { Session } from "../sessions";
 import type { UploadedFile } from "../parsers/parserInterface";
 import { parseCookies } from "../sessions/cookies";
+import { IncomingHttpHeaders } from "node:http";
 
 /**
  * Represents an incoming client request within the framework.
@@ -21,7 +21,7 @@ export class Request {
   private _url: string;
 
   /** Incoming HTTP headers */
-  private _headers: Headers;
+  private _headers: IncomingHttpHeaders;
 
   /** Normalized HTTP method */
   private _method: HttpMethods;
@@ -65,11 +65,11 @@ export class Request {
     this._method = method;
   }
 
-  get headers(): Headers {
+  get headers(): IncomingHttpHeaders {
     return this._headers;
   }
 
-  public setHeaders(headers: Headers) {
+  public setHeaders(headers: IncomingHttpHeaders) {
     this._headers = headers;
   }
 

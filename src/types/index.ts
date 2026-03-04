@@ -1,6 +1,5 @@
 import { Response, Request, HttpMethods } from "../http/index";
 import { Layer } from "../routing/layer";
-import { IncomingHttpHeaders } from "node:http";
 
 /**
  * Route controller function.
@@ -35,15 +34,6 @@ export type RouteHandler = (request: Request) => Promise<Response> | Response;
  * must be present.
  */
 export type HashMapRouters = Partial<Record<HttpMethods, Layer[]>>;
-
-/**
- * Typed representation of incoming HTTP headers.
- *
- * Direct alias of Node.js `IncomingHttpHeaders`,
- * used to decouple the framework domain from
- * the underlying runtime implementation.
- */
-export type Headers = IncomingHttpHeaders;
 
 /**
  * Helper function type for template engines.

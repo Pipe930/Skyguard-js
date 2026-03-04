@@ -12,10 +12,7 @@ import { Request } from "../http/request";
 import { UploadException } from "../exceptions/uploadException";
 import { DiskStorage, MemoryStorage } from "./storage";
 import type { Middleware, RouteHandler } from "../types";
-import {
-  type MultipartData,
-  type UploadedFile,
-} from "../parsers/parserInterface";
+import type { MultipartData, UploadedFile } from "../parsers/parserInterface";
 
 /**
  * Core uploader component.

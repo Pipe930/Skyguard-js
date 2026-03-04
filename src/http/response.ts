@@ -1,10 +1,10 @@
-import type { Headers } from "../types";
 import { statusCodes } from "./statusCodes";
 import { InvalidHttpStatusException } from "../exceptions/invalidHttpStatusException";
 import { FileDownloadHelper } from "../static/fileDownload";
 import { ViewEngine } from "../views/engineTemplate";
 import { Container } from "../container/container";
 import { type CookieOptions, serializeCookie } from "../sessions/cookies";
+import { IncomingHttpHeaders } from "node:http";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -31,7 +31,7 @@ export class Response {
   /**
    * Collection of response headers.
    */
-  private _headers: Headers = Object.create(null) as Headers;
+  private _headers = Object.create(null) as IncomingHttpHeaders;
 
   /**
    * Response body content.
@@ -49,11 +49,11 @@ export class Response {
     return this;
   }
 
-  get headers(): Headers {
+  get headers(): IncomingHttpHeaders {
     return this._headers;
   }
 
-  public setHeaders(headers: Headers): this {
+  public setHeaders(headers: IncomingHttpHeaders): this {
     this._headers = this.merge(this._headers, headers);
     return this;
   }
