@@ -24,16 +24,57 @@ import { Validator } from "./validator";
 import type { Middleware } from "../types";
 import { ConvertPrimitiveRule } from "./rules/convertPrimitiveRule";
 
+/**
+ * Factory responsible for creating **conversion-aware validation rules**
+ * for primitive JavaScript types.
+ *
+ * Each method returns a `BaseValidationRule<T>` that performs two steps:
+ *
+ * 1. **Coercion / conversion** – transforms the incoming value into the
+ *    expected primitive type.
+ * 2. **Validation** – verifies that the converted value is a valid instance
+ *    of that type.
+ *
+ * This factory is typically used in request validation pipelines where
+ * incoming values (often strings from HTTP requests) must be **normalized
+ * and validated simultaneously**. For example:
+ *
+ * - Query parameters `"42"` → `number`
+ * - Query parameters `"true"` → `boolean`
+ * - JSON timestamps → `Date`
+ *
+ * By combining conversion and validation into a single rule, the system
+ * avoids the need for separate parsing and validation layers.
+ *
+ * This approach ensures that request values are converted to the correct
+ * runtime type before additional validation rules are applied.
+ */
 class ConvertFactory {
+  /**
+   * Creates a rule that converts a value to a **string** and validates it.
+   *
+   * @param message - Optional custom validation error message.
+   * @returns A string conversion and validation rule.
+   */
   string(message?: string): BaseValidationRule<string> {
     return new ConvertPrimitiveRule<string>(
       "string",
-      value => String(JSON.stringify(value)),
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      value => String(value),
       value => typeof value === "string",
       message || "must be a string",
     );
   }
 
+  /**
+   * Creates a rule that converts a value to a **number** and validates it.
+   *
+   * Conversion behavior:
+   * - Uses the `Number(...)` constructor for coercion.
+   *
+   * @param message - Optional custom validation error message.
+   * @returns A number conversion and validation rule.
+   */
   number(message?: string): BaseValidationRule<number> {
     return new ConvertPrimitiveRule<number>(
       "number",
@@ -43,6 +84,15 @@ class ConvertFactory {
     );
   }
 
+  /**
+   * Creates a rule that converts a value to a **boolean** and validates it.
+   *
+   * Validation:
+   * - Ensures the resulting value is of type `boolean`.
+   *
+   * @param message - Optional custom validation error message.
+   * @returns A boolean conversion and validation rule.
+   */
   boolean(message?: string): BaseValidationRule<boolean> {
     return new ConvertPrimitiveRule<boolean>(
       "boolean",
@@ -65,6 +115,12 @@ class ConvertFactory {
     );
   }
 
+  /**
+   * Creates a rule that converts a value to a **bigint** and validates it.
+   *
+   * @param message - Optional custom validation error message.
+   * @returns A bigint conversion and validation rule.
+   */
   bigint(message?: string): BaseValidationRule<bigint> {
     return new ConvertPrimitiveRule<bigint>(
       "bigint",
@@ -74,6 +130,12 @@ class ConvertFactory {
     );
   }
 
+  /**
+   * Creates a rule that converts a value to a **Date** instance and validates it.
+   *
+   * @param message - Optional custom validation error message.
+   * @returns A date conversion and validation rule.
+   */
   date(message?: string): BaseValidationRule<Date> {
     return new ConvertPrimitiveRule<Date>(
       "date",
@@ -326,9 +388,9 @@ export const schema = (
  * @param schemaDefinition - Object mapping field names to their validation rules.
  * @returns A compiled map of field definitions ready for validation.
  */
-const compileFieldSchema = (
+function compileFieldSchema(
   schemaDefinition: Record<string, BaseValidationRule>,
-): Map<string, FieldDefinition> => {
+): Map<string, FieldDefinition> {
   const schema = new ValidationSchema();
 
   for (const [fieldName, validator] of Object.entries(schemaDefinition)) {
@@ -341,7 +403,7 @@ const compileFieldSchema = (
   }
 
   return schema.build();
-};
+}
 
 // Export a singleton instance for convenience
 export const v = new ValidatorRules();

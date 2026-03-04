@@ -85,10 +85,10 @@ interface CorsOptions {
  * - the request origin when it is allowed (whitelist or custom resolver)
  * - `null` if the origin is not allowed (no CORS headers will be applied)
  */
-const resolveOrigin = (
+function resolveOrigin(
   requestOrigin: string,
   config: CorsOptions,
-): string | null => {
+): string | null {
   if (!requestOrigin) return null;
 
   const cleanOrigin = (origin: string) =>
@@ -111,7 +111,7 @@ const resolveOrigin = (
   return cleanOrigin(config.origin) === cleanOrigin(requestOrigin)
     ? requestOrigin
     : null;
-};
+}
 
 /**
  * Native CORS middleware, generates a CORS configuration for the server.

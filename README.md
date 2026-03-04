@@ -172,6 +172,103 @@ app.middlewares([
 
 ---
 
+## 🛡️ CSRF Middleware
+
+Use the built-in `csrf` middleware to protect endpoints against CSRF attacks.
+
+```ts
+import { csrf } from "skyguard-js";
+
+app.middlewares([
+  csrf({
+    cookieName: "XSRF-TOKEN",
+    headerNames: ["x-csrf-token"],
+  }),
+]);
+
+app.post("/transfer", () => {
+  return Response.json({ ok: true });
+});
+```
+
+The middleware follows a hardened **double-submit cookie** strategy:
+
+- It issues a CSRF cookie when missing (including first GET/HEAD/OPTIONS and failed protected requests).
+- For state-changing requests (POST/PUT/PATCH/DELETE), it validates the token from header/body against the cookie value.
+- It validates `Origin`/`Referer` for protected requests (and requires `Referer` on HTTPS when `Origin` is missing).
+- It rejects duplicated CSRF header values to avoid ambiguous token parsing.
+
+### Example: CSRF token in HTML templates (Express Handlebars)
+
+When you render server-side HTML, you can pass the CSRF token to your template and include it as a hidden field in forms.
+
+```ts
+import { createApp, csrf, Response } from "skyguard-js";
+import { engine } from "express-handlebars";
+import { join } from "node:path";
+
+const app = createApp();
+
+app.views(__dirname, "views");
+app.engineTemplates(
+  "hbs",
+  engine({
+    extname: "hbs",
+    layoutsDir: join(__dirname, "views"),
+    defaultLayout: "main",
+  }),
+);
+
+app.middlewares([
+  csrf({
+    cookieName: "XSRF-TOKEN",
+    headerNames: ["x-csrf-token"],
+  }),
+]);
+
+app.get("/transfer", request => {
+  return Response.render("transfer", {
+    csrfToken: request.cookies["XSRF-TOKEN"],
+  });
+});
+
+app.post("/transfer", request => {
+  // If middleware passes, token is valid
+  return Response.json({ ok: true, amount: request.body.amount });
+});
+```
+
+`views/transfer.hbs`:
+
+```hbs
+<form action="/transfer" method="POST">
+  <input type="hidden" name="csrf" value="{{csrfToken}}" />
+  <input type="number" name="amount" />
+  <button type="submit">Send</button>
+</form>
+```
+
+For `fetch`/AJAX requests, send the same token in headers:
+
+```html
+<script>
+  const csrfToken = "{{csrfToken}}";
+
+  async function sendTransfer() {
+    await fetch("/transfer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-csrf-token": csrfToken,
+      },
+      body: JSON.stringify({ amount: 150 }),
+    });
+  }
+</script>
+```
+
+---
+
 ## 📌 Static Files
 
 To serve static files, use the application's `staticFiles` method with the directory path. The name of the folder will determine the initial route prefix.

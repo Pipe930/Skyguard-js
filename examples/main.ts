@@ -4,7 +4,7 @@ import type { RouteHandler } from "../src/types";
 import { json, redirect, text, download, render } from "../src/helpers/http";
 import { v, schema, validateRequest } from "../src/validators/validationSchema";
 import { join } from "node:path";
-import { cors, sessions } from "../src/middlewares";
+import { cors, csrf, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
 import { Hasher, JWT } from "../src/crypto";
 import { UnauthorizedError } from "../src/exceptions/httpExceptions";
@@ -59,6 +59,11 @@ app.middlewares([
     rolling: false,
     saveUninitialized: false,
   }),
+  csrf({
+    cookieName: "XSRF-TOKEN",
+    headerNames: ["x-csrf-token"],
+    bodyField: "csrfToken",
+  }),
 ]);
 
 app.get(
@@ -87,8 +92,38 @@ app.post(
   [uploader.single("file")],
 );
 
-app.get("/home", async () => {
-  return render("<h1>Hola mundo</h1><p>Esta es una vista renderizada</p>");
+app.get("/home", async (request: Request) => {
+  const csrfToken = request.cookies["XSRF-TOKEN"];
+
+  return render(
+    `
+    <h1>Hola mundo</h1><p>Esta es una vista renderizada</p>
+
+
+    <form method="POST" action="/login">
+      <input type="hidden" name="csrfToken" value="${csrfToken}" />
+      <label for="username">Username</label>
+      <input
+        type="text"
+        id="username"
+        name="username"
+        required
+        autocomplete="username"
+      />
+
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        required
+        autocomplete="current-password"
+      />
+
+      <button type="submit">Login</button>
+    </form>
+    `,
+  );
 });
 
 app.get("/test", () => {
