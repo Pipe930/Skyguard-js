@@ -78,3 +78,46 @@ export async function render(
 ): Promise<Response> {
   return await Response.render(data, params);
 }
+
+/**
+ * Sends a file as an HTTP response.
+ *
+ * This helper is a thin wrapper around `Response.sendFile`, allowing a file
+ * to be streamed to the client while optionally applying custom headers
+ * and resolving the file path relative to a root directory.
+ *
+ * @param filePath - Path to the file to send.
+ * @param options - Optional configuration for the file response.
+ * @param options.headers - Additional HTTP headers to include in the response
+ * (e.g. `Content-Type`, `Cache-Control`, `Content-Disposition`).
+ * @param options.root - Base directory used to resolve `filePath`.
+ * @returns A `Response` object that streams the requested file to the client.
+ *
+ * @example
+ * // Send a file using an absolute path
+ * const response = await sendFile("/var/www/files/report.pdf", {});
+ *
+ * @example
+ * // Send a file relative to a root directory
+ * const response = await sendFile("report.pdf", {
+ *   root: "/var/www/files",
+ * });
+ *
+ * @example
+ * // Send a downloadable file
+ * const response = await sendFile("report.pdf", {
+ *   root: "/var/www/files",
+ *   headers: {
+ *     "Content-Disposition": "attachment; filename=\"report.pdf\"",
+ *   },
+ * });
+ */
+export async function sendFile(
+  filePath: string,
+  options: {
+    headers?: Record<string, string>;
+    root?: string;
+  },
+): Promise<Response> {
+  return await Response.sendFile(filePath, options);
+}

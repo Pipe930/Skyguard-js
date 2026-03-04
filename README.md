@@ -37,6 +37,7 @@ Skyguard.js currently delivers a solid core that includes **routing**, **type-sa
 - Built-in HTTP exceptions
 - Password hashing and JWT token generation
 - CORS middleware
+- CSRF middleware protection
 - File uploads (via middleware)
 - Static file serving
 - Session handling (via middleware)
@@ -113,8 +114,8 @@ Route groups allow you to organize endpoints under a shared prefix.
 
 ```ts
 app.group("/api", api => {
-  api.get("/users", () => Response.json({ message: "Users" }));
-  api.get("/products", () => Response.json({ message: "Products" }));
+  api.get("/users", () => res.json({ message: "Users" }));
+  api.get("/products", () => res.json({ message: "Products" }));
 });
 ```
 
@@ -125,14 +126,14 @@ app.group("/api", api => {
 Middlewares can be registered **globally**, **per group**, or **per route**.
 
 ```ts
-import { Request, Response, RouteHandler } from "skyguard-js";
+import { Request, Response, json, RouteHandler } from "skyguard-js";
 
 const authMiddleware = async (
   request: Request,
   next: RouteHandler,
 ): Promise<Response> => {
   if (request.headers["authorization"] !== "secret") {
-    return Response.json({ message: "Unauthorized" }).setStatus(401);
+    return json({ message: "Unauthorized" }).setStatus(401);
   }
 
   return next(request);
@@ -144,11 +145,11 @@ app.middlewares([authMiddleware]);
 // Group middleware
 app.group("/admin", admin => {
   admin.middlewares([authMiddleware]);
-  admin.get("/dashboard", () => Response.json({ ok: true }));
+  admin.get("/dashboard", () => json({ ok: true }));
 });
 
 // Route-level middleware
-app.get("/secure", () => Response.json({ secure: true }), [authMiddleware]);
+app.get("/secure", () => json({ secure: true }), [authMiddleware]);
 ```
 
 ---
@@ -177,7 +178,7 @@ app.middlewares([
 Use the built-in `csrf` middleware to protect endpoints against CSRF attacks.
 
 ```ts
-import { csrf } from "skyguard-js";
+import { csrf, json } from "skyguard-js";
 
 app.middlewares([
   csrf({
@@ -187,7 +188,7 @@ app.middlewares([
 ]);
 
 app.post("/transfer", () => {
-  return Response.json({ ok: true });
+  return json({ ok: true });
 });
 ```
 
@@ -203,7 +204,7 @@ The middleware follows a hardened **double-submit cookie** strategy:
 When you render server-side HTML, you can pass the CSRF token to your template and include it as a hidden field in forms.
 
 ```ts
-import { createApp, csrf, Response } from "skyguard-js";
+import { createApp, csrf, render, json } from "skyguard-js";
 import { engine } from "express-handlebars";
 import { join } from "node:path";
 
@@ -227,14 +228,14 @@ app.middlewares([
 ]);
 
 app.get("/transfer", request => {
-  return Response.render("transfer", {
+  return render("transfer", {
     csrfToken: request.cookies["XSRF-TOKEN"],
   });
 });
 
 app.post("/transfer", request => {
   // If middleware passes, token is valid
-  return Response.json({ ok: true, amount: request.body.amount });
+  return json({ ok: true, amount: request.body.amount });
 });
 ```
 
@@ -288,7 +289,7 @@ app.staticFiles(join(__dirname, "..", "static"));
 To validate the data in the body of client requests, the framework provides the creation of validation schemes and a middleware function to validate the body of HTTP requests, used as follows:
 
 ```ts
-import { v, schema, validateRequest } from "skyguard-js";
+import { v, schema, validateRequest, json } from "skyguard-js";
 
 // Created Schema
 const userSchema = schema({
@@ -327,7 +328,7 @@ Validation is:
 The framework provides a set of built-in HTTP exceptions that can be thrown from route handlers or middleware. When an exception is thrown, the framework detects it and sends an appropriate HTTP response with the status code and message you specified in the class.
 
 ```ts
-import { NotFoundError, InternalServerError } from "skyguard-js";
+import { NotFoundError, InternalServerError, json } from "skyguard-js";
 
 const listResources = ["1", "2", "3"];
 
@@ -338,7 +339,7 @@ app.get("/resource/{id}", (request: Request) => {
     throw new NotFoundError("Resource not found");
   }
 
-  return Response.json(resource);
+  return json(resource);
 });
 
 app.get("/divide", (request: Request) => {
@@ -346,7 +347,7 @@ app.get("/divide", (request: Request) => {
     const { a, b } = request.query;
     const result = Number(a) / Number(b);
 
-    return Response.json({ result });
+    return json({ result });
   } catch (error) {
     throw new InternalServerError(
       "An error occurred while processing your request",
@@ -362,7 +363,7 @@ app.get("/divide", (request: Request) => {
 To handle sessions, you must use the framework’s built-in middleware. Depending on where you want to store them (in memory, in files, or in a database), you need to use the corresponding storage class.
 
 ```ts
-import { sessions, FileSessionStorage } from "skyguard-js";
+import { sessions, FileSessionStorage, json } from "skyguard-js";
 
 app.middlewares([
   sessions(FileSessionStorage, {
@@ -410,7 +411,7 @@ app.get("/me", (request: Request) => {
 The framework includes some password hashing and JWT token generation functions, and also includes JWT authentication middleware.
 
 ```ts
-import { Hasher, JWT } from "skyguard-js";
+import { Hasher, JWT, json } from "skyguard-js";
 
 app.post("/register", async (request: Request) => {
   const { username, password } = request.data;
@@ -419,7 +420,7 @@ app.post("/register", async (request: Request) => {
   // Save username and hashedPassword to database
   // ...
 
-  return Response.json({ message: "User registered" });
+  return json({ message: "User registered" });
 });
 
 app.post("/login", async (request: Request) => {
@@ -439,7 +440,7 @@ app.post("/login", async (request: Request) => {
     expiresIn: "1h",
   });
 
-  return Response.json({ token });
+  return json({ token });
 });
 ```
 
@@ -450,7 +451,7 @@ app.post("/login", async (request: Request) => {
 To handle file uploads, use the built-in `createUploader` function to create an uploader middleware with the desired storage configuration.
 
 ```ts
-import { createUploader, StorageType } from "skyguard-js";
+import { createUploader, StorageType, json } from "skyguard-js";
 
 const uploader = createUploader({
   storageType: StorageType.DISK,
@@ -464,7 +465,7 @@ const uploader = createUploader({
 app.post(
   "/upload",
   (request: Request) => {
-    return Response.json({
+    return json({
       message: "File uploaded successfully",
       file: request.file,
     });
@@ -485,6 +486,7 @@ To render views, you must first set up the template engine using the `engineTemp
 import { engine } from "express-handlebars";
 import ejs from "ejs";
 import { join } from "node:path";
+import { render } from "skyguard-js";
 
 app.views(__dirname, "views");
 

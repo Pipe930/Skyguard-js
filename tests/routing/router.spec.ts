@@ -1,5 +1,5 @@
 import { Router } from "../../src/routing/router";
-import { Response, Request, HttpMethods } from "../../src/http/index";
+import { Response, Request, HttpMethods } from "../../src/http";
 import { createRequestMock } from "../utils";
 import { RouteHandler } from "../../src/types";
 

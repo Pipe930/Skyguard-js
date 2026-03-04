@@ -5,6 +5,14 @@ import { ViewEngine } from "../views/engineTemplate";
 import { Container } from "../container/container";
 import { type CookieOptions, serializeCookie } from "../sessions/cookies";
 import { IncomingHttpHeaders } from "node:http";
+import { stat, readFile } from "node:fs/promises";
+import { resolve, extname } from "node:path";
+import { mimeTypesObject } from "../static/mimeTypes";
+import {
+  BadRequestError,
+  NotFoundError,
+  InternalServerError,
+} from "../exceptions/httpExceptions";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -210,6 +218,22 @@ export class Response {
     return new this().setStatusCode(302).setHeader("location", url);
   }
 
+  /**
+   * Prepare a response that forces a file download.
+   *
+   * Uses `FileDownloadHelper` to obtain the file content and the headers
+   * required to trigger a download (for example, `content-disposition`).
+   * Returns a `Response` instance containing the file content (typically a
+   * `Buffer`) and the download headers.
+   *
+   * @param path - Path to the file on disk or a location understood by the helper
+   * @param filename - Suggested filename for the downloaded file (optional)
+   * @param headers - Additional headers to merge into the response (optional)
+   * @returns Promise that resolves to a `Response` ready to be sent to the client
+   * @throws Propagates any exceptions thrown by `FileDownloadHelper.download`
+   * @example
+   * return await Response.download("./uploads/report.pdf", "report.pdf");
+   */
   public static async download(
     path: string,
     filename?: string,
@@ -222,6 +246,73 @@ export class Response {
       headers,
     );
     return new this().setContent(content).setHeaders(downloadHeaders);
+  }
+
+  /**
+   * Sends a file to the client for display (inline).
+   *
+   * Unlike {@link download}, this method does not force the browser to download
+   * the file. Instead, it attempts to display the file in the browser (e.g.,
+   * images, PDFs, HTML files). Sets appropriate `Content-Type` and
+   * `Content-Length` headers based on the file.
+   *
+   * @param filePath - Path to the file on disk
+   * @param options - Optional configuration for sending the file
+   * @returns A {@link Response} configured for inline file display
+   *
+   * @example
+   * app.get("/preview", async () => {
+   *   return Response.sendFile("./uploads/document.pdf");
+   * });
+   *
+   * @example
+   * app.get("/image", async () => {
+   *   return Response.sendFile("./assets/photo.jpg", {
+   *     headers: { "Cache-Control": "max-age=3600" }
+   *   });
+   * });
+   */
+  public static async sendFile(
+    filePath: string,
+    options?: {
+      headers?: Record<string, string>;
+      root?: string;
+    },
+  ): Promise<Response> {
+    try {
+      const fullPath = options?.root
+        ? resolve(options.root, filePath)
+        : resolve(filePath);
+      const stats = await stat(fullPath);
+
+      if (!stats.isFile()) throw new BadRequestError("Path is not a file");
+
+      const content = await readFile(fullPath);
+      const ext = extname(fullPath).toLowerCase();
+      const contentType = mimeTypesObject[ext] || "application/octet-stream";
+
+      const responseHeaders: Record<string, string> = {
+        "content-type": contentType,
+        "content-length": content.length.toString(),
+        "last-modified": stats.mtime.toUTCString(),
+      };
+
+      if (options?.headers) {
+        for (const [key, value] of Object.entries(options.headers)) {
+          responseHeaders[key.toLowerCase()] = value;
+        }
+      }
+
+      return new this().setContent(content).setHeaders(responseHeaders);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).syscall === "stat") {
+        throw new NotFoundError("File not found");
+      }
+      if (error instanceof Error && error.name === "BadRequestError") {
+        throw error;
+      }
+      throw new InternalServerError("Failed to send file");
+    }
   }
 
   /**

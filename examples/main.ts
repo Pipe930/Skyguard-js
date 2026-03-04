@@ -1,7 +1,6 @@
 import { Request, Response } from "../src/http";
 import { createApp } from "../src/app";
 import type { RouteHandler } from "../src/types";
-import { json, redirect, text, download, render } from "../src/helpers/http";
 import { v, schema, validateRequest } from "../src/validators/validationSchema";
 import { join } from "node:path";
 import { cors, csrf, sessions } from "../src/middlewares";
@@ -69,7 +68,7 @@ app.middlewares([
 app.get(
   "/test/{id}/nel/{param}",
   (request: Request) => {
-    const jsonTest = json({
+    const jsonTest = Response.json({
       params: request.params,
       queries: request.query,
     });
@@ -84,7 +83,7 @@ app.post(
     console.log("Archivo subido:", request.files);
 
     request.files;
-    return json({
+    return Response.json({
       message: "Archivo subido exitosamente",
       file: request.files,
     });
@@ -95,7 +94,7 @@ app.post(
 app.get("/home", async (request: Request) => {
   const csrfToken = request.cookies["XSRF-TOKEN"];
 
-  return render(
+  return Response.render(
     `
     <h1>Hola mundo</h1><p>Esta es una vista renderizada</p>
 
@@ -127,37 +126,37 @@ app.get("/home", async (request: Request) => {
 });
 
 app.get("/test", () => {
-  return text("holamundo");
+  return Response.text("holamundo");
 });
 
 app.get("/nueva-ruta", () => {
-  return text("holamundo");
+  return Response.text("holamundo");
 });
 
 app.post(
   "/test",
   (request: Request) => {
     const data = request.body;
-    return json(data).setStatusCode(201);
+    return Response.json(data).setStatusCode(201);
   },
   [validateRequest(userSchema)],
 );
 
 app.post("/xml", (request: Request) => {
-  return json({ message: request.body });
+  return Response.json({ message: request.body });
 });
 
 app.get("/redirect", () => {
-  return redirect("/test");
+  return Response.redirect("/test");
 });
 
 app.group("/tienda", tienda => {
   tienda.get("/pagina", () => {
-    return json({ message: "desde ruta grupada" });
+    return Response.json({ message: "desde ruta grupada" });
   });
 
   tienda.get("/holamundo/{param}", (request: Request) => {
-    return json({
+    return Response.json({
       message: "desde ruta agrupada con parametros",
       params: request.params,
     });
@@ -173,10 +172,12 @@ const authMiddleware = async (
   return await next(request);
 };
 
-app.get("/middlewares", () => json({ message: "hola" }), [authMiddleware]);
+app.get("/middlewares", () => Response.json({ message: "hola" }), [
+  authMiddleware,
+]);
 
 app.get("/download/report", async () => {
-  return await download(
+  return await Response.download(
     join(__dirname, "..", "files", "report.pdf"),
     "reporte-2024.pdf",
   );
@@ -192,7 +193,7 @@ app.post("/login", (request: Request) => {
       role: "admin",
     });
 
-    return json({ message: "Logged in" });
+    return Response.json({ message: "Logged in" });
   }
 
   throw new UnauthorizedError("Invalid credentials");
@@ -202,7 +203,7 @@ app.get("/me", (request: Request) => {
   const user = request.session.get("user");
 
   if (!user) throw new UnauthorizedError("Not authenticated");
-  return json({ user });
+  return Response.json({ user });
 });
 
 app.post("/password-hashed", async (request: Request) => {
@@ -210,7 +211,10 @@ app.post("/password-hashed", async (request: Request) => {
   const passwordHash = await Hasher.hash(password as string);
   const verifyHash = await Hasher.verify(password as string, passwordHash);
 
-  return json({ data: passwordHash, verified: verifyHash }).setStatusCode(200);
+  return Response.json({
+    data: passwordHash,
+    verified: verifyHash,
+  }).setStatusCode(200);
 });
 
 app.get("/generate-jwt", () => {
@@ -219,7 +223,7 @@ app.get("/generate-jwt", () => {
     expiresIn: "1h",
   });
 
-  return json({
+  return Response.json({
     token,
   });
 });
@@ -229,7 +233,7 @@ app.post("/logout", (request: Request) => {
 
   request.session.destroy();
 
-  return json({ message: "Logged out" }).removeCookie("test");
+  return Response.json({ message: "Logged out" }).removeCookie("test");
 });
 
 app.run(PORT, () => {

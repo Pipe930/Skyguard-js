@@ -1,4 +1,4 @@
-import { Request, Response, HttpMethods } from "../../src/http/index";
+import { Request, HttpMethods, Response } from "../../src/http";
 import { Layer } from "../../src/routing/layer";
 
 describe("RequestTest", () => {
