@@ -101,7 +101,7 @@ export type Constructor<T = unknown> = new (...args: unknown[]) => T;
  *   return response;
  * };
  *
- * app.middlewares([loggerMiddleware]);
+ * app.middlewares(loggerMiddleware);
  */
 export type Middleware = (
   request: Request,
