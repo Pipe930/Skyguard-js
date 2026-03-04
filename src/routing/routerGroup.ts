@@ -45,9 +45,9 @@ export class RouterGroup {
    * @returns The group instance (for chaining)
    *
    * @example
-   * group.middlewares([AuthMiddleware, AdminMiddleware]);
+   * group.middlewares(AuthMiddleware, AdminMiddleware);
    */
-  public middlewares(middlewares: Middleware[]): this {
+  public middlewares(...middlewares: Middleware[]): this {
     this.middlewaresGroup.push(...middlewares);
     return this;
   }

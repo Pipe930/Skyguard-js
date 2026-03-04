@@ -140,11 +140,11 @@ const authMiddleware = async (
 };
 
 // Global middleware
-app.middlewares([authMiddleware]);
+app.middlewares(authMiddleware);
 
 // Group middleware
 app.group("/admin", admin => {
-  admin.middlewares([authMiddleware]);
+  admin.middlewares(authMiddleware);
   admin.get("/dashboard", () => json({ ok: true }));
 });
 
@@ -161,14 +161,14 @@ To enable CORS, use the built-in `cors` middleware.
 ```ts
 import { cors, HttpMethods } from "skyguard-js";
 
-app.middlewares([
+app.middlewares(
   cors({
     origin: ["http://localhost:3000", "https://myapp.com"],
     methods: [HttpMethods.get, HttpMethods.post],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
-]);
+);
 ```
 
 ---
@@ -180,12 +180,12 @@ Use the built-in `csrf` middleware to protect endpoints against CSRF attacks.
 ```ts
 import { csrf, json } from "skyguard-js";
 
-app.middlewares([
+app.middlewares(
   csrf({
     cookieName: "XSRF-TOKEN",
     headerNames: ["x-csrf-token"],
   }),
-]);
+);
 
 app.post("/transfer", () => {
   return json({ ok: true });
@@ -220,12 +220,12 @@ app.engineTemplates(
   }),
 );
 
-app.middlewares([
+app.middlewares(
   csrf({
     cookieName: "XSRF-TOKEN",
     headerNames: ["x-csrf-token"],
   }),
-]);
+);
 
 app.get("/transfer", request => {
   return render("transfer", {
@@ -266,6 +266,30 @@ For `fetch`/AJAX requests, send the same token in headers:
     });
   }
 </script>
+```
+
+---
+
+## 🚦 Rate Limit Middleware
+
+You can limit requests with the built-in `rateLimit` middleware.
+
+```ts
+import { rateLimit, Response } from "skyguard-js";
+
+const apiRateLimit = rateLimit({
+  windowMs: 60_000, // 1 minute
+  max: 100,
+  message: "Too many requests from this IP",
+});
+
+app.get(
+  "/api/users",
+  () => {
+    return Response.json([{ id: 1 }]);
+  },
+  [apiRateLimit],
+);
 ```
 
 ---
@@ -365,7 +389,7 @@ To handle sessions, you must use the framework’s built-in middleware. Dependin
 ```ts
 import { sessions, FileSessionStorage, json } from "skyguard-js";
 
-app.middlewares([
+app.middlewares(
   sessions(FileSessionStorage, {
     name: "connect.sid",
     rolling: true,
@@ -378,7 +402,7 @@ app.middlewares([
       path: "/",
     },
   }),
-]);
+);
 
 app.post("/login", (request: Request) => {
   const { username, password } = request.data;

@@ -249,7 +249,7 @@ export class App {
    *
    * app.middlewares(auth);
    */
-  public middlewares(middlewares: Middleware[]): void {
+  public middlewares(...middlewares: Middleware[]): void {
     this.router.middlewares(middlewares);
   }
 

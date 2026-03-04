@@ -61,7 +61,7 @@ describe("RouterGroup", () => {
     const layer = createLayerMock();
     (router.get as jest.Mock).mockReturnValue(layer);
 
-    group.middlewares([testMiddlewareA]);
+    group.middlewares(testMiddlewareA);
     group.get("/users", handler);
 
     expect(layer.setMiddlewares).toHaveBeenCalledWith([testMiddlewareA]);
@@ -71,7 +71,7 @@ describe("RouterGroup", () => {
     const layer = createLayerMock();
     (router.get as jest.Mock).mockReturnValue(layer);
 
-    group.middlewares([testMiddlewareA]);
+    group.middlewares(testMiddlewareA);
     group.get("/users", handler, [testMiddlewareB]);
 
     expect(layer.setMiddlewares).toHaveBeenCalledWith([
@@ -126,7 +126,7 @@ describe("RouterGroup", () => {
   });
 
   it("should allow chaining middlewares()", () => {
-    const result = group.middlewares([testMiddlewareA]);
+    const result = group.middlewares(testMiddlewareA);
 
     expect(result).toBe(group);
   });

@@ -3,7 +3,7 @@ import { createApp } from "../src/app";
 import type { RouteHandler } from "../src/types";
 import { v, schema, validateRequest } from "../src/validators/validationSchema";
 import { join } from "node:path";
-import { cors, csrf, sessions } from "../src/middlewares";
+import { cors, csrf, rateLimit, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
 import { Hasher, JWT } from "../src/crypto";
 import { UnauthorizedError } from "../src/exceptions/httpExceptions";
@@ -13,6 +13,12 @@ import { StorageType } from "../src/storage/types";
 const PORT = 3000;
 
 const app = createApp();
+
+const apiRateLimit = rateLimit({
+  windowMs: 60_000, // 1 minute
+  max: 100,
+  message: "Too many requests from this IP",
+});
 
 const uploader = createUploader({
   storageType: StorageType.DISK,
@@ -49,7 +55,8 @@ const validParamsAndQuery = schema({
   },
 });
 
-app.middlewares([
+app.middlewares(apiRateLimit);
+app.middlewares(
   cors({
     origin: ["http://localhost:3000/", "http://127.0.0.1:3000/"],
   }),
@@ -63,7 +70,7 @@ app.middlewares([
     headerNames: ["x-csrf-token"],
     bodyField: "csrfToken",
   }),
-]);
+);
 
 app.get(
   "/test/{id}/nel/{param}",
