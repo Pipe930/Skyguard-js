@@ -40,7 +40,7 @@ export class FileSessionStorage implements SessionStorage {
   private sessionId: string | null = null;
 
   /** In-memory session key/value data. */
-  private data: Record<string, unknown> = {};
+  private data = Object.create(null) as Record<string, unknown>;
 
   /** Expiration timestamp in milliseconds since epoch. */
   private expiresAt = 0;

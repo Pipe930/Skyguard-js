@@ -29,7 +29,7 @@ export interface ValidationRule {
  */
 export abstract class BaseValidationRule<T = any> implements ValidationRule {
   public hasOptional = false;
-  public defaultValue?: T = undefined;
+  public defaultValue?: T;
   public converter?: (value: unknown) => unknown;
 
   constructor(

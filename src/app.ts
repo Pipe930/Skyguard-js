@@ -35,7 +35,7 @@ import { Container } from "./container/container";
  * from the runtime platform (Node, Bun, Deno, etc.)
  * through {@link HttpAdapter} and {@link Server}.
  */
-export class App {
+class App {
   /** Main routing system */
   private router: Router;
 

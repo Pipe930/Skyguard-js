@@ -1,3 +1,4 @@
+import { Container } from "../container/container";
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 
@@ -336,4 +337,4 @@ class HasherCrypto {
  * - scrypt is intentionally expensive; concurrency is bounded in batch methods to help prevent
  *   resource exhaustion (especially relevant in containers and small instances).
  */
-export const Hasher = new HasherCrypto();
+export const Hasher = Container.singleton(HasherCrypto);

@@ -1,3 +1,4 @@
+import { Container } from "../container/container";
 import { BaseException } from "../exceptions/baseException";
 import {
   createHmac,
@@ -411,4 +412,4 @@ class Jwt {
  * - Expiration handling is **strict**: `verify()` expects `exp` to exist and be in the future.
  * - Input parsing is defensive: malformed tokens or unsupported algorithms yield `null` on verify/decode.
  */
-export const JWT = new Jwt();
+export const JWT = Container.singleton(Jwt);

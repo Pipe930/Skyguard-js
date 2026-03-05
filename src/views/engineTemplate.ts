@@ -26,9 +26,9 @@ export type TemplateEngineFunction = (
  * it delegates rendering to the configured TemplateEngineFunction.
  */
 export class ViewEngine {
-  private viewsPath: string = "";
+  private viewsPath = "";
   private templateEngine: TemplateEngineFunction | null = null;
-  private defaultExtension: string = "html";
+  private defaultExtension = "html";
 
   /**
    * Sets the base directory where view templates are located.

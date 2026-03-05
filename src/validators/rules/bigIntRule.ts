@@ -65,34 +65,4 @@ export class BigIntRule extends BaseValidationRule<bigint> {
 
     return null;
   }
-
-  gt(limit: bigint, message?: string): this {
-    this.rules.push({ rule: this, options: { gt: limit, message } });
-    return this;
-  }
-
-  gte(limit: bigint, message?: string): this {
-    this.rules.push({ rule: this, options: { gte: limit, message } });
-    return this;
-  }
-
-  lt(limit: bigint, message?: string): this {
-    this.rules.push({ rule: this, options: { lt: limit, message } });
-    return this;
-  }
-
-  lte(limit: bigint, message?: string): this {
-    this.rules.push({ rule: this, options: { lte: limit, message } });
-    return this;
-  }
-
-  positive(message?: string): this {
-    this.rules.push({ rule: this, options: { positive: true, message } });
-    return this;
-  }
-
-  negative(message?: string): this {
-    this.rules.push({ rule: this, options: { negative: true, message } });
-    return this;
-  }
 }

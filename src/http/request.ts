@@ -27,13 +27,13 @@ export class Request {
   private _method: HttpMethods;
 
   /** Parsed request body payload */
-  private _body: Record<string, any> = {};
+  private _body = Object.create(null) as Record<string, any>;
 
   /** Query string parameters */
-  private _query: Record<string, unknown> = {};
+  private _query = Object.create(null) as Record<string, unknown>;
 
   /** Dynamic route parameters (path params) */
-  private _params: Record<string, unknown> = {};
+  private _params = Object.create(null) as Record<string, unknown>;
 
   /** Session associated with the request */
   private _session: Session;
@@ -44,7 +44,7 @@ export class Request {
    * This object can be freely used by middlewares and route handlers to store
    * arbitrary data during the request lifecycle.
    */
-  public state: Record<string, unknown> = {};
+  public state = Object.create(null) as Record<string, unknown>;
 
   /** Multiple uploaded files metadata. */
   public files?: UploadedFile | UploadedFile[] | Record<string, UploadedFile[]>;

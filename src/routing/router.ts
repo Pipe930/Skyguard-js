@@ -13,7 +13,7 @@ import { buildFullPath } from "./buildFullPath";
  */
 export class Router {
   /** Routes organized by HTTP method */
-  private routes: HashMapRouters = Object.create(null) as HashMapRouters;
+  private routes = Object.create(null) as HashMapRouters;
 
   /** Global middlewares executed for every route */
   private globalMiddlewares: Middleware[] = [];

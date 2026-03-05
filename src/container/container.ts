@@ -20,7 +20,7 @@ export class Container {
    *
    * @internal
    */
-  private static instances = new Map<Constructor, any>();
+  private static instances = new Map<Constructor, unknown>();
 
   /**
    * Get or create a singleton instance for the given class.

@@ -36,7 +36,7 @@ export class MemorySessionStorage implements SessionStorage {
   private sessionId: string | null = null;
 
   /** In-memory session key/value data for the current session. */
-  private data: Record<string, unknown> = {};
+  private data = Object.create(null) as Record<string, unknown>;
 
   /**
    * @param ttlSeconds - Session TTL in seconds. Defaults to 86,400 seconds (24 hours).
