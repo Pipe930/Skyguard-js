@@ -1,5 +1,13 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 
+export type LogFormat = "combined" | "common" | "dev" | "short" | "tiny";
+
+export type LoggerOptions = {
+  format?: LogFormat;
+  stream?: NodeJS.WritableStream;
+  fileStream?: NodeJS.WritableStream;
+};
+
 /**
  * Minimal HTTP request logger.
  *
@@ -18,9 +26,13 @@ import { IncomingMessage, ServerResponse } from "node:http";
  */
 export class Logger {
   private stream: NodeJS.WritableStream;
+  private fileStream?: NodeJS.WritableStream;
+  private format: LogFormat;
 
-  constructor() {
-    this.stream = process.stdout;
+  constructor(options: LoggerOptions = {}) {
+    this.stream = options.stream || process.stdout;
+    this.fileStream = options.fileStream;
+    this.format = options.format || "dev";
   }
 
   /**
@@ -46,16 +58,59 @@ export class Logger {
     res: ServerResponse,
     startTime: bigint,
   ): void {
-    const method = req.method || "-";
-    const url = req.url || "-";
-    const contentLength = res.getHeader("content-length") || "-";
-
     const diff = process.hrtime.bigint() - startTime;
     const responseTime = (Number(diff) / 1_000_000).toFixed(3);
-    const coloredStatus = this.colorizeStatus(res.statusCode);
-    const logLine = `${method} ${url} ${coloredStatus} ${responseTime} ms - ${contentLength.toString()}`;
+    const consoleLine = this.buildLogLine(req, res, responseTime, true);
+    const fileLine = this.buildLogLine(req, res, responseTime, false);
 
-    this.stream.write(logLine + "\n");
+    this.stream.write(consoleLine + "\n");
+
+    if (this.fileStream) {
+      this.fileStream.write(fileLine + "\n");
+    }
+  }
+
+  private buildLogLine(
+    req: IncomingMessage,
+    res: ServerResponse,
+    responseTime: string,
+    useColor: boolean,
+  ): string {
+    const method = req.method || "-";
+    const url = req.url || "-";
+    const statusCode = useColor
+      ? this.colorizeStatus(res.statusCode)
+      : String(res.statusCode);
+    const contentLength = res.getHeader("content-length")?.toString() || "-";
+    const remoteAddr = req.socket.remoteAddress || "-";
+    const httpVersion = req.httpVersion || "1.1";
+    const referrerHeader = req.headers.referer || req.headers.referrer;
+    const referrer = Array.isArray(referrerHeader)
+      ? referrerHeader.join(", ")
+      : referrerHeader || "-";
+    const userAgentHeader = req.headers["user-agent"];
+    const userAgent = Array.isArray(userAgentHeader)
+      ? userAgentHeader.join(", ")
+      : userAgentHeader || "-";
+    const date = new Date().toUTCString();
+
+    if (this.format === "tiny") {
+      return `${method} ${url} ${statusCode} ${contentLength} - ${responseTime} ms`;
+    }
+
+    if (this.format === "short") {
+      return `${remoteAddr} ${method} ${url} ${statusCode} ${contentLength} - ${responseTime} ms`;
+    }
+
+    if (this.format === "common") {
+      return `${remoteAddr} - - [${date}] "${method} ${url} HTTP/${httpVersion}" ${statusCode} ${contentLength}`;
+    }
+
+    if (this.format === "combined") {
+      return `${remoteAddr} - - [${date}] "${method} ${url} HTTP/${httpVersion}" ${statusCode} ${contentLength} "${referrer}" "${userAgent}"`;
+    }
+
+    return `${method} ${url} ${statusCode} ${responseTime} ms - ${contentLength}`;
   }
 
   /**

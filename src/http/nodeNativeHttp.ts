@@ -4,7 +4,7 @@ import type { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
 import { ContentParserManager } from "../parsers/contentParserManager";
-import { Logger } from "./logger";
+import { type LoggerOptions, Logger } from "./logger";
 
 /**
  * Node.js HTTP adapter.
@@ -31,9 +31,10 @@ export class NodeHttpAdapter implements HttpAdapter {
   constructor(
     private readonly req: IncomingMessage,
     private readonly res: ServerResponse,
+    loggerOptions: LoggerOptions = {},
   ) {
     this.startTime = process.hrtime.bigint();
-    this.logger = new Logger();
+    this.logger = new Logger(loggerOptions);
     this.contentParser = new ContentParserManager();
   }
 
