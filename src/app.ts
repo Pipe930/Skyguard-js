@@ -2,11 +2,14 @@ import { Router, RouterGroup } from "./routing";
 import {
   type HttpAdapter,
   HttpMethods,
+  type LogFormat,
+  type LoggerOptions,
   NodeHttpAdapter,
   Response,
 } from "./http";
 import { ValidationException } from "./exceptions/validationException";
 import { join } from "node:path";
+import { createWriteStream } from "node:fs";
 import type { Middleware, RouteHandler } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
 import { createServer } from "node:http";
@@ -44,6 +47,11 @@ class App {
 
   /** View engine for rendering templates (optional) */
   private viewEngine: ViewEngine;
+
+  /** Logger configuration */
+  private loggerOptions: LoggerOptions = {
+    format: "dev",
+  };
 
   /**
    * Bootstraps and configures the application.
@@ -171,11 +179,38 @@ class App {
     hostname: string = "127.0.0.1",
   ): void {
     createServer((req, res) => {
-      const adapter = new NodeHttpAdapter(req, res);
+      const adapter = new NodeHttpAdapter(req, res, this.loggerOptions);
       void this.handle(adapter);
     }).listen(port, hostname, () => {
       callback();
     });
+  }
+
+  /**
+   * Configures HTTP request logger output format and optional file output.
+   *
+   * Supported formats are inspired by morgan:
+   * - "combined"
+   * - "common"
+   * - "dev"
+   * - "short"
+   * - "tiny"
+   *
+   * @example
+   * app.logger("common");
+   * app.logger("combined", "./logs/http.log");
+   */
+  public logger(format: LogFormat = "dev", filePath?: string): void {
+    this.loggerOptions = {
+      ...this.loggerOptions,
+      format,
+    };
+
+    if (filePath) {
+      this.loggerOptions.fileStream = createWriteStream(filePath, {
+        flags: "a",
+      });
+    }
   }
 
   /**
