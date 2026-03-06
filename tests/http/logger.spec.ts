@@ -35,10 +35,10 @@ const buildResponse = (): ServerResponse => {
   } as ServerResponse;
 };
 
-describe("Logger", () => {
+describe("Logger Test", () => {
   test.each<LogFormat>(["combined", "common", "dev", "short", "tiny"])(
     "logs using %s format",
-    (format) => {
+    format => {
       const stream = new MemoryStream();
       const logger = new Logger({
         format,

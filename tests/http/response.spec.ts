@@ -1,6 +1,6 @@
 import { Response } from "../../src/http/response";
 
-describe("ResponseTest", () => {
+describe("Response Test", () => {
   it("should json response is constructed correctly", () => {
     const content = { test: "text", num: 1 };
     const response = Response.json(content);

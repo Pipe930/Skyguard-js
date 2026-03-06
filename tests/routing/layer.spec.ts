@@ -1,6 +1,6 @@
 import { Layer } from "../../src/routing/layer";
 
-describe("LayerTest", () => {
+describe("Layer Test", () => {
   let layer: Layer;
 
   const listUrlsNoParameters: string[] = [
@@ -53,10 +53,12 @@ describe("LayerTest", () => {
   });
 
   it("should escape regex-special characters in static segments", () => {
-    const layerWithSpecialChars = new Layer("/v1.0/users+active/{id}", jest.fn());
+    const layerWithSpecialChars = new Layer(
+      "/v1.0/users+active/{id}",
+      jest.fn(),
+    );
 
     expect(layerWithSpecialChars.matches("/v1.0/users+active/123")).toBe(true);
     expect(layerWithSpecialChars.matches("/v10/usersactive/123")).toBe(false);
   });
-
 });

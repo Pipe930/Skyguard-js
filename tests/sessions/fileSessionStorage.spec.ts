@@ -19,7 +19,7 @@ jest.mock("fs/promises");
 jest.mock("crypto");
 jest.mock("path");
 
-describe("FileSessionStorage", () => {
+describe("File Session Storage Test", () => {
   let storage: FileSessionStorage;
   const mockStoragePath = "/tmp/test-sessions";
   const mockExpiredSession = 3600;

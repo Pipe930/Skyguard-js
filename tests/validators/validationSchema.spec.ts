@@ -2,7 +2,7 @@ import { NumberRule, ObjectRule, StringRule } from "../../src/validators/index";
 import { EmailRule } from "../../src/validators/rules/stringRule";
 import { v, schema } from "../../src/validators/validationSchema";
 
-describe("ValidationSchemaTest", () => {
+describe("Validation Schema Test", () => {
   it("should create a new ValidationSchema instance using create()", () => {
     const schemaTest = schema({});
 

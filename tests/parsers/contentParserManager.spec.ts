@@ -28,7 +28,7 @@ function createMockReq(options: {
   return req;
 }
 
-describe("ContentParserManager", () => {
+describe("Content Parser Manager Test", () => {
   let manager: ContentParserManager;
 
   beforeEach(() => {

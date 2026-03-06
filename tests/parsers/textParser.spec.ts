@@ -1,6 +1,6 @@
 import { TextParser } from "../../src/parsers/textParser";
 
-describe("TextParserTest", () => {
+describe("Text Parser Test", () => {
   let parser: TextParser;
 
   const contentTypesInvalids = new Set<string>([

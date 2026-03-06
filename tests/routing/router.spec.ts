@@ -3,7 +3,7 @@ import { Response, Request, HttpMethods } from "../../src/http";
 import { createRequestMock } from "../utils";
 import { RouteHandler } from "../../src/types";
 
-describe("RouterTest", () => {
+describe("Router Test", () => {
   let router: Router;
 
   beforeEach(() => {

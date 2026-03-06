@@ -1,6 +1,6 @@
 import { ContentDisposition } from "../../src/static/contentDisposition";
 
-describe("ContentDispositionTest", () => {
+describe("Content Disposition Test", () => {
   let contentDisposition: ContentDisposition;
 
   beforeEach(() => {

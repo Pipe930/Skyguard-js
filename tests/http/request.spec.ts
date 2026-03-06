@@ -1,7 +1,7 @@
 import { Request, HttpMethods, Response } from "../../src/http";
 import { Layer } from "../../src/routing/layer";
 
-describe("RequestTest", () => {
+describe("Request Test", () => {
   it("should request returns data obtained from server correctly", () => {
     const url = "/test/route";
     const method = HttpMethods.post;

@@ -1,7 +1,7 @@
 import { UnprocessableContentError } from "../../src/exceptions/httpExceptions";
 import { XmlParser } from "../../src/parsers/xmlParser";
 
-describe("XmlParserTest", () => {
+describe("Xml Parser Test", () => {
   let parser: XmlParser;
   const setContentTypesInvalids = new Set<string>([
     "application/json",

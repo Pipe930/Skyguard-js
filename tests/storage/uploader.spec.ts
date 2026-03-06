@@ -3,7 +3,7 @@ import { StorageType, UploadErrorCode } from "../../src/storage/types";
 import { Request } from "../../src/http/request";
 import { UploadedFile } from "../../src/parsers/parserInterface";
 
-describe("Uploader", () => {
+describe("Uploader Test", () => {
   const makeFile = (fieldName: string, filename: string, content = "ok") => ({
     fieldName,
     filename,

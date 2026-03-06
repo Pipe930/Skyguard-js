@@ -11,7 +11,7 @@ import {
   Validator,
 } from "../../src/validators";
 
-describe("RulesTest", () => {
+describe("Rules Test", () => {
   describe("StringRule", () => {
     let rule: StringRule;
     beforeEach(() => {

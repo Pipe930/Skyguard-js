@@ -1,6 +1,6 @@
 import { UrlEncodedParser } from "../../src/parsers/urlEncodedParser";
 
-describe("UrlEncodedParserTest", () => {
+describe("Url Encoded Parser Test", () => {
   let parser: UrlEncodedParser;
 
   const contentTypesInvalids = new Set<string>([

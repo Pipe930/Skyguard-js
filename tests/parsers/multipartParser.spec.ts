@@ -1,7 +1,7 @@
 import { UnprocessableContentError } from "../../src/exceptions/httpExceptions";
 import { MultipartParser } from "../../src/parsers/multipartParser";
 
-describe("MultipartParserTest", () => {
+describe("Multipart Parser Test", () => {
   let parser: MultipartParser;
 
   const contentTypesInvalids = new Set<string>([

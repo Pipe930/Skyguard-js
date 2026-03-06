@@ -25,7 +25,7 @@ function createRouterMock(): Router {
   } as unknown as Router;
 }
 
-describe("RouterGroup", () => {
+describe("Router Group Test", () => {
   let router: Router;
   let group: RouterGroup;
 

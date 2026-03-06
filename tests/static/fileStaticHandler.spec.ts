@@ -35,7 +35,7 @@ const mockStat = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-describe("StaticFileHandlerTest", () => {
+describe("Static File Handler Test", () => {
   const publicPath = normalize("/var/www/public");
   let handler: StaticFileHandler;
 

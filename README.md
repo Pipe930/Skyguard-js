@@ -428,6 +428,227 @@ app.get("/me", (request: Request) => {
 });
 ```
 
+For **database-backed sessions**, configure `DatabaseSessionStorage` once with an adapter that maps to your DB client/ORM. This keeps the framework **DB-engine agnostic** (MySQL, MariaDB, SQLite, PostgreSQL, SQL Server, Oracle, etc.).
+
+```ts
+import {
+  sessions,
+  DatabaseSessionStorage,
+  type SessionDatabaseAdapter,
+} from "skyguard-js";
+
+const sessionAdapter: SessionDatabaseAdapter = {
+  async findById(id) {
+    // query row by id and return: { data: parsedJson, expiresAt: unixMs }
+    return null;
+  },
+  async upsert(id, payload) {
+    // insert/update row depending on your DB driver
+  },
+  async deleteById(id) {
+    // delete row by id
+  },
+  async deleteExpired(now) {
+    // delete rows where expiresAt <= now
+  },
+};
+
+DatabaseSessionStorage.configure(sessionAdapter);
+
+app.middlewares(sessions(DatabaseSessionStorage));
+```
+
+### Concrete DB adapter examples
+
+> Suggested table shape (portable across engines):
+>
+> - `id` (string/varchar, primary key)
+> - `data` (JSON/TEXT containing serialized object)
+> - `expires_at` (bigint/timestamp in unix milliseconds)
+
+To keep the code cleaner, you should create a separate file where you can configure the database sessions, such as `src/sessions/config.ts`
+
+#### Prisma (MySQL / PostgreSQL / SQLite / SQL Server / CockroachDB)
+
+```ts
+import { PrismaClient } from "@prisma/client";
+import {
+  DatabaseSessionStorage,
+  type SessionDatabaseAdapter,
+} from "skyguard-js";
+
+const prisma = new PrismaClient();
+
+// model Session {
+//   id        String @id
+//   data      String
+//   expiresAt BigInt @map("expires_at")
+//   @@map("sessions")
+// }
+
+const adapter: SessionDatabaseAdapter = {
+  async findById(id) {
+    const row = await prisma.session.findUnique({ where: { id } });
+    if (!row) return null;
+    return { data: JSON.parse(row.data), expiresAt: Number(row.expiresAt) };
+  },
+  async upsert(id, payload) {
+    await prisma.session.upsert({
+      where: { id },
+      update: {
+        data: JSON.stringify(payload.data),
+        expiresAt: BigInt(payload.expiresAt),
+      },
+      create: {
+        id,
+        data: JSON.stringify(payload.data),
+        expiresAt: BigInt(payload.expiresAt),
+      },
+    });
+  },
+  async deleteById(id) {
+    await prisma.session.deleteMany({ where: { id } });
+  },
+  async deleteExpired(now) {
+    await prisma.session.deleteMany({
+      where: { expiresAt: { lte: BigInt(now) } },
+    });
+  },
+};
+
+DatabaseSessionStorage.configure(adapter);
+```
+
+#### TypeORM (MySQL / MariaDB / PostgreSQL / SQLite / MSSQL / Oracle)
+
+```ts
+import {
+  DataSource,
+  Entity,
+  Column,
+  PrimaryColumn,
+  LessThanOrEqual,
+} from "typeorm";
+import {
+  DatabaseSessionStorage,
+  type SessionDatabaseAdapter,
+} from "skyguard-js";
+
+@Entity({ name: "sessions" })
+class SessionEntity {
+  @PrimaryColumn({ type: "varchar", length: 64 })
+  id!: string;
+
+  @Column({ type: "text" })
+  data!: string;
+
+  @Column({ name: "expires_at", type: "bigint" })
+  expiresAt!: string;
+}
+
+const ds = new DataSource({ /* your db config */ entities: [SessionEntity] });
+await ds.initialize();
+const repo = ds.getRepository(SessionEntity);
+
+const adapter: SessionDatabaseAdapter = {
+  async findById(id) {
+    const row = await repo.findOneBy({ id });
+    if (!row) return null;
+    return { data: JSON.parse(row.data), expiresAt: Number(row.expiresAt) };
+  },
+  async upsert(id, payload) {
+    await repo.save({
+      id,
+      data: JSON.stringify(payload.data),
+      expiresAt: String(payload.expiresAt),
+    });
+  },
+  async deleteById(id) {
+    await repo.delete({ id });
+  },
+  async deleteExpired(now) {
+    await repo.delete({ expiresAt: LessThanOrEqual(String(now)) });
+  },
+};
+
+DatabaseSessionStorage.configure(adapter);
+```
+
+#### mysql2 (MySQL)
+
+```ts
+import mysql from "mysql2/promise";
+import {
+  DatabaseSessionStorage,
+  type SessionDatabaseAdapter,
+} from "skyguard-js";
+
+const pool = mysql.createPool({ uri: process.env.DATABASE_URL });
+
+const adapter: SessionDatabaseAdapter = {
+  async findById(id) {
+    const [rows] = await pool.query<any[]>(
+      "SELECT data, expires_at FROM sessions WHERE id = ? LIMIT 1",
+      [id],
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return { data: JSON.parse(row.data), expiresAt: Number(row.expires_at) };
+  },
+  async upsert(id, payload) {
+    await pool.query(
+      `INSERT INTO sessions (id, data, expires_at) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE data = VALUES(data), expires_at = VALUES(expires_at)`,
+      [id, JSON.stringify(payload.data), payload.expiresAt],
+    );
+  },
+  async deleteById(id) {
+    await pool.query("DELETE FROM sessions WHERE id = ?", [id]);
+  },
+  async deleteExpired(now) {
+    await pool.query("DELETE FROM sessions WHERE expires_at <= ?", [now]);
+  },
+};
+
+DatabaseSessionStorage.configure(adapter);
+```
+
+#### sqlite3 (SQLite)
+
+```ts
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import { type SessionDatabaseAdapter } from "skyguard-js";
+
+const db = await open({ filename: "./sessions.db", driver: sqlite3.Database });
+
+const adapter: SessionDatabaseAdapter = {
+  async findById(id) {
+    const row = await db.get<{ data: string; expires_at: number }>(
+      "SELECT data, expires_at FROM sessions WHERE id = ? LIMIT 1",
+      [id],
+    );
+    if (!row) return null;
+    return { data: JSON.parse(row.data), expiresAt: Number(row.expires_at) };
+  },
+  async upsert(id, payload) {
+    await db.run(
+      `INSERT INTO sessions (id, data, expires_at) VALUES (?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET data = excluded.data, expires_at = excluded.expires_at`,
+      [id, JSON.stringify(payload.data), payload.expiresAt],
+    );
+  },
+  async deleteById(id) {
+    await db.run("DELETE FROM sessions WHERE id = ?", [id]);
+  },
+  async deleteExpired(now) {
+    await db.run("DELETE FROM sessions WHERE expires_at <= ?", [now]);
+  },
+};
+
+DatabaseSessionStorage.configure(adapter);
+```
+
 ---
 
 ## 🛡️ Security
