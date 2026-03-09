@@ -10,8 +10,6 @@ import { UnauthorizedError } from "../src/exceptions/httpExceptions";
 import { createUploader } from "../src/storage/uploader";
 import { StorageType } from "../src/storage/types";
 
-const PORT = 3000;
-
 const app = createApp();
 
 const apiRateLimit = rateLimit({
@@ -243,6 +241,4 @@ app.post("/logout", (request: Request) => {
   return Response.json({ message: "Logged out" }).removeCookie("test");
 });
 
-app.run(PORT, () => {
-  console.log(`Server running in port: http://localhost:${PORT}`);
-});
+app.run();

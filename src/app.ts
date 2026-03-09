@@ -174,15 +174,15 @@ class App {
    * @param port - TCP port to listen on
    */
   public run(
-    port: number,
-    callback: VoidFunction,
+    port: number = 3000,
+    callback?: VoidFunction,
     hostname: string = "127.0.0.1",
   ): void {
     createServer((req, res) => {
       const adapter = new NodeHttpAdapter(req, res, this.loggerOptions);
       void this.handle(adapter);
     }).listen(port, hostname, () => {
-      callback();
+      if (callback) callback();
     });
   }
 
