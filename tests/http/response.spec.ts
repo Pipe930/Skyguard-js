@@ -1,4 +1,5 @@
 import { Response } from "../../src/http/response";
+import { Readable } from "node:stream";
 
 describe("Response Test", () => {
   it("should json response is constructed correctly", () => {
@@ -47,5 +48,30 @@ describe("Response Test", () => {
     reponse.prepare();
 
     expect(content.length.toString()).toBe(reponse.headers["content-length"]);
+  });
+
+  it("should create stream response with fluent stream method", () => {
+    const stream = Readable.from(["hello", " ", "world"]);
+    const response = new Response().stream(stream);
+
+    expect(response.content).toBe(stream);
+  });
+
+  it("should create stream response with static stream method", () => {
+    const stream = Readable.from(["chunk"]);
+    const response = Response.stream(stream, { "x-test": "true" });
+
+    expect(response.content).toBe(stream);
+    expect(response.headers["x-test"]).toBe("true");
+  });
+
+  it("should not set content-length for stream content", () => {
+    const stream = Readable.from(["chunk"]);
+    const response = Response.stream(stream);
+
+    response.prepare();
+
+    expect(response.headers["content-length"]).toBeUndefined();
+    expect(response.headers["content-type"]).toBe("application/octet-stream");
   });
 });
