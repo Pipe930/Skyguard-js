@@ -13,6 +13,7 @@ import {
   NotFoundError,
   InternalServerError,
 } from "../exceptions/httpExceptions";
+import { Readable } from "node:stream";
 
 /**
  * Represents an outgoing response sent to the client.
@@ -44,7 +45,7 @@ export class Response {
   /**
    * Response body content.
    */
-  private _content: string | Buffer | null = null;
+  private _content: string | Buffer | Readable | null = null;
 
   get statusCode(): number {
     return this._statusCode;
@@ -130,13 +131,26 @@ export class Response {
     return this;
   }
 
-  get content(): string | Buffer | null {
+  get content(): string | Buffer | Readable | null {
     return this._content;
   }
 
-  public setContent(content: string | Buffer): this {
+  public setContent(content: string | Buffer | Readable): this {
     this._content = content;
     return this;
+  }
+
+  /**
+   * Sets a readable stream as the response body.
+   *
+   * Use this when you need to send large payloads in chunks without
+   * buffering the full content in memory first.
+   *
+   * @param stream - Node.js readable stream
+   * @returns The current {@link Response} instance
+   */
+  public stream(stream: Readable): this {
+    return this.setContent(stream);
   }
 
   /**
@@ -155,14 +169,18 @@ export class Response {
    */
   public prepare(): void {
     if (!this._headers["content-type"] && this._content) {
-      if (Buffer.isBuffer(this._content)) {
+      if (Buffer.isBuffer(this._content) || this._content instanceof Readable) {
         this._headers["content-type"] = "application/octet-stream";
       } else {
         this._headers["content-type"] = "text/plain";
       }
     }
 
-    if (this._content && !this._headers["content-length"]) {
+    if (
+      this._content &&
+      !(this._content instanceof Readable) &&
+      !this._headers["content-length"]
+    ) {
       const length = Buffer.isBuffer(this._content)
         ? this._content.length
         : Buffer.byteLength(this._content, "utf-8");
@@ -201,6 +219,22 @@ export class Response {
    */
   public static text(data: string): Response {
     return new this().setContentType("text/plain").setContent(data);
+  }
+
+  /**
+   * Creates a response whose body is streamed.
+   *
+   * @param stream - Node.js readable stream
+   * @param headers - Optional headers to include in the response
+   * @returns A {@link Response} configured for streaming
+   */
+  public static stream(
+    stream: Readable,
+    headers?: Record<string, string>,
+  ): Response {
+    const response = new this().stream(stream);
+    if (headers) response.setHeaders(headers);
+    return response;
   }
 
   /**

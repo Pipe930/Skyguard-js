@@ -5,6 +5,7 @@ import { Response } from "./response";
 import { Request } from "./request";
 import { ContentParserManager } from "../parsers/contentParserManager";
 import { type LoggerOptions, Logger } from "./logger";
+import { Readable } from "node:stream";
 
 /**
  * Node.js HTTP adapter.
@@ -85,6 +86,12 @@ export class NodeHttpAdapter implements HttpAdapter {
     if (!response.content) this.res.removeHeader("Content-Type");
 
     this.logger.log(this.req, this.res, this.startTime);
+
+    if (response.content instanceof Readable) {
+      response.content.pipe(this.res);
+      return;
+    }
+
     this.res.end(response.content);
   }
 }
