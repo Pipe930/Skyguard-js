@@ -149,7 +149,7 @@ app.group("/admin", admin => {
 });
 
 // Route-level middleware
-app.get("/secure", () => json({ secure: true }), [authMiddleware]);
+app.get("/secure", [authMiddleware], () => json({ secure: true }));
 ```
 
 ---
@@ -283,13 +283,9 @@ const apiRateLimit = rateLimit({
   message: "Too many requests from this IP",
 });
 
-app.get(
-  "/api/users",
-  () => {
-    return Response.json([{ id: 1 }]);
-  },
-  [apiRateLimit],
-);
+app.get("/api/users", [apiRateLimit], () => {
+  return Response.json([{ id: 1 }]);
+});
 ```
 
 ---
@@ -326,14 +322,10 @@ const userSchema = schema({
   },
 });
 
-app.post(
-  "/test",
-  [validateRequest(userSchema)],
-  (request: Request) => {
-    const data = request.body;
-    return json(data).setStatusCode(201);
-  },
-);
+app.post("/test", [validateRequest(userSchema)], (request: Request) => {
+  const data = request.body;
+  return json(data).setStatusCode(201);
+});
 ```
 
 To type the request body, an interface is used and the .getData() method is used, which allows returning the typed bodym. By default each property you define in the schema is required, to define it optional you use the `.optional()` or `.default(value)` function
@@ -707,16 +699,12 @@ const uploader = createUploader({
   },
 });
 
-app.post(
-  "/upload",
-  (request: Request) => {
-    return json({
-      message: "File uploaded successfully",
-      file: request.file,
-    });
-  },
-  [uploader.single("file")],
-);
+app.post("/upload", [uploader.single("file")], (request: Request) => {
+  return json({
+    message: "File uploaded successfully",
+    file: request.file,
+  });
+});
 ```
 
 Depending on the `Storage Type` you have selected, the storage options will contain two properties: `disk` and `memory`
