@@ -72,7 +72,20 @@ describe("Router Group Test", () => {
     (router.get as jest.Mock).mockReturnValue(layer);
 
     group.middlewares(testMiddlewareA);
-    group.get("/users", handler, [testMiddlewareB]);
+    group.get("/users", [testMiddlewareB], handler);
+
+    expect(layer.setMiddlewares).toHaveBeenCalledWith([
+      testMiddlewareA,
+      testMiddlewareB,
+    ]);
+  });
+
+  it("should combine group and route middlewares using second argument", () => {
+    const layer = createLayerMock();
+    (router.get as jest.Mock).mockReturnValue(layer);
+
+    group.middlewares(testMiddlewareA);
+    group.get("/users", [testMiddlewareB], handler);
 
     expect(layer.setMiddlewares).toHaveBeenCalledWith([
       testMiddlewareA,

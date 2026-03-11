@@ -1,9 +1,15 @@
-import type { HashMapRouters, Middleware, RouteHandler } from "../types";
+import type {
+  HashMapRouters,
+  Middleware,
+  HandlerOrMiddlewares,
+  RouteHandler,
+} from "../types";
 import { Request, Response, HttpMethods } from "../http";
 import { NotFoundError } from "../exceptions/httpExceptions";
 import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
 import { buildFullPath } from "./buildFullPath";
+import { normalizeRouteArgs } from "./routeResolveFunc";
 
 /**
  * Central routing system of the framework.
@@ -168,47 +174,97 @@ export class Router {
   }
 
   /** Registers a GET route. */
+  public get(path: string, action: RouteHandler): Layer;
   public get(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): Layer;
+  public get(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): Layer {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
     return this.registerRoute(HttpMethods.get, path, action, middlewares);
   }
 
   /** Registers a POST route. */
+  public post(path: string, action: RouteHandler): Layer;
   public post(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): Layer;
+  public post(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): Layer {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
     return this.registerRoute(HttpMethods.post, path, action, middlewares);
   }
 
   /** Registers a PATCH route. */
+  public patch(path: string, action: RouteHandler): Layer;
   public patch(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): Layer;
+  public patch(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): Layer {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
     return this.registerRoute(HttpMethods.patch, path, action, middlewares);
   }
 
   /** Registers a PUT route. */
+  public put(path: string, action: RouteHandler): Layer;
   public put(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): Layer;
+  public put(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): Layer {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
     return this.registerRoute(HttpMethods.put, path, action, middlewares);
   }
 
   /** Registers a DELETE route. */
+  public delete(path: string, action: RouteHandler): Layer;
   public delete(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): Layer;
+  public delete(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): Layer {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
     return this.registerRoute(HttpMethods.delete, path, action, middlewares);
   }
 }

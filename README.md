@@ -328,11 +328,11 @@ const userSchema = schema({
 
 app.post(
   "/test",
+  [validateRequest(userSchema)],
   (request: Request) => {
     const data = request.body;
     return json(data).setStatusCode(201);
   },
-  [validateRequest(userSchema)],
 );
 ```
 

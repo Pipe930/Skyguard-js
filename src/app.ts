@@ -1,4 +1,5 @@
 import { Router, RouterGroup } from "./routing";
+import { normalizeRouteArgs } from "./routing/routeResolveFunc";
 import {
   type HttpAdapter,
   HttpMethods,
@@ -10,7 +11,7 @@ import {
 import { ValidationException } from "./exceptions/validationException";
 import { join } from "node:path";
 import { createWriteStream } from "node:fs";
-import type { Middleware, RouteHandler } from "./types";
+import type { Middleware, RouteHandler, HandlerOrMiddlewares } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
 import { createServer } from "node:http";
 import { HttpException } from "./exceptions/httpExceptions";
@@ -227,48 +228,98 @@ class App {
   }
 
   /** Registers a GET route */
+  public get(path: string, action: RouteHandler): void;
   public get(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public get(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
-    this.router.get(path, action, middlewares);
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
+    this.router.get(path, middlewares, action);
   }
 
   /** Registers a POST route */
+  public post(path: string, action: RouteHandler): void;
   public post(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public post(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
-    this.router.post(path, action, middlewares);
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
+    this.router.post(path, middlewares, action);
   }
 
   /** Registers a PUT route */
+  public put(path: string, action: RouteHandler): void;
   public put(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public put(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
-    this.router.put(path, action, middlewares);
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
+    this.router.put(path, middlewares, action);
   }
 
   /** Registers a PATCH route */
+  public patch(path: string, action: RouteHandler): void;
   public patch(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public patch(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
-    this.router.patch(path, action, middlewares);
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
+    this.router.patch(path, middlewares, action);
   }
 
   /** Registers a DELETE route */
+  public delete(path: string, action: RouteHandler): void;
   public delete(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public delete(
+    path: string,
+    handlerOrMiddlewares: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
-    this.router.delete(path, action, middlewares);
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddlewares,
+      handler,
+    );
+    this.router.delete(path, middlewares, action);
   }
 
   /**

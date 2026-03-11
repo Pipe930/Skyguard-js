@@ -1,6 +1,7 @@
-import type { Middleware, RouteHandler } from "../types";
+import type { Middleware, RouteHandler, HandlerOrMiddlewares } from "../types";
 import { buildFullPath } from "./buildFullPath";
 import { Router } from "./router";
+import { normalizeRouteArgs } from "./routeResolveFunc";
 
 type Methods = "get" | "post" | "put" | "patch" | "delete";
 
@@ -78,47 +79,97 @@ export class RouterGroup {
   }
 
   /** Registers a GET route within the group. */
+  public get(path: string, action: RouteHandler): void;
   public get(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public get(
+    path: string,
+    handlerOrMiddleware: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddleware,
+      handler,
+    );
     this.addRoute("get", path, action, middlewares);
   }
 
   /** Registers a POST route within the group. */
+  public post(path: string, action: RouteHandler): void;
   public post(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public post(
+    path: string,
+    handlerOrMiddleware: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddleware,
+      handler,
+    );
     this.addRoute("post", path, action, middlewares);
   }
 
   /** Registers a PUT route within the group. */
+  public put(path: string, action: RouteHandler): void;
   public put(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public put(
+    path: string,
+    handlerOrMiddleware: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddleware,
+      handler,
+    );
     this.addRoute("put", path, action, middlewares);
   }
 
   /** Registers a PATCH route within the group. */
+  public patch(path: string, action: RouteHandler): void;
   public patch(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public patch(
+    path: string,
+    handlerOrMiddleware: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddleware,
+      handler,
+    );
     this.addRoute("patch", path, action, middlewares);
   }
 
   /** Registers a DELETE route within the group. */
+  public delete(path: string, action: RouteHandler): void;
   public delete(
     path: string,
+    middlewares: Middleware[],
     action: RouteHandler,
-    middlewares?: Middleware[],
+  ): void;
+  public delete(
+    path: string,
+    handlerOrMiddleware: HandlerOrMiddlewares,
+    handler?: RouteHandler,
   ): void {
+    const { action, middlewares } = normalizeRouteArgs(
+      handlerOrMiddleware,
+      handler,
+    );
     this.addRoute("delete", path, action, middlewares);
   }
 }

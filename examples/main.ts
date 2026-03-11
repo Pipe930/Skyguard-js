@@ -72,6 +72,7 @@ app.middlewares(
 
 app.get(
   "/test/{id}/nel/{param}",
+  [validateRequest(validParamsAndQuery)],
   (request: Request) => {
     const jsonTest = Response.json({
       params: request.params,
@@ -79,22 +80,15 @@ app.get(
     });
     return jsonTest;
   },
-  [validateRequest(validParamsAndQuery)],
 );
 
-app.post(
-  "/upload",
-  (request: Request) => {
-    console.log("Archivo subido:", request.files);
-
-    request.files;
-    return Response.json({
-      message: "Archivo subido exitosamente",
-      file: request.files,
-    });
-  },
-  [uploader.single("file")],
-);
+app.post("/upload", [uploader.single("file")], (request: Request) => {
+  console.log("Archivo subido:", request.files);
+  return Response.json({
+    message: "Archivo subido exitosamente",
+    file: request.files,
+  });
+});
 
 app.get("/home", async (request: Request) => {
   const csrfToken = request.cookies["XSRF-TOKEN"];
@@ -138,14 +132,10 @@ app.get("/nueva-ruta", () => {
   return Response.text("holamundo");
 });
 
-app.post(
-  "/test",
-  (request: Request) => {
-    const data = request.body;
-    return Response.json(data).setStatusCode(201);
-  },
-  [validateRequest(userSchema)],
-);
+app.post("/test", [validateRequest(userSchema)], (request: Request) => {
+  const data = request.body;
+  return Response.json(data).setStatusCode(201);
+});
 
 app.post("/xml", (request: Request) => {
   return Response.json({ message: request.body });
@@ -177,9 +167,9 @@ const authMiddleware = async (
   return await next(request);
 };
 
-app.get("/middlewares", () => Response.json({ message: "hola" }), [
-  authMiddleware,
-]);
+app.get("/middlewares", [authMiddleware], () =>
+  Response.json({ message: "hola" }),
+);
 
 app.get("/download/report", async () => {
   return await Response.download(

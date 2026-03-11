@@ -117,7 +117,7 @@ describe("Router Test", () => {
     const responseExcepted = Response.text("hola");
     const url = "/test/hola";
 
-    router.get(url, () => responseExcepted, [middleware1, middleware2]);
+    router.get(url, [middleware1, middleware2], () => responseExcepted);
 
     const requestMock = await createRequestMock(url, HttpMethods.get);
     const response = await router.resolve(requestMock);
@@ -144,12 +144,34 @@ describe("Router Test", () => {
     const responseExcepted = Response.text("Unreachable");
     const url = "/test/hola";
 
-    router.get(url, () => responseExcepted, [middlewareStopped, middleware2]);
+    router.get(url, [middlewareStopped, middleware2], () => responseExcepted);
 
     const requestMock = await createRequestMock(url, HttpMethods.get);
     const response = await router.resolve(requestMock);
 
     expect("stopped").toBe(response.content);
     expect(response.headers["x-test-two"]).toBeUndefined();
+  });
+
+  it("should accept middlewares as second argument", async () => {
+    const middleware = async (
+      request: Request,
+      next: RouteHandler,
+    ): Promise<Response> => {
+      const response = await next(request);
+      response.setHeader("x-test-order", "ok");
+      return response;
+    };
+
+    const responseExpected = Response.text("hola");
+    const url = "/test/new-signature";
+
+    router.get(url, [middleware], () => responseExpected);
+
+    const requestMock = await createRequestMock(url, HttpMethods.get);
+    const response = await router.resolve(requestMock);
+
+    expect(responseExpected).toBe(response);
+    expect(response.headers["x-test-order"]).toBe("ok");
   });
 });

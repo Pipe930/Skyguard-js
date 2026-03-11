@@ -107,3 +107,5 @@ export type Middleware = (
   request: Request,
   next: RouteHandler,
 ) => Response | Promise<Response>;
+
+export type HandlerOrMiddlewares = RouteHandler | Middleware[];
