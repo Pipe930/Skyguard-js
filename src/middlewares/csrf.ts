@@ -158,7 +158,7 @@ const defaultTokenGenerator = () => randomBytes(32).toString("hex");
  * Normalizes an origin-like string by removing trailing slashes.
  *
  * This helps make origin comparisons stable across minor formatting differences
- * (e.g. `https://example.com/` vs `https://example.com`).
+ * (e.g. `scheme://host/` vs `scheme://host`).
  *
  * @param value - Origin string to normalize.
  * @returns Normalized origin string without trailing slashes.
@@ -313,7 +313,7 @@ function isHttpsRequest(request: Request): boolean {
  *
  * @param request - Incoming request.
  * @param isHttps - Whether the request is considered HTTPS.
- * @returns An origin string like `https://example.com`, or `null` if `Host` is missing.
+ * @returns An origin string like `scheme://host`, or `null` if `Host` is missing.
  */
 function inferRequestOrigin(request: Request, isHttps: boolean): string | null {
   const host = getSingleHeaderValue(request, "host");
@@ -326,7 +326,7 @@ function inferRequestOrigin(request: Request, isHttps: boolean): string | null {
  * Extracts the origin (scheme + host + port) from a Referer header value.
  *
  * @param referer - The raw Referer header.
- * @returns The parsed origin (e.g., `https://example.com`) or `null` if invalid.
+ * @returns The parsed origin (e.g., `scheme://host`) or `null` if invalid.
  */
 function extractOriginFromReferer(referer: string): string | null {
   try {

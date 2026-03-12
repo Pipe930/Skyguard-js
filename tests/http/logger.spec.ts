@@ -20,7 +20,7 @@ const buildRequest = (): IncomingMessage => {
       referer: "http://localhost/source",
     },
     socket: {
-      remoteAddress: "127.0.0.1",
+      remoteAddress: "localhost",
     },
   } as IncomingMessage;
 };
