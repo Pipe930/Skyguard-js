@@ -177,7 +177,7 @@ class App {
   public run(
     port: number = 3000,
     callback?: VoidFunction,
-    hostname: string = "127.0.0.1",
+    hostname: string = "localhost",
   ): void {
     createServer((req, res) => {
       const adapter = new NodeHttpAdapter(req, res, this.loggerOptions);
