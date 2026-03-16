@@ -88,6 +88,9 @@ app.run();
 
 To enable CORS, use the built-in `cors` middleware.
 
+> Security note: by default CORS is now **disabled** unless you explicitly set
+> `origin`.
+
 ```ts
 import { cors, HttpMethods } from "skyguard-js";
 
@@ -211,12 +214,16 @@ const apiRateLimit = rateLimit({
   windowMs: 60_000, // 1 minute
   max: 100,
   message: "Too many requests from this IP",
+  trustProxy: true, // only enable when running behind trusted reverse proxies
 });
 
 app.get("/api/users", [apiRateLimit], () => {
   return Response.json([{ id: 1 }]);
 });
 ```
+
+For multi-instance deployments, provide a shared store (for example Redis) by
+implementing the `RateLimitStore` interface and passing it in `store`.
 
 ---
 

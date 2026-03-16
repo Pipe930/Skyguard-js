@@ -53,6 +53,7 @@ export class NodeHttpAdapter implements HttpAdapter {
     request.setMethod((this.req.method as HttpMethods) || HttpMethods.get);
     request.setQuery(Object.fromEntries(url.searchParams.entries()));
     request.setHeaders(this.req.headers);
+    request.setRemoteAddress(this.req.socket?.remoteAddress);
 
     if (
       request.method === HttpMethods.post ||

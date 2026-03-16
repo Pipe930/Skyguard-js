@@ -2,22 +2,32 @@ import { Context, HttpMethods, Response } from "../http";
 import type { Middleware, RouteHandler } from "../types";
 
 /**
+ * Callback contract for dynamic CORS allow/deny decisions.
+ *
+ * Return `true` to allow the current request origin, `false` to deny it.
+ */
+type CorsOriginResolver = (
+  origin: string | undefined,
+  context: Context,
+) => boolean | Promise<boolean>;
+
+/**
  * CORS middleware configuration options.
  *
  * These options map to standard CORS response headers and preflight behavior.
  */
-interface CorsOptions {
+export interface CorsOptions {
   /**
    * Allowed origin(s) for cross-origin requests.
    *
    * - `"*"` allows any origin (public).
    * - A specific origin (string) restricts access to that origin.
    * - An array provides a whitelist.
-   * - A function can implement custom allow/deny logic.
+   * - A function implements custom allow/deny logic.
    *
    * Affects: `Access-Control-Allow-Origin`.
    */
-  origin?: string | string[] | ((origin: string | undefined) => string);
+  origin?: string | string[] | CorsOriginResolver;
 
   /**
    * HTTP methods allowed for cross-origin requests.
@@ -77,25 +87,54 @@ interface CorsOptions {
 }
 
 /**
+ * Normalizes a header that may be represented as `string[]`.
+ *
+ * @param value - Header value.
+ * @returns A single header value or `undefined`.
+ */
+const getHeaderValue = (value?: string | string[]): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
+/**
  * Resolves the effective `Access-Control-Allow-Origin` value for a request.
  *
- * @param requestOrigin - The `Origin` header value from the incoming request.
- * @returns The origin to allow:
- * - `"*"` for public access when credentials are disabled
- * - the request origin when it is allowed (whitelist or custom resolver)
- * - `null` if the origin is not allowed (no CORS headers will be applied)
+ * @param context - Current HTTP context.
+ * @param requestOrigin - Incoming `Origin` header value.
+ * @param config - CORS config.
+ * @returns Allowed origin value or `null` when denied/not configured.
  */
-function resolveOrigin(
-  requestOrigin: string,
+async function resolveOrigin(
+  context: Context,
+  requestOrigin: string | undefined,
   config: CorsOptions,
-): string | null {
+): Promise<string | null> {
   if (!requestOrigin) return null;
 
   const cleanOrigin = (origin: string) =>
     origin.endsWith("/") ? origin.slice(0, -1) : origin;
 
   if (typeof config.origin === "function") {
-    return config.origin(requestOrigin) ? requestOrigin : null;
+    const result = config.origin(requestOrigin, context);
+    const isAllowed = result instanceof Promise ? await result : result;
+    return isAllowed ? requestOrigin : null;
+  }
+
+  if (!config.origin) {
+    return null;
+  }
+
+  if (typeof config.origin !== "string" && !Array.isArray(config.origin)) {
+    return null;
+  }
+
+  if (typeof config.origin === "string") {
+    if (config.origin === "*") {
+      return config.credentials ? requestOrigin : "*";
+    }
+
+    return cleanOrigin(config.origin) === cleanOrigin(requestOrigin)
+      ? requestOrigin
+      : null;
   }
 
   if (Array.isArray(config.origin)) {
@@ -104,13 +143,7 @@ function resolveOrigin(
       : null;
   }
 
-  if (config.origin === "*") {
-    return config.credentials ? requestOrigin : "*";
-  }
-
-  return cleanOrigin(config.origin) === cleanOrigin(requestOrigin)
-    ? requestOrigin
-    : null;
+  return null;
 }
 
 /**
@@ -133,7 +166,7 @@ function resolveOrigin(
  */
 export const cors = (options: CorsOptions = {}): Middleware => {
   const config = {
-    origin: options.origin ?? "*",
+    origin: options.origin,
     methods: options.methods ?? [
       HttpMethods.get,
       HttpMethods.post,
@@ -150,7 +183,11 @@ export const cors = (options: CorsOptions = {}): Middleware => {
   };
 
   return async (context: Context, next: RouteHandler) => {
-    const allowedOrigin = resolveOrigin(context.headers.origin, config);
+    const allowedOrigin = await resolveOrigin(
+      context,
+      getHeaderValue(context.headers.origin),
+      config,
+    );
     const corsHeaders: Record<string, string> = {};
 
     if (allowedOrigin) {

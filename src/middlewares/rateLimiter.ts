@@ -1,16 +1,52 @@
 import { Context, Response } from "../http";
 import type { Middleware, RouteHandler } from "../types";
 import { TooManyRequestsError } from "../exceptions/httpExceptions";
+import { isIP } from "node:net";
 
-interface RateLimitStoreEntry {
+type MaybePromise<T> = T | Promise<T>;
+
+/**
+ * Mutable counter entry for a single rate-limit key.
+ */
+export interface RateLimitStoreEntry {
+  /** Requests performed in the current window. */
   count: number;
+  /** Absolute timestamp (ms) when the current window expires. */
   resetTime: number;
+}
+
+/**
+ * Pluggable store contract for rate limiting.
+ *
+ * Use a shared implementation (e.g. Redis) in multi-instance deployments.
+ */
+export interface RateLimitStore {
+  /**
+   * Increments the counter for `key` in the active window.
+   *
+   * @param key - Unique client key.
+   * @param windowMs - Active window size in milliseconds.
+   * @param now - Current unix timestamp in milliseconds.
+   * @returns Updated counter entry for the key.
+   */
+  increment(
+    key: string,
+    windowMs: number,
+    now: number,
+  ): MaybePromise<RateLimitStoreEntry>;
+
+  /**
+   * Optional cleanup hook for removing expired entries.
+   *
+   * @param now - Current unix timestamp in milliseconds.
+   */
+  cleanup?(now: number): MaybePromise<void>;
 }
 
 /**
  * Rate limit middleware configuration.
  */
-interface RateLimitOptions {
+export interface RateLimitOptions {
   /**
    * Time window in milliseconds where requests are counted.
    * @default 60000
@@ -40,6 +76,30 @@ interface RateLimitOptions {
   keyGenerator?: (context: Context) => string;
 
   /**
+   * Trusts proxy-provided IP headers (`x-forwarded-for`, `x-real-ip`,
+   * `cf-connecting-ip`) in the default key generator.
+   * @default false
+   */
+  trustProxy?: boolean;
+
+  /**
+   * Custom store implementation. Defaults to in-memory store.
+   */
+  store?: RateLimitStore;
+
+  /**
+   * Periodic cleanup interval for stores that support `cleanup`.
+   * @default windowMs
+   */
+  cleanupIntervalMs?: number;
+
+  /**
+   * Max number of keys retained by the built-in in-memory store.
+   * @default 50000
+   */
+  maxKeys?: number;
+
+  /**
    * Optional predicate to skip rate limiting for selected requests.
    */
   skip?: (context: Context) => boolean | Promise<boolean>;
@@ -63,36 +123,163 @@ interface RateLimitOptions {
 }
 
 /**
- * Default key generator used by the rate limiter to uniquely identify a client.
+ * Default in-memory implementation of {@link RateLimitStore}.
  *
- * The function attempts to extract the client IP address from common proxy
- * headers in order of priority:
- *
- * 1. `x-forwarded-for` → typically used by reverse proxies and load balancers.
- *    If multiple IPs are present, the first one is assumed to be the client IP.
- * 2. `x-real-ip` → used by some proxies (e.g., Nginx).
- * 3. `cf-connecting-ip` → used by Cloudflare to forward the original client IP.
- *
- * If none of these headers are available, the request `Host` header is used as
- * a fallback identifier. If that is also missing, `"anonymous"` is returned.
- *
- * @param request - Incoming HTTP request.
- * @returns A string key used to track request counts per client.
+ * Use a shared external store (e.g. Redis) for distributed environments.
  */
-const defaultKeyGenerator = (context: Context): string => {
-  const forwardedFor = context.headers["x-forwarded-for"];
-  const realIp = context.headers["x-real-ip"];
-  const cfIp = context.headers["cf-connecting-ip"];
+class MemoryRateLimitStore implements RateLimitStore {
+  private readonly store = new Map<string, RateLimitStoreEntry>();
 
-  if (typeof forwardedFor === "string") {
-    return forwardedFor.split(",")[0]?.trim() ?? "anonymous";
+  /**
+   * @param maxKeys - Maximum number of retained keys in memory.
+   */
+  constructor(private readonly maxKeys: number) {}
+
+  /**
+   * Increments an in-memory counter for the provided key.
+   *
+   * If the window is expired (or absent), a new window starts at `now`.
+   */
+  public increment(
+    key: string,
+    windowMs: number,
+    now: number,
+  ): RateLimitStoreEntry {
+    let entry = this.store.get(key);
+
+    if (!entry || now > entry.resetTime) {
+      entry = { count: 1, resetTime: now + windowMs };
+      this.store.set(key, entry);
+      this.trimIfNeeded(now);
+      return entry;
+    }
+
+    entry.count += 1;
+    return entry;
   }
 
-  if (typeof realIp === "string") return realIp;
-  if (typeof cfIp === "string") return cfIp;
+  /**
+   * Removes expired entries from the internal map.
+   */
+  public cleanup(now: number): void {
+    for (const [key, value] of this.store.entries()) {
+      if (now > value.resetTime) this.store.delete(key);
+    }
+  }
 
-  return context.headers.host ?? "anonymous";
+  /**
+   * Enforces `maxKeys` and avoids unbounded memory growth.
+   */
+  private trimIfNeeded(now: number): void {
+    if (this.store.size <= this.maxKeys) return;
+
+    this.cleanup(now);
+    while (this.store.size > this.maxKeys) {
+      const oldestKey = this.store.keys().next().value as string;
+      if (!oldestKey) break;
+      this.store.delete(oldestKey);
+    }
+  }
+}
+
+/**
+ * Normalizes a candidate IP address into a canonical value.
+ *
+ * Supported inputs:
+ * - Plain IPv4/IPv6
+ * - IPv4-mapped IPv6 (`::ffff:x.x.x.x`)
+ * - Bracketed IPv6 (`[2001:db8::1]`)
+ * - IPv4 with port (`x.x.x.x:port`)
+ *
+ * @param value - Raw address candidate.
+ * @returns Normalized IP, or `null` when the input is not a valid IP.
+ */
+const normalizeAddress = (value?: string): string | null => {
+  if (!value) return null;
+  const candidate = value.trim();
+  if (!candidate) return null;
+
+  if (isIP(candidate)) return candidate;
+
+  if (candidate.startsWith("::ffff:")) {
+    const mapped = candidate.slice("::ffff:".length);
+    if (isIP(mapped)) return mapped;
+  }
+
+  const withoutBrackets =
+    candidate.startsWith("[") && candidate.endsWith("]")
+      ? candidate.slice(1, -1)
+      : candidate;
+  if (isIP(withoutBrackets)) return withoutBrackets;
+
+  const ipv4WithPort = withoutBrackets.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
+  if (ipv4WithPort && isIP(ipv4WithPort[1])) return ipv4WithPort[1];
+
+  return null;
 };
+
+/**
+ * Returns the first value when a header can be `string | string[]`.
+ */
+const pickFirstHeaderValue = (value?: string | string[]): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
+/**
+ * Parses `x-forwarded-for` into an ordered list of candidates.
+ *
+ * @param value - Raw `x-forwarded-for` header value.
+ * @returns A trimmed list of forwarded addresses.
+ */
+const parseForwardedFor = (value?: string | string[]): string[] => {
+  const firstValue = pickFirstHeaderValue(value);
+  if (!firstValue) return [];
+  return firstValue
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean);
+};
+
+/**
+ * Builds the default key generator used by the rate limiter.
+ *
+ * Behavior:
+ * - `trustProxy: false` -> uses only socket `remoteAddress` (plus host fallback).
+ * - `trustProxy: true` -> allows proxy headers in this priority:
+ *   1) `cf-connecting-ip`
+ *   2) `x-real-ip`
+ *   3) first valid item in `x-forwarded-for`
+ *   4) socket `remoteAddress` fallback
+ *
+ * @param trustProxy - Whether proxy headers are trusted.
+ * @returns A key generator function for rate-limit identity.
+ */
+const buildDefaultKeyGenerator =
+  (trustProxy: boolean) =>
+  (context: Context): string => {
+    const remoteAddress = normalizeAddress(context.remoteAddress);
+    if (!trustProxy)
+      return remoteAddress ?? context.headers.host ?? "anonymous";
+
+    const cfIp = normalizeAddress(
+      pickFirstHeaderValue(context.headers["cf-connecting-ip"]),
+    );
+    if (cfIp) return cfIp;
+
+    const realIp = normalizeAddress(
+      pickFirstHeaderValue(context.headers["x-real-ip"]),
+    );
+    if (realIp) return realIp;
+
+    const forwardedCandidates = parseForwardedFor(
+      context.headers["x-forwarded-for"],
+    );
+    for (const candidate of forwardedCandidates) {
+      const trustedIp = normalizeAddress(candidate);
+      if (trustedIp) return trustedIp;
+    }
+
+    return remoteAddress ?? context.headers.host ?? "anonymous";
+  };
 
 /**
  * Generates HTTP headers describing the current rate limit state.
@@ -185,19 +372,26 @@ const getRateLimitHeaders = (
  * ]);
  */
 export const rateLimit = (options: RateLimitOptions = {}): Middleware => {
+  const trustProxy = options.trustProxy ?? false;
+  const memoryStoreMaxKeys = Math.max(options.maxKeys ?? 50_000, 1);
+  const store = options.store ?? new MemoryRateLimitStore(memoryStoreMaxKeys);
+
   const config = {
     windowMs: options.windowMs ?? 60_000,
     max: options.max ?? 5,
     message: options.message ?? "Too many requests, please try again later.",
     statusCode: options.statusCode ?? 429,
-    keyGenerator: options.keyGenerator ?? defaultKeyGenerator,
+    keyGenerator: options.keyGenerator ?? buildDefaultKeyGenerator(trustProxy),
     skip: options.skip,
     standardHeaders: options.standardHeaders ?? true,
     legacyHeaders: options.legacyHeaders ?? false,
     handler: options.handler,
   };
-
-  const store = new Map<string, RateLimitStoreEntry>();
+  const cleanupIntervalMs = Math.max(
+    options.cleanupIntervalMs ?? config.windowMs,
+    1000,
+  );
+  let nextCleanupAt = Date.now() + cleanupIntervalMs;
 
   return async (context: Context, next: RouteHandler) => {
     if (config.skip && (await config.skip(context))) {
@@ -205,20 +399,13 @@ export const rateLimit = (options: RateLimitOptions = {}): Middleware => {
     }
 
     const now = Date.now();
-    const key = config.keyGenerator(context);
-
-    const current = store.get(key);
-
-    if (!current || now > current.resetTime) {
-      store.set(key, {
-        count: 1,
-        resetTime: now + config.windowMs,
-      });
-    } else {
-      current.count += 1;
+    if (now >= nextCleanupAt && store.cleanup) {
+      await store.cleanup(now);
+      nextCleanupAt = now + cleanupIntervalMs;
     }
 
-    const entry = store.get(key);
+    const key = config.keyGenerator(context) || "anonymous";
+    const entry = await store.increment(key, config.windowMs, now);
     const headers = getRateLimitHeaders(
       config.max,
       entry.count,

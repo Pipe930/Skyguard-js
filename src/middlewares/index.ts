@@ -1,4 +1,8 @@
 export { cors } from "./cors";
 export { sessions } from "./session";
 export { csrf } from "./csrf";
-export { rateLimit } from "./rateLimiter";
+export {
+  rateLimit,
+  type RateLimitStore,
+  type RateLimitStoreEntry,
+} from "./rateLimiter";

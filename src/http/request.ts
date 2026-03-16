@@ -38,6 +38,9 @@ export class Request {
   /** Session associated with the request */
   private _session: Session;
 
+  /** Network peer address (adapter-provided). */
+  private _remoteAddress?: string;
+
   /**
    * Per-request shared state container.
    *
@@ -103,6 +106,14 @@ export class Request {
 
   public setSession(session: Session) {
     this._session = session;
+  }
+
+  get remoteAddress(): string | undefined {
+    return this._remoteAddress;
+  }
+
+  public setRemoteAddress(remoteAddress: string) {
+    this._remoteAddress = remoteAddress;
   }
 
   /**

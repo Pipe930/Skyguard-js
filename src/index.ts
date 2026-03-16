@@ -14,4 +14,5 @@ export { StorageType } from "./storage/types";
 export { v, schema, validateRequest } from "./validators/validationSchema";
 export { Hasher, JWT } from "./crypto";
 export { sessions, cors, csrf, rateLimit } from "./middlewares";
+export type { RateLimitStore, RateLimitStoreEntry } from "./middlewares";
 export * from "./exceptions/httpExceptions";
