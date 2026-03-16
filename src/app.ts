@@ -87,11 +87,11 @@ class App {
    */
   private async handle(adapter: HttpAdapter): Promise<void> {
     try {
-      const request = await adapter.getRequest();
+      const context = await adapter.getContext();
 
-      if (this.staticFileHandler && request.method === HttpMethods.get) {
+      if (this.staticFileHandler && context.req.method === HttpMethods.get) {
         const staticResponse = await this.staticFileHandler.tryServeFile(
-          request.url,
+          context.req.url,
         );
 
         if (staticResponse) {
@@ -100,7 +100,7 @@ class App {
         }
       }
 
-      const response = await this.router.resolve(request);
+      const response = await this.router.resolve(context);
       adapter.sendResponse(response);
     } catch (error) {
       this.handleError(error, adapter);
@@ -368,6 +368,7 @@ class App {
     if (error instanceof ValidationException) {
       adapter.sendResponse(
         Response.json({
+          message: "Validation Error",
           errors: error.getErrorsByField(),
         }).setStatusCode(400),
       );

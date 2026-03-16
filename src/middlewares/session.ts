@@ -5,7 +5,8 @@ import {
   type CookieOptions,
 } from "../sessions/cookies";
 import { UnauthorizedError } from "../exceptions/httpExceptions";
-import type { Middleware } from "../types";
+import type { Middleware, RouteHandler } from "../types";
+import { Context } from "../http/context";
 
 /**
  * Constructor type for `SessionStorage` implementations.
@@ -111,21 +112,21 @@ export const sessions = (
     },
   };
 
-  return async (request, next) => {
-    const cookies = parseCookies(request.headers.cookie);
+  return async (context: Context, next: RouteHandler) => {
+    const cookies = parseCookies(context.headers.cookie);
     const sessionIdFromCookie = cookies[config.name];
 
     const storage = new StorageClass(config.cookie.maxAge);
     await loadSessionFromCookie(storage, sessionIdFromCookie);
 
     const session = new Session(storage);
-    request.setSession(session);
+    context.req.setSession(session);
 
     const sessionIdBefore = storage.id();
 
     if (!sessionIdBefore && config.saveUninitialized) await storage.start();
 
-    const response = await next(request);
+    const response = await next(context);
     const sessionIdAfter = storage.id();
 
     if (sessionIdAfter && config.rolling) await storage.touch();

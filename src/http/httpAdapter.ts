@@ -1,4 +1,4 @@
-import { Request } from "./request";
+import { Context } from "./context";
 import { Response } from "./response";
 
 /**
@@ -10,12 +10,12 @@ import { Response } from "./response";
  */
 export interface HttpAdapter {
   /**
-   * Builds and returns a {@link Request} instance from
+   * Builds and returns a {@link Context} instance from
    * the current connection context.
    *
-   * @returns A promise that resolves to a {@link Request} object
+   * @returns A promise that resolves to a {@link Context} object
    */
-  getRequest(): Promise<Request>;
+  getContext(): Promise<Context>;
 
   /**
    * Sends a {@link Response} to the client, mapping its status,

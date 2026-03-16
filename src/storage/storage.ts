@@ -2,9 +2,9 @@ import { UploadErrorCode, type Storage, type StorageOptions } from "./types";
 import { writeFile, unlink, mkdir } from "node:fs/promises";
 import { join, extname } from "node:path";
 import { randomBytes, createHash } from "node:crypto";
-import { Request } from "../http/request";
 import { UploadException } from "../exceptions/uploadException";
 import type { UploadedFile } from "../parsers/parserInterface";
+import { Context } from "../http/context";
 
 /**
  * Disk-based storage engine responsible for persisting uploaded files
@@ -27,7 +27,7 @@ export class DiskStorage implements Storage {
   private destination:
     | string
     | ((
-        request: Request,
+        context: Context,
         file: Partial<UploadedFile>,
       ) => string | Promise<string>);
 
@@ -36,7 +36,7 @@ export class DiskStorage implements Storage {
    * If not provided, a unique filename will be generated automatically.
    */
   private filenameGenerator: (
-    request: Request,
+    context: Context,
     file: Partial<UploadedFile>,
   ) => string | Promise<string>;
 
@@ -72,13 +72,13 @@ export class DiskStorage implements Storage {
    * @throws UploadException if the file cannot be written to disk.
    */
   public async handleFile(
-    request: Request,
+    context: Context,
     file: Partial<UploadedFile>,
     fileData: Buffer,
   ): Promise<UploadedFile> {
     try {
-      const destination = await this.resolveDestination(request, file);
-      const filename = await this.filenameGenerator(request, file);
+      const destination = await this.resolveDestination(context, file);
+      const filename = await this.filenameGenerator(context, file);
       const filePath = join(destination, filename);
 
       await mkdir(destination, { recursive: true });
@@ -127,11 +127,11 @@ export class DiskStorage implements Storage {
    * Otherwise the static directory is returned.
    */
   private async resolveDestination(
-    request: Request,
+    context: Context,
     file: Partial<UploadedFile>,
   ): Promise<string> {
     if (typeof this.destination === "function") {
-      return await this.destination(request, file);
+      return await this.destination(context, file);
     }
     return this.destination;
   }
@@ -148,7 +148,7 @@ export class DiskStorage implements Storage {
    *  1700000000000-a3f9b1c2d4e5f678.png
    */
   private generateUniqueFilename(
-    request: Request,
+    context: Context,
     file: Partial<UploadedFile>,
   ): string {
     const timestamp = Date.now();
@@ -185,7 +185,7 @@ export class MemoryStorage implements Storage {
   }
 
   public handleFile(
-    request: Request,
+    context: Context,
     file: Partial<UploadedFile>,
     fileData: Buffer,
   ): UploadedFile {

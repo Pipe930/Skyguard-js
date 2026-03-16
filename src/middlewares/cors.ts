@@ -1,4 +1,4 @@
-import { HttpMethods, Request, Response } from "../http";
+import { Context, HttpMethods, Response } from "../http";
 import type { Middleware, RouteHandler } from "../types";
 
 /**
@@ -149,8 +149,8 @@ export const cors = (options: CorsOptions = {}): Middleware => {
     preflightContinue: options.preflightContinue ?? false,
   };
 
-  return async (request: Request, next: RouteHandler) => {
-    const allowedOrigin = resolveOrigin(request.headers.origin, config);
+  return async (context: Context, next: RouteHandler) => {
+    const allowedOrigin = resolveOrigin(context.headers.origin, config);
     const corsHeaders: Record<string, string> = {};
 
     if (allowedOrigin) {
@@ -165,7 +165,7 @@ export const cors = (options: CorsOptions = {}): Middleware => {
       corsHeaders["Access-Control-Expose-Headers"] =
         config.exposedHeaders.join(", ");
 
-    if (request.method === HttpMethods.options) {
+    if (context.req.method === HttpMethods.options) {
       corsHeaders["Access-Control-Allow-Methods"] = config.methods.join(", ");
       corsHeaders["Access-Control-Allow-Headers"] =
         config.allowedHeaders.join(", ");
@@ -178,7 +178,7 @@ export const cors = (options: CorsOptions = {}): Middleware => {
           .setHeaders(corsHeaders);
     }
 
-    const response = await next(request);
+    const response = await next(context);
 
     for (const [key, value] of Object.entries(corsHeaders)) {
       response.setHeader(key, value);

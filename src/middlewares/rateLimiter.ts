@@ -1,4 +1,4 @@
-import { Request, Response } from "../http";
+import { Context, Response } from "../http";
 import type { Middleware, RouteHandler } from "../types";
 import { TooManyRequestsError } from "../exceptions/httpExceptions";
 
@@ -37,12 +37,12 @@ interface RateLimitOptions {
   /**
    * Resolves the identity key used for counting requests.
    */
-  keyGenerator?: (request: Request) => string;
+  keyGenerator?: (context: Context) => string;
 
   /**
    * Optional predicate to skip rate limiting for selected requests.
    */
-  skip?: (request: Request) => boolean | Promise<boolean>;
+  skip?: (context: Context) => boolean | Promise<boolean>;
 
   /**
    * Includes `RateLimit-*` response headers.
@@ -59,7 +59,7 @@ interface RateLimitOptions {
   /**
    * Optional custom handler executed when the limit is exceeded.
    */
-  handler?: (request: Request) => Response | Promise<Response>;
+  handler?: RouteHandler;
 }
 
 /**
@@ -79,10 +79,10 @@ interface RateLimitOptions {
  * @param request - Incoming HTTP request.
  * @returns A string key used to track request counts per client.
  */
-const defaultKeyGenerator = (request: Request): string => {
-  const forwardedFor = request.headers["x-forwarded-for"];
-  const realIp = request.headers["x-real-ip"];
-  const cfIp = request.headers["cf-connecting-ip"];
+const defaultKeyGenerator = (context: Context): string => {
+  const forwardedFor = context.headers["x-forwarded-for"];
+  const realIp = context.headers["x-real-ip"];
+  const cfIp = context.headers["cf-connecting-ip"];
 
   if (typeof forwardedFor === "string") {
     return forwardedFor.split(",")[0]?.trim() ?? "anonymous";
@@ -91,7 +91,7 @@ const defaultKeyGenerator = (request: Request): string => {
   if (typeof realIp === "string") return realIp;
   if (typeof cfIp === "string") return cfIp;
 
-  return request.headers.host ?? "anonymous";
+  return context.headers.host ?? "anonymous";
 };
 
 /**
@@ -199,13 +199,13 @@ export const rateLimit = (options: RateLimitOptions = {}): Middleware => {
 
   const store = new Map<string, RateLimitStoreEntry>();
 
-  return async (request: Request, next: RouteHandler) => {
-    if (config.skip && (await config.skip(request))) {
-      return next(request);
+  return async (context: Context, next: RouteHandler) => {
+    if (config.skip && (await config.skip(context))) {
+      return next(context);
     }
 
     const now = Date.now();
-    const key = config.keyGenerator(request);
+    const key = config.keyGenerator(context);
 
     const current = store.get(key);
 
@@ -233,7 +233,7 @@ export const rateLimit = (options: RateLimitOptions = {}): Middleware => {
       headers["Retry-After"] = String(retryAfter);
 
       const blockedResponse = config.handler
-        ? await config.handler(request)
+        ? await config.handler(context)
         : Response.json(
             new TooManyRequestsError(config.message).toJSON(),
           ).setStatusCode(config.statusCode);
@@ -242,7 +242,7 @@ export const rateLimit = (options: RateLimitOptions = {}): Middleware => {
       return blockedResponse;
     }
 
-    const response = await next(request);
+    const response = await next(context);
     response.setHeaders(headers);
 
     return response;

@@ -1,5 +1,5 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
-import { HttpMethods, Request, Response } from "../http";
+import { Context, HttpMethods, Response } from "../http";
 import type { CookieOptions } from "../sessions/cookies";
 import type { Middleware, RouteHandler } from "../types";
 
@@ -206,10 +206,10 @@ const buildConfig = (options: CsrfOptions): CsrfConfig => ({
  * @returns The header value if exactly one is present, otherwise `null`.
  */
 function getSingleHeaderValue(
-  request: Request,
+  context: Context,
   headerName: string,
 ): string | null {
-  const value = request.headers[headerName];
+  const value = context.headers[headerName];
   if (!value) return null;
 
   if (Array.isArray(value)) {
@@ -235,11 +235,11 @@ function getSingleHeaderValue(
  * @returns `true` if duplicates/invalid array form exist, otherwise `false`.
  */
 const hasInvalidDuplicateHeader = (
-  request: Request,
+  context: Context,
   headerName: string,
 ): boolean =>
-  Array.isArray(request.headers[headerName]) &&
-  request.headers[headerName].length !== 1;
+  Array.isArray(context.headers[headerName]) &&
+  context.headers[headerName].length !== 1;
 
 /**
  * Extracts a CSRF token from the first matching header in `headerNames`.
@@ -252,11 +252,11 @@ const hasInvalidDuplicateHeader = (
  * @returns The token value if found, otherwise `null`.
  */
 function getHeaderToken(
-  request: Request,
+  context: Context,
   headerNames: string[],
 ): string | null {
   for (const headerName of headerNames) {
-    const value = getSingleHeaderValue(request, headerName);
+    const value = getSingleHeaderValue(context, headerName);
     if (value) return value;
   }
 
@@ -294,12 +294,12 @@ function safeCompare(a: string, b: string): boolean {
  * @param request - Incoming request.
  * @returns `true` if HTTPS is inferred, otherwise `false`.
  */
-function isHttpsRequest(request: Request): boolean {
-  const forwardedProto = getSingleHeaderValue(request, "x-forwarded-proto");
+function isHttpsRequest(context: Context): boolean {
+  const forwardedProto = getSingleHeaderValue(context, "x-forwarded-proto");
   if (forwardedProto?.split(",")[0]?.trim().toLowerCase() === "https")
     return true;
 
-  const forwarded = getSingleHeaderValue(request, "forwarded");
+  const forwarded = getSingleHeaderValue(context, "forwarded");
   if (forwarded?.toLowerCase().includes("proto=https")) return true;
 
   return false;
@@ -315,8 +315,8 @@ function isHttpsRequest(request: Request): boolean {
  * @param isHttps - Whether the request is considered HTTPS.
  * @returns An origin string like `scheme://host`, or `null` if `Host` is missing.
  */
-function inferRequestOrigin(request: Request, isHttps: boolean): string | null {
-  const host = getSingleHeaderValue(request, "host");
+function inferRequestOrigin(context: Context, isHttps: boolean): string | null {
+  const host = getSingleHeaderValue(context, "host");
   if (!host) return null;
 
   return `${isHttps ? "https" : "http"}://${host}`;
@@ -348,20 +348,20 @@ function extractOriginFromReferer(referer: string): string | null {
  * @returns An error message string, or `null` if headers look safe.
  */
 function validateDuplicateSecurityHeaders(
-  request: Request,
+  context: Context,
   headerNames: string[],
 ): string | null {
   if (
     headerNames.some(headerName =>
-      hasInvalidDuplicateHeader(request, headerName),
+      hasInvalidDuplicateHeader(context, headerName),
     )
   ) {
     return "Invalid CSRF token header format";
   }
 
   if (
-    hasInvalidDuplicateHeader(request, "origin") ||
-    hasInvalidDuplicateHeader(request, "referer")
+    hasInvalidDuplicateHeader(context, "origin") ||
+    hasInvalidDuplicateHeader(context, "referer")
   ) {
     return "Invalid Origin/Referer headers";
   }
@@ -377,19 +377,19 @@ function validateDuplicateSecurityHeaders(
  * @returns An error message string, or `null` if origin is acceptable.
  */
 function validateOriginHeaders(
-  request: Request,
+  context: Context,
   config: CsrfConfig,
 ): string | null {
   if (!config.validateOrigin) return null;
 
-  const httpsRequest = isHttpsRequest(request);
-  const inferredOrigin = inferRequestOrigin(request, httpsRequest);
+  const httpsRequest = isHttpsRequest(context);
+  const inferredOrigin = inferRequestOrigin(context, httpsRequest);
   const allowedOrigins =
     config.allowedOrigins ??
     (inferredOrigin ? [normalizeOrigin(inferredOrigin)] : []);
 
-  const originHeader = getSingleHeaderValue(request, "origin");
-  const refererHeader = getSingleHeaderValue(request, "referer");
+  const originHeader = getSingleHeaderValue(context, "origin");
+  const refererHeader = getSingleHeaderValue(context, "referer");
 
   if (
     !originHeader &&
@@ -432,12 +432,12 @@ function validateOriginHeaders(
  * @returns An error message string, or `null` if the token is valid.
  */
 function validateCsrfToken(
-  request: Request,
+  context: Context,
   config: CsrfConfig,
   expectedToken: string,
 ): string | null {
-  const tokenFromHeader = getHeaderToken(request, config.headerNames);
-  const tokenFromBody = request.body[config.bodyField] as string;
+  const tokenFromHeader = getHeaderToken(context, config.headerNames);
+  const tokenFromBody = context.body[config.bodyField] as string;
   const providedToken = tokenFromHeader ?? tokenFromBody;
 
   if (
@@ -487,11 +487,11 @@ const buildForbiddenResponse = (message: string): Response => {
 export const csrf = (options: CsrfOptions = {}): Middleware => {
   const config = buildConfig(options);
 
-  return async (request: Request, next: RouteHandler) => {
+  return async (context: Context, next: RouteHandler) => {
     const methodRequiresCheck = config.protectedMethods.includes(
-      request.method,
+      context.req.method,
     );
-    const tokenFromCookie = request.cookies[config.cookieName];
+    const tokenFromCookie = context.cookies[config.cookieName];
     const issuedToken = tokenFromCookie || config.tokenGenerator();
 
     const appendCsrfCookie = (response: Response): Response => {
@@ -504,16 +504,16 @@ export const csrf = (options: CsrfOptions = {}): Middleware => {
 
     if (methodRequiresCheck) {
       const validationError =
-        validateDuplicateSecurityHeaders(request, config.headerNames) ??
-        validateOriginHeaders(request, config) ??
-        validateCsrfToken(request, config, issuedToken);
+        validateDuplicateSecurityHeaders(context, config.headerNames) ??
+        validateOriginHeaders(context, config) ??
+        validateCsrfToken(context, config, issuedToken);
 
       if (validationError) {
         return appendCsrfCookie(buildForbiddenResponse(validationError));
       }
     }
 
-    const response = await next(request);
+    const response = await next(context);
     return appendCsrfCookie(response);
   };
 };

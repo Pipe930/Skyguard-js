@@ -4,7 +4,7 @@ import type {
   HandlerOrMiddlewares,
   RouteHandler,
 } from "../types";
-import { Request, Response, HttpMethods } from "../http";
+import { Context, Request, Response, HttpMethods } from "../http";
 import { NotFoundError } from "../exceptions/httpExceptions";
 import { Layer } from "./layer";
 import { RouterGroup } from "./routerGroup";
@@ -43,11 +43,11 @@ export class Router {
    * @returns The matching {@link Layer}
    * @throws {HttpNotFoundException} If no route matches
    */
-  public resolveLayer(request: Request): Layer {
-    const routes = this.routes[request.method];
+  public resolveLayer(context: Context): Layer {
+    const routes = this.routes[context.req.method];
 
     for (const route of routes) {
-      if (route.matches(request.url)) return route;
+      if (route.matches(context.req.url)) return route;
     }
 
     throw new NotFoundError("Route not found");
@@ -65,29 +65,36 @@ export class Router {
    * @param request - Request to process
    * @returns The handler/middleware response (sync or async)
    */
-  public resolve(request: Request): Promise<Response> | Response {
-    const executeLayer = (req: Request): Promise<Response> | Response => {
-      const layer = this.resolveLayer(req);
+  public resolve(request: Context): Promise<Response> | Response {
+    const context = this.ensureContext(request);
+
+    const executeLayer = (ctx: Context): Promise<Response> | Response => {
+      const layer = this.resolveLayer(ctx);
 
       if (layer.hasParameters()) {
-        req.setParams(layer.parseParameters(req.url));
+        ctx.req.setParams(layer.parseParameters(ctx.req.url));
       }
 
       const action = layer.getAction;
       const routeMiddlewares = layer.getMiddlewares;
 
       if (routeMiddlewares.length > 0) {
-        return this.runMiddlewares(req, routeMiddlewares, action);
+        return this.runMiddlewares(ctx, routeMiddlewares, action);
       }
 
-      return action(req);
+      return action(ctx);
     };
 
     if (this.globalMiddlewares.length > 0) {
-      return this.runMiddlewares(request, this.globalMiddlewares, executeLayer);
+      return this.runMiddlewares(context, this.globalMiddlewares, executeLayer);
     }
 
-    return executeLayer(request);
+    return executeLayer(context);
+  }
+
+  private ensureContext(request: Request | Context): Context {
+    if (request instanceof Context) return request;
+    return new Context(request);
   }
 
   /**
@@ -102,14 +109,18 @@ export class Router {
    * @returns The response returned by a middleware or the final handler
    */
   private runMiddlewares(
-    request: Request,
+    context: Context,
     middlewares: Middleware[],
     target: RouteHandler,
   ): Response | Promise<Response> {
-    if (middlewares.length === 0) return target(request);
+    if (middlewares.length === 0) return target(context);
 
-    return middlewares[0](request, request =>
-      this.runMiddlewares(request, middlewares.slice(1), target),
+    return middlewares[0](context, nextContext =>
+      this.runMiddlewares(
+        this.ensureContext(nextContext),
+        middlewares.slice(1),
+        target,
+      ),
     );
   }
 

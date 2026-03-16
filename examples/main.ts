@@ -1,4 +1,4 @@
-import { Request, Response } from "../src/http";
+import { Context, Response } from "../src/http";
 import { createApp } from "../src/app";
 import type { RouteHandler } from "../src/types";
 import { v, schema, validateRequest } from "../src/validators/validationSchema";
@@ -63,37 +63,31 @@ app.middlewares(
     rolling: false,
     saveUninitialized: false,
   }),
-  csrf({
-    cookieName: "XSRF-TOKEN",
-    headerNames: ["x-csrf-token"],
-    bodyField: "csrfToken",
-  }),
 );
 
 app.get(
   "/test/{id}/nel/{param}",
   [validateRequest(validParamsAndQuery)],
-  (request: Request) => {
-    const jsonTest = Response.json({
-      params: request.params,
-      queries: request.query,
+  context => {
+    return context.json({
+      params: context.params,
+      queries: context.query,
     });
-    return jsonTest;
   },
 );
 
-app.post("/upload", [uploader.single("file")], (request: Request) => {
-  console.log("Archivo subido:", request.files);
-  return Response.json({
+app.post("/upload", [uploader.single("file")], context => {
+  console.log("Archivo subido:", context.req.files);
+  return context.json({
     message: "Archivo subido exitosamente",
-    file: request.files,
+    file: context.req.files,
   });
 });
 
-app.get("/home", async (request: Request) => {
-  const csrfToken = request.cookies["XSRF-TOKEN"];
+app.get("/home", async context => {
+  const csrfToken = context.cookies["XSRF-TOKEN"];
 
-  return Response.render(
+  return context.render(
     `
     <h1>Hola mundo</h1><p>Esta es una vista renderizada</p>
 
@@ -124,65 +118,65 @@ app.get("/home", async (request: Request) => {
   );
 });
 
-app.get("/test", () => {
-  return Response.text("holamundo");
+app.get("/test", context => {
+  return context.text("holamundo");
 });
 
-app.get("/nueva-ruta", () => {
-  return Response.text("holamundo");
+app.get("/nueva-ruta", context => {
+  return context.text("holamundo");
 });
 
-app.post("/test", [validateRequest(userSchema)], (request: Request) => {
-  const data = request.body;
-  return Response.json(data).setStatusCode(201);
+app.post("/test", [validateRequest(userSchema)], context => {
+  const data = context.body;
+  return context.json(data).setStatusCode(201);
 });
 
-app.post("/xml", (request: Request) => {
-  return Response.json({ message: request.body });
+app.post("/xml", context => {
+  return context.json({ message: context.body });
 });
 
-app.get("/redirect", () => {
-  return Response.redirect("/test");
+app.get("/redirect", context => {
+  return context.redirect("/test");
 });
 
 app.group("/tienda", tienda => {
-  tienda.get("/pagina", () => {
-    return Response.json({ message: "desde ruta grupada" });
+  tienda.get("/pagina", context => {
+    return context.json({ message: "desde ruta grupada" });
   });
 
-  tienda.get("/holamundo/{param}", (request: Request) => {
-    return Response.json({
+  tienda.get("/holamundo/{param}", context => {
+    return context.json({
       message: "desde ruta agrupada con parametros",
-      params: request.params,
+      params: context.params,
     });
   });
 });
 
 const authMiddleware = async (
-  request: Request,
+  context: Context,
   next: RouteHandler,
 ): Promise<Response> => {
-  if (request.headers["authorization"] !== "test")
+  if (context.headers["authorization"] !== "test")
     throw new UnauthorizedError("Unauthorized");
-  return await next(request);
+  return await next(context);
 };
 
-app.get("/middlewares", [authMiddleware], () =>
-  Response.json({ message: "hola" }),
+app.get("/middlewares", [authMiddleware], context =>
+  context.json({ message: "hola" }),
 );
 
-app.get("/download/report", async () => {
-  return await Response.download(
+app.get("/download/report", async context => {
+  return await context.download(
     join(__dirname, "..", "files", "report.pdf"),
     "reporte-2024.pdf",
   );
 });
 
-app.post("/login", (request: Request) => {
-  const { username, password } = request.body;
+app.post("/login", context => {
+  const { username, password } = context.body;
 
   if (username === "admin" && password === "secret") {
-    request.session.set("user", {
+    context.session.set("user", {
       id: 1,
       username: "admin",
       role: "admin",
@@ -194,15 +188,15 @@ app.post("/login", (request: Request) => {
   throw new UnauthorizedError("Invalid credentials");
 });
 
-app.get("/me", (request: Request) => {
-  const user = request.session.get("user");
+app.get("/me", context => {
+  const user = context.session.get("user");
 
   if (!user) throw new UnauthorizedError("Not authenticated");
   return Response.json({ user });
 });
 
-app.post("/password-hashed", async (request: Request) => {
-  const { password } = request.body;
+app.post("/password-hashed", async context => {
+  const { password } = context.body;
   const passwordHash = await Hasher.hash(password as string);
   const verifyHash = await Hasher.verify(password as string, passwordHash);
 
@@ -212,23 +206,23 @@ app.post("/password-hashed", async (request: Request) => {
   }).setStatusCode(200);
 });
 
-app.get("/generate-jwt", () => {
+app.get("/generate-jwt", context => {
   const token = JWT.create({ sub: "123" }, "secret-key", {
     algorithm: "HS256",
     expiresIn: "1h",
   });
 
-  return Response.json({
+  return context.json({
     token,
   });
 });
 
-app.post("/logout", (request: Request) => {
-  if (!request.cookies) throw new UnauthorizedError("Its not autenticate");
+app.post("/logout", context => {
+  if (!context.cookies) throw new UnauthorizedError("Its not autenticate");
 
-  request.session.destroy();
+  context.session.destroy();
 
-  return Response.json({ message: "Logged out" }).removeCookie("test");
+  return context.json({ message: "Logged out" }).removeCookie("test");
 });
 
 app.run();

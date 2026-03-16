@@ -3,6 +3,7 @@ import { IncomingMessage, ServerResponse } from "node:http";
 import type { HttpAdapter } from "./httpAdapter";
 import { Response } from "./response";
 import { Request } from "./request";
+import { Context } from "./context";
 import { ContentParserManager } from "../parsers/contentParserManager";
 import { type LoggerOptions, Logger } from "./logger";
 import { Readable } from "node:stream";
@@ -40,12 +41,12 @@ export class NodeHttpAdapter implements HttpAdapter {
   }
 
   /**
-   * Builds and returns a {@link Request} instance from
+   * Builds and returns a {@link Context} instance from
    * the incoming Node.js request.
    *
-   * @returns A fully constructed {@link Request} instance
+   * @returns A fully constructed {@link Context} instance
    */
-  public async getRequest(): Promise<Request> {
+  public async getContext(): Promise<Context> {
     const url = new URL(this.req.url || "", `http://${this.req.headers.host}`);
 
     const request = new Request(url.pathname);
@@ -62,7 +63,7 @@ export class NodeHttpAdapter implements HttpAdapter {
       request.setBody(parsedData);
     }
 
-    return request;
+    return new Context(request);
   }
 
   /**

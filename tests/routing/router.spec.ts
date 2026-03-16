@@ -1,5 +1,5 @@
 import { Router } from "../../src/routing/router";
-import { Response, Request, HttpMethods } from "../../src/http";
+import { Response, HttpMethods, Context } from "../../src/http";
 import { createRequestMock } from "../utils";
 import { RouteHandler } from "../../src/types";
 
@@ -97,19 +97,19 @@ describe("Router Test", () => {
 
   it("should valid run middlewares", async () => {
     const middleware1 = async (
-      request: Request,
+      context: Context,
       next: RouteHandler,
     ): Promise<Response> => {
-      const response = await next(request);
+      const response = await next(context);
       response.setHeader("x-test-one", "one");
       return response;
     };
 
     const middleware2 = async (
-      request: Request,
+      context: Context,
       next: RouteHandler,
     ): Promise<Response> => {
-      const response = await next(request);
+      const response = await next(context);
       response.setHeader("x-test-two", "two");
       return response;
     };
@@ -128,15 +128,15 @@ describe("Router Test", () => {
   });
 
   it("should middleware stack can be stopped", async () => {
-    const middlewareStopped = (): Response => {
-      return Response.text("stopped");
+    const middlewareStopped = (context: Context): Response => {
+      return context.text("stopped");
     };
 
     const middleware2 = async (
-      request: Request,
+      context: Context,
       next: RouteHandler,
     ): Promise<Response> => {
-      const response = await next(request);
+      const response = await next(context);
       response.setHeader("x-test-two", "two");
       return response;
     };
@@ -155,10 +155,10 @@ describe("Router Test", () => {
 
   it("should accept middlewares as second argument", async () => {
     const middleware = async (
-      request: Request,
+      context: Context,
       next: RouteHandler,
     ): Promise<Response> => {
-      const response = await next(request);
+      const response = await next(context);
       response.setHeader("x-test-order", "ok");
       return response;
     };

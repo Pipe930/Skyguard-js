@@ -1,6 +1,7 @@
 import { createUploader } from "../../src/storage/uploader";
 import { StorageType, UploadErrorCode } from "../../src/storage/types";
 import { Request } from "../../src/http/request";
+import { Context } from "../../src/http/context";
 import { UploadedFile } from "../../src/parsers/parserInterface";
 
 describe("Uploader Test", () => {
@@ -28,8 +29,9 @@ describe("Uploader Test", () => {
     });
 
     const mw = uploader.single("avatar");
+    const context = new Context(request);
 
-    await mw(request, next);
+    await mw(context, next);
 
     request.files = request.files as UploadedFile;
 
@@ -51,8 +53,9 @@ describe("Uploader Test", () => {
     request.setBody({ hello: "world" });
 
     const mw = uploader.single("missing");
+    const context = new Context(request);
 
-    await mw(request, next);
+    await mw(context, next);
 
     expect(request.files).toBeUndefined();
     expect(request.body.hello).toBe("world");
@@ -72,8 +75,9 @@ describe("Uploader Test", () => {
     });
 
     const mw = uploader.array("photos", 2);
+    const context = new Context(request);
 
-    await mw(request, next);
+    await mw(context, next);
 
     request.files = request.files as UploadedFile[];
 
@@ -88,8 +92,9 @@ describe("Uploader Test", () => {
     });
 
     const mwOne = uploader.array("photos", 1);
+    const badContext = new Context(badReq);
 
-    await expect(mwOne(badReq, next)).rejects.toHaveProperty(
+    await expect(mwOne(badContext, next)).rejects.toHaveProperty(
       "code",
       UploadErrorCode.LIMIT_FILE_COUNT,
     );
@@ -106,8 +111,9 @@ describe("Uploader Test", () => {
     request.setBody({ fields: {}, files: [makeFile("unlisted", "x.txt")] });
 
     const mw = uploader.fields([{ name: "avatar", maxCount: 1 }]);
+    const context = new Context(request);
 
-    await expect(mw(request, next)).rejects.toHaveProperty(
+    await expect(mw(context, next)).rejects.toHaveProperty(
       "code",
       UploadErrorCode.LIMIT_UNEXPECTED_FILE,
     );
@@ -128,8 +134,9 @@ describe("Uploader Test", () => {
     });
 
     const mw = uploader.any();
+    const context = new Context(request);
 
-    await expect(mw(request, next)).rejects.toHaveProperty(
+    await expect(mw(context, next)).rejects.toHaveProperty(
       "code",
       UploadErrorCode.LIMIT_FILE_COUNT,
     );
@@ -146,8 +153,9 @@ describe("Uploader Test", () => {
     reqWithFile.setBody({ fields: {}, files: [makeFile("f", "1")] });
 
     const mw = uploader.none();
+    const contextWithFile = new Context(reqWithFile);
 
-    await expect(mw(reqWithFile, next)).rejects.toHaveProperty(
+    await expect(mw(contextWithFile, next)).rejects.toHaveProperty(
       "code",
       UploadErrorCode.LIMIT_UNEXPECTED_FILE,
     );
@@ -156,7 +164,9 @@ describe("Uploader Test", () => {
     reqNoFile.setHeaders({ "content-type": "multipart/form-data" });
     reqNoFile.setBody({ fields: { a: "b" }, files: [] });
 
-    await mw(reqNoFile, next);
+    const contextNoFile = new Context(reqNoFile);
+
+    await mw(contextNoFile, next);
     expect(reqNoFile.body.a).toBe("b");
   });
 
@@ -172,8 +182,9 @@ describe("Uploader Test", () => {
     req.setBody({ fields: {}, files: [makeFile("x", "p")] });
 
     const mw = uploader.single("x");
+    const context = new Context(req);
 
-    await expect(mw(req, next)).rejects.toHaveProperty(
+    await expect(mw(context, next)).rejects.toHaveProperty(
       "code",
       UploadErrorCode.INVALID_FILE_TYPE,
     );
@@ -191,8 +202,9 @@ describe("Uploader Test", () => {
     req.setBody({ fields: {}, files: [makeFile("f", "big", "too big")] });
 
     const mw = uploader.single("f");
+    const context = new Context(req);
 
-    await expect(mw(req, next)).rejects.toHaveProperty(
+    await expect(mw(context, next)).rejects.toHaveProperty(
       "code",
       UploadErrorCode.LIMIT_FILE_SIZE,
     );

@@ -1,5 +1,5 @@
 export { createApp } from "./app";
-export { Request, Response } from "./http";
+export { Request, Response, Context } from "./http";
 export type { Middleware, RouteHandler } from "./types";
 export { RouterGroup } from "./routing";
 export {

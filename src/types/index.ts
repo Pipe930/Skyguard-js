@@ -1,4 +1,4 @@
-import { Response, Request, HttpMethods } from "../http/index";
+import { Response, Context, HttpMethods } from "../http/index";
 import { Layer } from "../routing/layer";
 
 /**
@@ -13,7 +13,7 @@ import { Layer } from "../routing/layer";
  *   return Response.json({ message: "Hello world" });
  * };
  */
-export type RouteHandler = (request: Request) => Promise<Response> | Response;
+export type RouteHandler = (context: Context) => Promise<Response> | Response;
 
 /**
  * Internal routing table structure.
@@ -104,7 +104,7 @@ export type Constructor<T = unknown> = new (...args: unknown[]) => T;
  * app.middlewares(loggerMiddleware);
  */
 export type Middleware = (
-  request: Request,
+  context: Context,
   next: RouteHandler,
 ) => Response | Promise<Response>;
 

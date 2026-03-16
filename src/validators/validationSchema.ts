@@ -418,25 +418,25 @@ export const v = new ValidatorRules();
 export const validateRequest = (
   schema: CompiledRequestValidationSchema,
 ): Middleware => {
-  return (request, next) => {
+  return (context, next) => {
     if (schema.body) {
-      const validBody = Validator.validateOrFail(request.body, schema.body);
-      request.setBody(validBody);
+      const validBody = Validator.validateOrFail(context.body, schema.body);
+      context.req.setBody(validBody);
     }
 
     if (schema.params) {
       const validParams = Validator.validateOrFail(
-        request.params,
+        context.params,
         schema.params,
       );
-      request.setParams(validParams);
+      context.req.setParams(validParams);
     }
 
     if (schema.query) {
-      const validQuery = Validator.validateOrFail(request.query, schema.query);
-      request.setQuery(validQuery);
+      const validQuery = Validator.validateOrFail(context.query, schema.query);
+      context.req.setQuery(validQuery);
     }
 
-    return next(request);
+    return next(context);
   };
 };

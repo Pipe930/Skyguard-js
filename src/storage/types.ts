@@ -1,5 +1,5 @@
 import type { UploadedFile } from "../parsers/parserInterface";
-import { Request } from "../http/request";
+import { Context } from "../http/context";
 
 /**
  * Available storage engine types.
@@ -44,14 +44,14 @@ interface DiskStorageOptions {
    */
   destination?:
     | string
-    | ((req: Request, file: Partial<UploadedFile>) => string | Promise<string>);
+    | ((ctx: Context, file: Partial<UploadedFile>) => string | Promise<string>);
 
   /**
    * Custom filename generator.
    * Receives the request and partial file metadata.
    */
   filename?: (
-    req: Request,
+    ctx: Context,
     file: Partial<UploadedFile>,
   ) => string | Promise<string>;
 }
@@ -98,7 +98,7 @@ export interface Storage {
    * @returns Final uploaded file metadata.
    */
   handleFile(
-    request: Request,
+    context: Context,
     file: Partial<UploadedFile>,
     fileData: Buffer,
   ): Promise<UploadedFile> | UploadedFile;
@@ -131,7 +131,7 @@ export type FileFilterCallback = (
  * The callback must be invoked to accept or reject the file.
  */
 export type FileFilter = (
-  request: Request,
+  context: Context,
   file: Partial<UploadedFile>,
   callback: FileFilterCallback,
 ) => void | Promise<void>;
