@@ -5,12 +5,12 @@ import { Layer } from "../routing/layer";
  * Route controller function.
  *
  * Represents the final endpoint in the execution pipeline.
- * Receives a normalized {@link Request} and must return
+ * Receives a normalized {@link Context} and must return
  * a {@link Response}.
  *
  * @example
- * const handler: RouteHandler = (req) => {
- *   return Response.json({ message: "Hello world" });
+ * const handler: RouteHandler = context => {
+ *   return context.json({ message: "Hello world" });
  * };
  */
 export type RouteHandler = (context: Context) => Promise<Response> | Response;
@@ -88,16 +88,16 @@ export type Constructor<T = unknown> = new (...args: unknown[]) => T;
  *
  * Can be synchronous or asynchronous.
  *
- * @param request - Current {@link Request} instance
+ * @param context - Current {@link Context} instance
  * @param next - Function that executes the next middleware
  * or the route handler
  * @returns A {@link Response} or a Promise resolving to {@link Response}
  *
  * @example
- * const loggerMiddleware: Middleware = async (request, next) => {
- *   console.log(request.getMethod, request.getUrl);
+ * const loggerMiddleware: Middleware = async (context, next) => {
+ *   console.log(context.req.method, context.req.url);
  *
- *   const response = await next(request);
+ *   const response = await next(context);
  *   return response;
  * };
  *

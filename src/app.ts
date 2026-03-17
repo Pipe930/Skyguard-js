@@ -328,9 +328,9 @@ class App {
    * These are executed for every route.
    *
    * @example
-   * const auth = async (request, next) => {
-   *    console.log(request.header);
-   *    return await next(request);
+   * const auth = async (context, next) => {
+   *    console.log(context.headers);
+   *    return await next(context);
    * }
    *
    * app.middlewares(auth);

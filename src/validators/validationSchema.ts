@@ -21,8 +21,9 @@ import {
   UnionRule,
 } from "./rules";
 import { Validator } from "./validator";
-import type { Middleware } from "../types";
+import type { Middleware, RouteHandler } from "../types";
 import { ConvertPrimitiveRule } from "./rules/convertPrimitiveRule";
+import { Context } from "../http/context";
 
 /**
  * Factory responsible for creating **conversion-aware validation rules**
@@ -418,7 +419,7 @@ export const v = new ValidatorRules();
 export const validateRequest = (
   schema: CompiledRequestValidationSchema,
 ): Middleware => {
-  return (context, next) => {
+  return (context: Context, next: RouteHandler) => {
     if (schema.body) {
       const validBody = Validator.validateOrFail(context.body, schema.body);
       context.req.setBody(validBody);

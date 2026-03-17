@@ -100,10 +100,10 @@ export class Router {
   /**
    * Runs a middleware chain using the onion model.
    *
-   * Each middleware receives `(request, next)` and can run code
+   * Each middleware receives `(context, next)` and can run code
    * before/after calling `next()`.
    *
-   * @param request - Incoming request
+   * @param context - Incoming context
    * @param middlewares - Remaining middlewares to execute
    * @param target - Final route handler
    * @returns The response returned by a middleware or the final handler

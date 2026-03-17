@@ -1,6 +1,6 @@
 {
   "name": "skyguard-js",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A lightweight, dependency-free TypeScript backend framework",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,7 +29,7 @@
   "bugs": {
     "url": "https://github.com/Pipe930/Skyguard-js/issues"
   },
-  "homepage": "https://github.com/Pipe930/Skyguard-js#readme",
+  "homepage": "https://pipe930.github.io/skyguard-documentation/",
   "engines": {
     "node": ">=22"
   },

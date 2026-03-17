@@ -78,7 +78,7 @@ class Uploader {
    * - If the file field does not exist, it does not error; it only attaches text
    *   fields and continues.
    * - If present, the file is validated, filtered (optional), stored via the
-   *   configured {@link Storage}, and attached as `request.file`.
+   *   configured {@link Storage}, and attached as `ctx.req.files`.
    *
    * @param fieldName Multipart field name expected to contain a file.
    * @returns A framework {@link Middleware} to be used in the route pipeline.
@@ -120,11 +120,11 @@ class Uploader {
    *
    * Behavior:
    * - If no multipart payload is present, it passes through.
-   * - If no files exist for the given field, it sets `request.files = []`,
+   * - If no files exist for the given field, it sets `ctx.req.files = []`,
    *   attaches text fields, and continues.
    * - If the number of files exceeds `maxCount`, it throws.
    * - Each file is validated, filtered (optional), stored, and collected into
-   *   `request.files` as an array of {@link UploadedFile}.
+   *   `ctx.req.files` as an array of {@link UploadedFile}.
    *
    * @param fieldName Multipart field name expected to contain files.
    * @param maxCount Maximum number of files allowed for this field.
@@ -182,7 +182,7 @@ class Uploader {
    * Behavior:
    * - Rejects any file whose field name is not declared in `fields`.
    * - Enforces `maxCount` per declared field (defaults to 1).
-   * - Aggregates results as `request.files` in a map:
+   * - Aggregates results as `ctx.req.files` in a map:
    *   `{ [fieldName]: UploadedFile[] }`.
    *
    * @param fields List of allowed fields and their per-field maximum counts.
@@ -248,7 +248,7 @@ class Uploader {
    *
    * Behavior:
    * - Enforces the global total file limit: `limits.files`.
-   * - Stores all files and attaches them as `request.files` (array).
+   * - Stores all files and attaches them as `ctx.req.files` (array).
    *
    * @returns A framework {@link Middleware}.
    *
@@ -515,10 +515,10 @@ class Uploader {
       },
     });
 
-    // Asign middleware a route
-    app.post("/file", (request) => {
-      return json({ file: request.file });
-    }, [uploader.single()])
+    // Assign middleware to a route
+    app.post("/file", [uploader.single("file")], context => {
+      return context.json({ file: context.req.files });
+    })
  */
 export const createUploader = (config?: UploaderConfig): Uploader => {
   return new Uploader(config);
