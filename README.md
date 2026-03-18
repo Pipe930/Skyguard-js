@@ -83,6 +83,12 @@ app.run();
 
 ---
 
+## 📚 Documentation
+
+Full documentation is available on the [Official Website](https://pipe930.github.io/skyguard-documentation/). A section with examples or use cases will follow.
+
+---
+
 ## 🔮 Roadmap (Tentative)
 
 - Middleware system (✅)
@@ -97,6 +103,6 @@ app.run();
 - Authentication & authorization
 - WebSockets
 
-## License
+## 📜 License
 
-MIT
+Licensed under the [MIT License](https://github.com/Pipe930/Skyguard-js/blob/main/LICENSE).
