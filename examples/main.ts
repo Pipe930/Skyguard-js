@@ -2,7 +2,6 @@ import { Context, Response } from "../src/http";
 import { createApp } from "../src/app";
 import type { RouteHandler } from "../src/types";
 import { v, schema, validateRequest } from "../src/validators/validationSchema";
-import { join } from "node:path";
 import { cors, csrf, rateLimit, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
 import { Hasher, JWT } from "../src/crypto";
@@ -29,8 +28,6 @@ const uploader = createUploader({
     fileSize: 5 * 1024 * 1024,
   },
 });
-
-app.staticFiles(join(__dirname, "..", "static"));
 
 const userSchema = schema({
   body: {
@@ -165,13 +162,6 @@ app.get("/middlewares", [authMiddleware], context =>
   context.json({ message: "hola" }),
 );
 
-app.get("/download/report", async context => {
-  return await context.download(
-    join(__dirname, "..", "files", "report.pdf"),
-    "reporte-2024.pdf",
-  );
-});
-
 app.post("/login", context => {
   const { username, password } = context.body;
 
@@ -225,4 +215,10 @@ app.post("/logout", context => {
   return context.json({ message: "Logged out" }).removeCookie("test");
 });
 
-app.run();
+app.run(
+  3000,
+  () => {
+    console.log("Server running in port 3000");
+  },
+  "0.0.0.0",
+);

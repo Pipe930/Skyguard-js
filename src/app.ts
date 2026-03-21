@@ -5,7 +5,6 @@ import {
   HttpMethods,
   type LogFormat,
   type LoggerOptions,
-  NodeHttpAdapter,
   Response,
 } from "./http";
 import { ValidationException } from "./exceptions/validationException";
@@ -13,13 +12,13 @@ import { join } from "node:path";
 import { createWriteStream } from "node:fs";
 import type { Middleware, RouteHandler, HandlerOrMiddlewares } from "./types";
 import { StaticFileHandler } from "./static/fileStaticHandler";
-import { createServer } from "node:http";
 import { HttpException } from "./exceptions/httpExceptions";
 import {
   type TemplateEngineFunction,
   ViewEngine,
 } from "./views/engineTemplate";
 import { Container } from "./container/container";
+import { createRuntimeServer } from "./server/createRuntimeServer";
 
 /**
  * The `App` class acts as the **execution kernel** and **lifecycle orchestrator**
@@ -177,14 +176,22 @@ class App {
   public run(
     port: number = 3000,
     callback?: VoidFunction,
-    hostname: string = "localhost",
+    hostname?: string,
   ): void {
-    createServer((req, res) => {
-      const adapter = new NodeHttpAdapter(req, res, this.loggerOptions);
-      void this.handle(adapter);
-    }).listen(port, hostname, () => {
-      if (callback) callback();
-    });
+    const runtimeServer = createRuntimeServer(this.loggerOptions);
+
+    runtimeServer.listen(
+      async adapter => {
+        await this.handle(adapter);
+      },
+      {
+        port,
+        hostname,
+        callback: () => {
+          if (callback) callback();
+        },
+      },
+    );
   }
 
   /**
@@ -201,7 +208,7 @@ class App {
    * app.logger("common");
    * app.logger("combined", "./logs/http.log");
    */
-  public logger(format: LogFormat = "dev", filePath?: string): void {
+  public logger(format?: LogFormat, filePath?: string): void {
     this.loggerOptions = {
       ...this.loggerOptions,
       format,

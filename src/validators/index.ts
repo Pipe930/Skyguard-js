@@ -1,7 +1,7 @@
-export { ValidationRule } from "./validationRule";
+export type { ValidationRule } from "./validationRule";
 export { Validator } from "./validator";
 export * from "./rules";
-export {
+export type {
   RuleOptions,
   ValidationContext,
   ValidationError,

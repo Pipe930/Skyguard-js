@@ -4,8 +4,8 @@ export type LogFormat = "combined" | "common" | "dev" | "short" | "tiny";
 
 export type LoggerOptions = {
   format?: LogFormat;
-  stream?: NodeJS.WritableStream;
-  fileStream?: NodeJS.WritableStream;
+  stream?: { write(chunk: string): unknown };
+  fileStream?: { write(chunk: string): unknown };
 };
 
 /**
@@ -25,12 +25,12 @@ export type LoggerOptions = {
  * - 5xx → red
  */
 export class Logger {
-  private stream: NodeJS.WritableStream;
-  private fileStream?: NodeJS.WritableStream;
+  private stream: { write(chunk: string): unknown };
+  private fileStream?: { write(chunk: string): unknown };
   private format: LogFormat;
 
   constructor(options: LoggerOptions = {}) {
-    this.stream = options.stream || process.stdout;
+    this.stream = options.stream || this.getDefaultStream();
     this.fileStream = options.fileStream;
     this.format = options.format || "dev";
   }
@@ -62,6 +62,22 @@ export class Logger {
     const responseTime = (Number(diff) / 1_000_000).toFixed(3);
     const consoleLine = this.buildLogLine(req, res, responseTime, true);
     const fileLine = this.buildLogLine(req, res, responseTime, false);
+
+    this.stream.write(consoleLine + "\n");
+
+    if (this.fileStream) {
+      this.fileStream.write(fileLine + "\n");
+    }
+  }
+
+  public logWeb(
+    req: globalThis.Request,
+    res: globalThis.Response,
+    startTimeMs: number,
+  ): void {
+    const responseTime = (performance.now() - startTimeMs).toFixed(3);
+    const consoleLine = this.buildWebLogLine(req, res, responseTime, true);
+    const fileLine = this.buildWebLogLine(req, res, responseTime, false);
 
     this.stream.write(consoleLine + "\n");
 
@@ -113,6 +129,43 @@ export class Logger {
     return `${method} ${url} ${statusCode} ${responseTime} ms - ${contentLength}`;
   }
 
+  private buildWebLogLine(
+    req: globalThis.Request,
+    res: globalThis.Response,
+    responseTime: string,
+    useColor: boolean,
+  ): string {
+    const method = req.method || "-";
+    const url = new URL(req.url).pathname || "-";
+    const statusCode = useColor
+      ? this.colorizeStatus(res.status)
+      : String(res.status);
+    const contentLength = res.headers.get("content-length") || "-";
+    const remoteAddr = req.headers.get("x-forwarded-for") || "-";
+    const httpVersion = "1.1";
+    const referrer = req.headers.get("referer") || req.headers.get("referrer") || "-";
+    const userAgent = req.headers.get("user-agent") || "-";
+    const date = new Date().toUTCString();
+
+    if (this.format === "tiny") {
+      return `${method} ${url} ${statusCode} ${contentLength} - ${responseTime} ms`;
+    }
+
+    if (this.format === "short") {
+      return `${remoteAddr} ${method} ${url} ${statusCode} ${contentLength} - ${responseTime} ms`;
+    }
+
+    if (this.format === "common") {
+      return `${remoteAddr} - - [${date}] "${method} ${url} HTTP/${httpVersion}" ${statusCode} ${contentLength}`;
+    }
+
+    if (this.format === "combined") {
+      return `${remoteAddr} - - [${date}] "${method} ${url} HTTP/${httpVersion}" ${statusCode} ${contentLength} "${referrer}" "${userAgent}"`;
+    }
+
+    return `${method} ${url} ${statusCode} ${responseTime} ms - ${contentLength}`;
+  }
+
   /**
    * Applies ANSI color codes to an HTTP status code for terminal output.
    *
@@ -140,5 +193,23 @@ export class Logger {
     }
 
     return statusStr;
+  }
+
+  private getDefaultStream(): { write(chunk: string): unknown } {
+    const maybeProcess = globalThis as {
+      process?: { stdout?: { write(chunk: string): unknown } };
+    };
+
+    if (maybeProcess.process?.stdout?.write) {
+      return maybeProcess.process.stdout;
+    }
+
+    return {
+      write: (chunk: string) => {
+        // Use console fallback on runtimes without Node process/stdout.
+        // eslint-disable-next-line no-console
+        console.log(chunk.trimEnd());
+      },
+    };
   }
 }

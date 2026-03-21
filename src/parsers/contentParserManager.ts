@@ -45,12 +45,19 @@ export class ContentParserManager {
    * @param req - Native incoming HTTP request
    * @returns Parsed body content or raw body
    */
-  public async parse(req: IncomingMessage): Promise<unknown> {
-    const body = await this.readBody(req);
+  public async parse(
+    req: IncomingMessage | globalThis.Request,
+  ): Promise<unknown> {
+    const isWebRequest = this.isWebRequest(req);
+    const body = isWebRequest
+      ? await this.readWebBody(req)
+      : await this.readNodeBody(req);
 
     if (body.length <= 0) return {};
 
-    const contentType = req.headers["content-type"] || "text/plain";
+    const contentType = isWebRequest
+      ? req.headers.get("content-type") || "text/plain"
+      : req.headers["content-type"] || "text/plain";
     const parser = this.findParser(contentType);
 
     if (!parser) return Buffer.isBuffer(body) ? body : Buffer.from(body);
@@ -64,7 +71,7 @@ export class ContentParserManager {
    * @param req - Native incoming HTTP request
    * @returns A promise that resolves to the full body buffer
    */
-  private readBody(req: IncomingMessage): Promise<Buffer> {
+  private readNodeBody(req: IncomingMessage): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
 
@@ -80,6 +87,29 @@ export class ContentParserManager {
         reject(new UnprocessableContentError("Failed to read request body"));
       });
     });
+  }
+
+  private async readWebBody(req: globalThis.Request): Promise<Buffer> {
+    try {
+      const arrayBuffer = await req.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch {
+      throw new UnprocessableContentError("Failed to read request body");
+    }
+  }
+
+  private isWebRequest(
+    req: IncomingMessage | globalThis.Request,
+  ): req is globalThis.Request {
+    const candidate = req as {
+      arrayBuffer?: unknown;
+      headers?: { get?: unknown };
+    };
+
+    return (
+      typeof candidate.arrayBuffer === "function" &&
+      typeof candidate.headers?.get === "function"
+    );
   }
 
   /**

@@ -2,8 +2,8 @@ export { MemorySessionStorage } from "./memorySessionStorage";
 export { FileSessionStorage } from "./fileSessionStorage";
 export {
   DatabaseSessionStorage,
-  SessionDatabaseAdapter,
+  type SessionDatabaseAdapter,
 } from "./databaseSessionStorage";
 export { Session } from "./session";
-export { SessionStorage } from "./sessionStorage";
+export type { SessionStorage } from "./sessionStorage";
 export { parseCookies, serializeCookie } from "./cookies";
