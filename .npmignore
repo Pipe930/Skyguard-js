@@ -4,9 +4,9 @@ tsconfig.json
 .git/
 .github/
 tests/
-views/
-public/
+examples/
 coverage/
+docker/
 
 # Development tools
 ts-node/
@@ -24,3 +24,4 @@ jest.config.ts
 dockerfile
 .prettierrc
 .eslint.config.mjs
+.github/
