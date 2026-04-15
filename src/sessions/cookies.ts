@@ -120,16 +120,16 @@ export function parseCookies(
 export function serializeCookie(
   name: string,
   value: string,
-  options: CookieOptions = {},
+  options?: CookieOptions,
 ): string {
   const parts: string[] = [`${name}=${encodeURIComponent(value)}`];
 
-  if (typeof options.maxAge === "number")
+  if (typeof options?.maxAge === "number")
     parts.push(`Max-Age=${options.maxAge}`);
-  if (options.path) parts.push(`Path=${options.path}`);
-  if (options.sameSite) parts.push(`SameSite=${options.sameSite}`);
-  if (options.httpOnly) parts.push("HttpOnly");
-  if (options.secure) parts.push("Secure");
+  if (options?.path) parts.push(`Path=${options.path}`);
+  if (options?.sameSite) parts.push(`SameSite=${options.sameSite}`);
+  if (options?.httpOnly) parts.push("HttpOnly");
+  if (options?.secure) parts.push("Secure");
 
   return parts.join("; ");
 }

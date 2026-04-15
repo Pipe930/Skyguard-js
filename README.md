@@ -40,6 +40,7 @@ Skyguard.js currently delivers a solid core that includes **routing**, **type-sa
 - File uploads (via middleware)
 - Static file serving
 - Session handling (via middleware)
+- Supported runtimes: [Bun](https://bun.com/) and [Deno](https://deno.com/)
 
 ---
 
@@ -88,20 +89,6 @@ app.run();
 Full documentation is available on the [Official Website](https://pipe930.github.io/skyguard-documentation/). A section with examples or use cases will follow.
 
 ---
-
-## 🔮 Roadmap (Tentative)
-
-- Middleware system (✅)
-- Template engines supported (✅)
-- Context abstraction (✅)
-- Data validation (✅)
-- Error handling improvements (✅)
-- Sessions & cookies (✅)
-- Passoword hashing & JWT tokens (✅)
-- File uploads (✅)
-- Database & ORM integration
-- Authentication & authorization
-- WebSockets
 
 ## 📜 License
 

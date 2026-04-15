@@ -83,11 +83,7 @@ export class Response {
   /**
    * Sets a cookie in the `Set-Cookie` response header.
    */
-  public setCookie(
-    name: string,
-    value: string,
-    options: CookieOptions = {},
-  ): this {
+  public setCookie(name: string, value: string, options?: CookieOptions): this {
     const cookie = serializeCookie(name, value, options);
     const current = this._headers["Set-Cookie"];
 
@@ -108,7 +104,7 @@ export class Response {
   /**
    * Clears a cookie by setting an empty value and immediate expiration.
    */
-  public removeCookie(name: string, options: CookieOptions = {}): this {
+  public removeCookie(name: string, options?: CookieOptions): this {
     return this.setCookie(name, "", {
       ...options,
       maxAge: 0,

@@ -2,7 +2,7 @@ import { Context, Response } from "../src/http";
 import { createApp } from "../src/app";
 import type { RouteHandler } from "../src/types";
 import { v, schema, validateRequest } from "../src/validators/validationSchema";
-import { cors, csrf, rateLimit, sessions } from "../src/middlewares";
+import { cors, rateLimit, sessions } from "../src/middlewares";
 import { MemorySessionStorage } from "../src/sessions";
 import { Hasher, JWT } from "../src/crypto";
 import { UnauthorizedError } from "../src/exceptions/httpExceptions";

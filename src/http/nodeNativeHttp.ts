@@ -7,6 +7,7 @@ import { Context } from "./context";
 import { ContentParserManager } from "../parsers/contentParserManager";
 import { type LoggerOptions, Logger } from "./logger";
 import { Readable } from "node:stream";
+import { TLSSocket } from "node:tls";
 
 /**
  * Node.js HTTP adapter.
@@ -47,13 +48,17 @@ export class NodeHttpAdapter implements HttpAdapter {
    * @returns A fully constructed {@link Context} instance
    */
   public async getContext(): Promise<Context> {
-    const url = new URL(this.req.url || "", `http://${this.req.headers.host}`);
+    const protocol = this.getProtocol();
+    const url = new URL(
+      this.req.url ?? "/",
+      `${protocol}://${this.req.headers.host}`,
+    );
 
     const request = new Request(url.pathname);
-    request.setMethod((this.req.method as HttpMethods) || HttpMethods.get);
+    request.setMethod((this.req.method as HttpMethods) ?? HttpMethods.get);
     request.setQuery(Object.fromEntries(url.searchParams.entries()));
     request.setHeaders(this.req.headers);
-    request.setRemoteAddress(this.req.socket?.remoteAddress);
+    request.setRemoteAddress(this.req.socket.remoteAddress);
 
     if (
       request.method === HttpMethods.post ||
@@ -61,7 +66,7 @@ export class NodeHttpAdapter implements HttpAdapter {
       request.method === HttpMethods.patch
     ) {
       const parsedData = await this.contentParser.parse(this.req);
-      request.setBody(parsedData);
+      request.setBody(parsedData as Record<string, any>);
     }
 
     return new Context(request);
@@ -95,5 +100,19 @@ export class NodeHttpAdapter implements HttpAdapter {
     }
 
     this.res.end(response.content);
+  }
+
+  private getProtocol(): string {
+    const forwarded = this.req.headers["x-forwarded-proto"];
+
+    if (typeof forwarded === "string") {
+      return forwarded.split(",")[0].trim();
+    }
+
+    if ((this.req.socket as TLSSocket).encrypted) {
+      return "https";
+    }
+
+    return "http";
   }
 }
