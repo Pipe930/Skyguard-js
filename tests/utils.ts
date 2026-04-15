@@ -2,10 +2,16 @@ import { NodeHttpAdapter, HttpMethods, Context } from "../src/http/index";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 
+type MockIncomingMessage = Omit<IncomingMessage, "socket"> & {
+  socket: {
+    encrypted?: boolean;
+  };
+};
+
 export const createRequestMock = async (
   url: string,
   method: HttpMethods,
-  body: any = null,
+  body: unknown = null,
 ): Promise<Context> => {
   const mockReq = new Readable() as IncomingMessage;
 
@@ -13,8 +19,11 @@ export const createRequestMock = async (
   mockReq.method = method;
   mockReq.headers = { host: "localhost:3000" };
 
-  if (body) mockReq.push(JSON.stringify(body));
+  (mockReq as MockIncomingMessage).socket = {
+    encrypted: false,
+  };
 
+  if (body) mockReq.push(JSON.stringify(body));
   mockReq.push(null);
 
   const mockRes = {

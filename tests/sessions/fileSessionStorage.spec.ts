@@ -11,9 +11,9 @@ import {
   readdir,
   rename,
 } from "fs/promises";
-import { randomBytes } from "crypto";
-import { join } from "path";
-import { SessionData } from "sessions/sessionStorage";
+import { randomBytes } from "node:crypto";
+import { join } from "node:path";
+import { SessionData } from "../../src/sessions/sessionStorage";
 
 jest.mock("fs/promises");
 jest.mock("crypto");
